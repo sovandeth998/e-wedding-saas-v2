@@ -29,7 +29,11 @@ export default function AdminLayout({
   const supabase = createClient();
 
   useEffect(() => {
-    if (!user || loading) return;
+    if (loading) return;
+    if (!user) {
+      router.push("/admin/login");
+      return;
+    }
 
     (async () => {
       const { data } = await supabase
@@ -44,7 +48,7 @@ export default function AdminLayout({
 
   useEffect(() => {
     if (!loading && isAdmin === false) {
-      router.push("/dashboard");
+      router.push("/admin/login");
     }
   }, [isAdmin, loading]);
 
