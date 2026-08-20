@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -22,17 +22,42 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading } = useAuth();
   const supabase = createClient();
+
+  useEffect(() => {
+    if (!user || loading) return;
+
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setIsAdmin(false);
+        return;
+      }
+
+      const res = await fetch("/api/admin/check", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const data = await res.json();
+      setIsAdmin(data.isAdmin);
+    })();
+  }, [user, loading]);
+
+  useEffect(() => {
+    if (!loading && isAdmin === false) {
+      router.push("/dashboard");
+    }
+  }, [isAdmin, loading]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
   };
 
-  if (loading) {
+  if (loading || isAdmin === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-cream-gradient">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
