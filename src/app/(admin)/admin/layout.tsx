@@ -32,17 +32,13 @@ export default function AdminLayout({
     if (!user || loading) return;
 
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        setIsAdmin(false);
-        return;
-      }
+      const { data } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", user.id)
+        .single();
 
-      const res = await fetch("/api/admin/check", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-      const data = await res.json();
-      setIsAdmin(data.isAdmin);
+      setIsAdmin(data?.role === "admin");
     })();
   }, [user, loading]);
 
