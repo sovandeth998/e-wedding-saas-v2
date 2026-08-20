@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, ArrowRight, Save, Eye, Upload, Music, MapPin, Users, Heart, Image, CreditCard } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save, Eye, Music, MapPin, Users, Heart, Image, CreditCard, Trash2 } from "lucide-react";
 import Link from "next/link";
-import type { Invitation } from "@/types/database";
+import { FileUpload } from "@/components/FileUpload";
+import type { Invitation, GalleryPhoto } from "@/types/database";
 
 const steps = [
   { id: 1, icon: Heart, title: "ព័ត៌មានកូនកំលោះ-កូនក្រមុំ" },
@@ -46,6 +47,8 @@ export default function BuilderPage() {
     background_music: "",
     status: "draft",
   });
+  const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>([]);
+  const [qrImageUrl, setQrImageUrl] = useState("");
 
   useEffect(() => {
     if (!params.id) return;
@@ -58,11 +61,59 @@ export default function BuilderPage() {
         .single();
 
       if (data) setInvitation(data);
+
+      const { data: photos } = await supabase
+        .from("gallery_photos")
+        .select("*")
+        .eq("invitation_id", params.id)
+        .order("order_index");
+
+      if (photos) setGalleryPhotos(photos);
+
+      const { data: qr } = await supabase
+        .from("qr_codes")
+        .select("qr_image_url")
+        .eq("invitation_id", params.id)
+        .single();
+
+      if (qr?.qr_image_url) setQrImageUrl(qr.qr_image_url);
     })();
   }, [params.id]);
 
   const updateField = (field: string, value: string) => {
     setInvitation((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleGalleryUpload = async (url: string) => {
+    if (!url) return;
+    const { data, error } = await supabase
+      .from("gallery_photos")
+      .insert({
+        invitation_id: params.id,
+        url,
+        order_index: galleryPhotos.length,
+      })
+      .select()
+      .single();
+
+    if (!error && data) {
+      setGalleryPhotos((prev) => [...prev, data]);
+    }
+  };
+
+  const removeGalleryPhoto = async (photoId: string) => {
+    const { error } = await supabase
+      .from("gallery_photos")
+      .delete()
+      .eq("id", photoId);
+
+    if (!error) {
+      setGalleryPhotos((prev) => prev.filter((p) => p.id !== photoId));
+    }
+  };
+
+  const handleQrUpload = (url: string) => {
+    setQrImageUrl(url);
   };
 
   const saveInvitation = async () => {
@@ -73,6 +124,26 @@ export default function BuilderPage() {
       .eq("id", params.id);
 
     if (!error) {
+      if (qrImageUrl) {
+        const { data: existingQr } = await supabase
+          .from("qr_codes")
+          .select("id")
+          .eq("invitation_id", params.id)
+          .single();
+
+        if (existingQr) {
+          await supabase
+            .from("qr_codes")
+            .update({ qr_image_url: qrImageUrl })
+            .eq("id", existingQr.id);
+        } else {
+          await supabase.from("qr_codes").insert({
+            invitation_id: params.id,
+            type: "gift",
+            qr_image_url: qrImageUrl,
+          });
+        }
+      }
       alert("បានរក្សាទុកជោគជ័យ!");
     }
     setSaving(false);
@@ -174,10 +245,12 @@ export default function BuilderPage() {
                       </div>
                       <div className="space-y-2">
                         <Label className="text-secondary">រូបថត</Label>
-                        <div className="border-2 border-dashed border-gold-200 rounded-lg p-8 text-center hover:bg-gold-50/50 cursor-pointer transition-colors">
-                          <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                          <p className="text-sm text-muted-foreground">ចុចដើម្បីបញ្ចូលរូបថត</p>
-                        </div>
+                        <FileUpload
+                          bucket="uploads"
+                          path={`invitations/${params.id}/groom`}
+                          onUpload={(url) => updateField("groom_photo", url)}
+                          className="aspect-square max-w-[200px]"
+                        />
                       </div>
                     </div>
                     <div className="space-y-4">
@@ -192,10 +265,12 @@ export default function BuilderPage() {
                       </div>
                       <div className="space-y-2">
                         <Label className="text-secondary">រូបថត</Label>
-                        <div className="border-2 border-dashed border-gold-200 rounded-lg p-8 text-center hover:bg-gold-50/50 cursor-pointer transition-colors">
-                          <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                          <p className="text-sm text-muted-foreground">ចុចដើម្បីបញ្ចូលរូបថត</p>
-                        </div>
+                        <FileUpload
+                          bucket="uploads"
+                          path={`invitations/${params.id}/bride`}
+                          onUpload={(url) => updateField("bride_photo", url)}
+                          className="aspect-square max-w-[200px]"
+                        />
                       </div>
                     </div>
                   </div>
@@ -247,14 +322,28 @@ export default function BuilderPage() {
                 <div className="space-y-4">
                   <p className="text-muted-foreground">បញ្ចូលរូបថត Pre-wedding របស់អ្នកដើម្បីបង្កើតវិចិត្រសាលដ៏ស្អាត។</p>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {[1, 2, 3, 4, 5, 6].map((i) => (
-                      <div key={i} className="aspect-square border-2 border-dashed border-gold-200 rounded-lg flex items-center justify-center hover:bg-gold-50/50 cursor-pointer transition-colors">
-                        <div className="text-center">
-                          <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                          <p className="text-xs text-muted-foreground">រូបភាព {i}</p>
-                        </div>
+                    {galleryPhotos.map((photo) => (
+                      <div key={photo.id} className="relative group aspect-square">
+                        <img
+                          src={photo.url}
+                          alt={photo.caption || "រូបភាព"}
+                          className="w-full h-full object-cover rounded-lg border border-gold-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeGalleryPhoto(photo.id)}
+                          className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     ))}
+                    <FileUpload
+                      bucket="uploads"
+                      path={`invitations/${params.id}/gallery`}
+                      onUpload={handleGalleryUpload}
+                      className="aspect-square"
+                    />
                   </div>
                 </div>
               )}
@@ -267,10 +356,12 @@ export default function BuilderPage() {
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label className="text-secondary">រូបភាព QR Code</Label>
-                        <div className="border-2 border-dashed border-gold-200 rounded-lg p-8 text-center hover:bg-gold-50/50 cursor-pointer transition-colors">
-                          <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                          <p className="text-sm text-muted-foreground">បញ្ចូលរូបភាព KHQR</p>
-                        </div>
+                        <FileUpload
+                          bucket="uploads"
+                          path={`invitations/${params.id}/qr`}
+                          onUpload={handleQrUpload}
+                          className="max-w-[250px]"
+                        />
                       </div>
                     </div>
                     <div className="space-y-4">
