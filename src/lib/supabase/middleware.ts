@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
@@ -6,6 +7,7 @@ export async function updateSession(request: NextRequest) {
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
     return supabaseResponse;
@@ -44,12 +46,8 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user && request.nextUrl.pathname.startsWith("/admin")) {
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const adminCheckUrl = supabaseUrl;
-
-    if (serviceRoleKey && adminCheckUrl) {
-      const { createClient } = await import("@supabase/supabase-js");
-      const adminClient = createClient(adminCheckUrl, serviceRoleKey);
+    if (serviceRoleKey && supabaseUrl) {
+      const adminClient = createClient(supabaseUrl, serviceRoleKey);
       const { data } = await adminClient
         .from("users")
         .select("role")
