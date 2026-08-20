@@ -18,18 +18,19 @@ export default function BillingPage() {
   useEffect(() => {
     if (!user) return;
 
-    supabase
-      .from("subscriptions")
-      .select("*, package:packages(name)")
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .single()
-      .then(({ data }) => {
-        if (data?.package) {
-          setCurrentPlan(data.package.name);
-        }
-      })
-      .finally(() => setLoading(false));
+    (async () => {
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("*, package:packages(name)")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .single();
+
+      if (data?.package) {
+        setCurrentPlan(data.package.name);
+      }
+      setLoading(false);
+    })();
   }, [user]);
 
   const plans = [
