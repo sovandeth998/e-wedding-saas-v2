@@ -26,9 +26,6 @@ export default function BillingPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [selectedPrice, setSelectedPrice] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
-  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  const [qrPayload, setQrPayload] = useState<string | null>(null);
-  const [qrLoading, setQrLoading] = useState(false);
   const [bankSettings, setBankSettings] = useState<Record<string, string>>({});
   const [countdown, setCountdown] = useState(300);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -80,8 +77,6 @@ export default function BillingPage() {
     setSelectedPlan(plan.key);
     setSelectedPrice(plan.price);
     setPaymentMethod(null);
-    setQrDataUrl(null);
-    setQrPayload(null);
     setCountdown(300);
     setReceiptFile(null);
     setReceiptPreview(null);
@@ -91,26 +86,15 @@ export default function BillingPage() {
 
   const handleSelectKHQR = async () => {
     setPaymentMethod("khqr");
-    setQrLoading(true);
     setCountdown(300);
-    try {
-      const { data: settings } = await supabase
-        .from("platform_settings")
-        .select("key, value")
-        .in("key", ["owner_khqr_image", "owner_bank_name", "owner_account_name", "owner_account_number"]);
-
-      if (settings) {
-        const map: Record<string, string> = {};
-        settings.forEach((s) => { map[s.key] = s.value; });
-        setBankSettings(map);
-        if (map.owner_khqr_image) {
-          setQrDataUrl(map.owner_khqr_image);
-        }
-      }
-    } catch {
-      console.error("Failed to load QR");
-    } finally {
-      setQrLoading(false);
+    const { data: settings } = await supabase
+      .from("platform_settings")
+      .select("key, value")
+      .in("key", ["owner_bank_name", "owner_account_name", "owner_account_number"]);
+    if (settings) {
+      const map: Record<string, string> = {};
+      settings.forEach((s) => { map[s.key] = s.value; });
+      setBankSettings(map);
     }
   };
 
@@ -161,7 +145,6 @@ export default function BillingPage() {
         amount: selectedPrice,
         payment_method: paymentMethod === "khqr" ? "khqr" : "receipt_upload",
         payment_proof_url: receiptUrl,
-        khqr_reference: qrPayload,
         status: "pending",
       });
 
@@ -310,7 +293,7 @@ export default function BillingPage() {
                 <div className="space-y-4 py-2">
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground mb-2">
-                      ស្គេន QR ដើម្បីបង់ប្រាក់
+                      ផ្ញើប្រាក់ទៅគណនីខាងក្រោម
                     </p>
                     <div className="flex items-center justify-center gap-2 mb-3">
                       <Timer className="h-4 w-4 text-orange-500" />
@@ -318,26 +301,26 @@ export default function BillingPage() {
                         {formatCountdown(countdown)}
                       </span>
                     </div>
-                    {qrLoading ? (
-                      <div className="h-[300px] w-[300px] mx-auto bg-gray-100 rounded-lg flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                    <div className="p-6 bg-gold-50 rounded-xl border border-gold-200 text-left space-y-3 mx-auto max-w-sm">
+                      <div className="text-center mb-3">
+                        <p className="text-lg font-bold text-primary">{bankSettings.owner_bank_name || "ABA Bank"}</p>
                       </div>
-                    ) : qrDataUrl ? (
-                      <div className="inline-block p-4 bg-white rounded-lg border border-gold-200 shadow-md">
-                        <img src={qrDataUrl} alt="KHQR" className="w-[260px] h-[260px] object-contain" />
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center p-2 bg-white rounded-lg">
+                          <span className="text-xs text-muted-foreground">ឈ្មោះគណនី</span>
+                          <span className="font-bold text-secondary">{bankSettings.owner_account_name || "MENSOANDETH"}</span>
+                        </div>
+                        <div className="flex justify-between items-center p-2 bg-white rounded-lg">
+                          <span className="text-xs text-muted-foreground">លេខគណនី</span>
+                          <span className="font-bold text-secondary font-mono">{bankSettings.owner_account_number || "070866998"}</span>
+                        </div>
+                        <div className="flex justify-between items-center p-2 bg-primary/5 rounded-lg border border-primary/20">
+                          <span className="text-xs text-muted-foreground">ចំនួនបង់</span>
+                          <span className="font-bold text-primary text-lg">${selectedPrice}</span>
+                        </div>
                       </div>
-                    ) : (
-                      <div className="h-[300px] w-[300px] mx-auto bg-gray-100 rounded-lg flex items-center justify-center">
-                        <p className="text-sm text-muted-foreground">មិនមាន QR Code</p>
-                      </div>
-                    )}
-                    <div className="mt-3 p-3 bg-gold-50 rounded-lg border border-gold-200 text-left space-y-1">
-                      <p className="text-xs text-muted-foreground font-medium">ព័ត៌មានធនាគារ</p>
-                      <p className="text-sm font-bold text-secondary">{bankSettings.owner_bank_name || "ABA Bank"}</p>
-                      <p className="text-sm text-secondary">ឈ្មោះគណនី: <span className="font-bold">{bankSettings.owner_account_name || "MENSOANDETH"}</span></p>
-                      <p className="text-sm text-secondary">លេខគណនី: <span className="font-bold">{bankSettings.owner_account_number || "070866998"}</span></p>
-                      <p className="text-xs text-muted-foreground mt-1">ចំនួនដែលត្រូវបង់: <span className="font-bold text-primary">${selectedPrice}</span></p>
                     </div>
+                    <p className="text-xs text-muted-foreground mt-3">ផ្ញើរួច → បញ្ជាក់ការបង់ប្រាក់ខាងក្រោម</p>
                   </div>
                   <div className="flex gap-2">
                     <Button
