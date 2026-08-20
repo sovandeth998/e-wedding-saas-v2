@@ -6,13 +6,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Heart, LayoutDashboard, Users, CreditCard, Palette, BarChart3, LogOut, Menu, X } from "lucide-react";
+import { Heart, LayoutDashboard, Users, CreditCard, Palette, BarChart3, LogOut, Menu, X, Settings } from "lucide-react";
 
 const navItems = [
   { href: "/admin", label: "ស្ថិតិ", icon: BarChart3 },
   { href: "/admin/users", label: "អ្នកប្រើប្រាស់", icon: Users },
   { href: "/admin/orders", label: "ការបញ្ជាទិញ", icon: CreditCard },
   { href: "/admin/templates", label: "ពុម្ព", icon: Palette },
+  { href: "/admin/settings", label: "ការកំណត់", icon: Settings },
 ];
 
 export default function AdminLayout({

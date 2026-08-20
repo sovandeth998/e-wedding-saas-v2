@@ -93,22 +93,16 @@ export default function BillingPage() {
     setQrLoading(true);
     setCountdown(300);
     try {
-      const res = await fetch("/api/khqr/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: selectedPrice,
-          orderId: `EW-${Date.now()}`,
-          description: `E-Wedding ${selectedPlan} subscription`,
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setQrDataUrl(data.qrDataUrl);
-        setQrPayload(data.payload);
+      const { data: settings } = await supabase
+        .from("platform_settings")
+        .select("value")
+        .eq("key", "owner_khqr_image")
+        .single();
+      if (settings?.value) {
+        setQrDataUrl(settings.value);
       }
     } catch {
-      console.error("Failed to generate KHQR");
+      console.error("Failed to load QR");
     } finally {
       setQrLoading(false);
     }
@@ -149,13 +143,19 @@ export default function BillingPage() {
         }
       }
 
+      const { data: pkg } = await supabase
+        .from("packages")
+        .select("id")
+        .eq("name", selectedPlan)
+        .single();
+
       const { error } = await supabase.from("orders").insert({
         user_id: user.id,
-        package_key: selectedPlan,
+        package_id: pkg?.id,
         amount: selectedPrice,
-        payment_method: paymentMethod === "khqr" ? "khqr" : "receipt",
-        receipt_url: receiptUrl,
-        qr_payload: qrPayload,
+        payment_method: paymentMethod === "khqr" ? "khqr" : "receipt_upload",
+        payment_proof_url: receiptUrl,
+        khqr_reference: qrPayload,
         status: "pending",
       });
 
@@ -318,12 +318,20 @@ export default function BillingPage() {
                       </div>
                     ) : qrDataUrl ? (
                       <div className="inline-block p-4 bg-white rounded-lg border border-gold-200 shadow-md">
-                        <img src={qrDataUrl} alt="KHQR" className="w-[260px] h-[260px]" />
+                        <img src={qrDataUrl} alt="KHQR" className="w-[260px] h-[260px] object-contain" />
                       </div>
-                    ) : null}
-                    <p className="text-xs text-muted-foreground mt-3">
-                      បង់ ${selectedPrice} ដោយប្រើ QR Code
-                    </p>
+                    ) : (
+                      <div className="h-[300px] w-[300px] mx-auto bg-gray-100 rounded-lg flex items-center justify-center">
+                        <p className="text-sm text-muted-foreground">មិនមាន QR Code</p>
+                      </div>
+                    )}
+                    <div className="mt-3 p-3 bg-gold-50 rounded-lg border border-gold-200 text-left space-y-1">
+                      <p className="text-xs text-muted-foreground font-medium">ព័ត៌មានធនាគារ</p>
+                      <p className="text-sm font-bold text-secondary">ABA Bank</p>
+                      <p className="text-sm text-secondary">ឈ្មោះគណនី: <span className="font-bold">MENSOANDETH</span></p>
+                      <p className="text-sm text-secondary">លេខគណនី: <span className="font-bold">070866998</span></p>
+                      <p className="text-xs text-muted-foreground mt-1">ចំនួនដែលត្រូវបង់: <span className="font-bold text-primary">${selectedPrice}</span></p>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <Button
