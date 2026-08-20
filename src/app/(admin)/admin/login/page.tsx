@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, Heart, Lock } from "lucide-react";
+import { Shield, Mail, Lock, LogIn, ArrowRight, Heart } from "lucide-react";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -50,63 +51,88 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-secondary via-secondary/95 to-secondary/90 p-4">
-      <Card className="w-full max-w-md border-0 shadow-2xl">
-        <CardHeader className="text-center space-y-4">
-          <div className="mx-auto h-16 w-16 rounded-full bg-gold-gradient flex items-center justify-center">
-            <Shield className="h-8 w-8 text-white" />
-          </div>
-          <div>
-            <CardTitle className="text-2xl text-secondary flex items-center justify-center gap-2">
-              <Lock className="h-5 w-5 text-primary" />
-              Admin Panel
-            </CardTitle>
-            <CardDescription className="mt-1">
-              សូមបំពេញព័ត៌មានដើម្បីចូល Admin
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            {error && (
-              <div className="bg-red-50 text-red-600 text-sm p-3 rounded-md text-center font-medium">{error}</div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-secondary font-medium">អ៊ីមែល Admin</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="admin@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="border-gold-200 focus-visible:ring-primary"
-              />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-secondary via-secondary/95 to-secondary px-4">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 mb-4">
+            <div className="h-12 w-12 rounded-full bg-gold-gradient flex items-center justify-center shadow-lg">
+              <Shield className="h-6 w-6 text-white" />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-secondary font-medium">ពាក្យសម្ងាត់</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="border-gold-200 focus-visible:ring-primary"
-              />
-            </div>
-            <Button type="submit" className="w-full bg-gold-gradient text-white hover:opacity-90 h-11 text-base" disabled={loading}>
-              {loading ? "កំពុងចូល..." : "ចូល Admin"}
-            </Button>
-          </form>
+          </div>
+          <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
+          <p className="text-sm text-white/60 mt-1">គ្រប់គ្រង Platform</p>
+        </div>
 
-          <div className="mt-6 text-center">
-            <a href="/login" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-              ← ចូលគណនីអតិថជន
-            </a>
-          </div>
-        </CardContent>
-      </Card>
+        <Card className="border-0 shadow-2xl rounded-2xl">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="h-8 w-8 rounded-full bg-gold-50 flex items-center justify-center">
+                <Lock className="h-4 w-4 text-primary" />
+              </div>
+              <h2 className="text-lg font-bold text-secondary">ចូល Admin</h2>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              {error && (
+                <div className="bg-red-50 text-red-600 text-sm p-3 rounded-xl text-center font-medium border border-red-100">
+                  {error}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label className="text-secondary text-sm font-medium flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5 text-primary" /> អ៊ីមែល Admin
+                </Label>
+                <Input
+                  type="email"
+                  placeholder="admin@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="border-gold-200 rounded-xl h-11 focus-visible:ring-primary"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-secondary text-sm font-medium flex items-center gap-1.5">
+                  <Lock className="h-3.5 w-3.5 text-primary" /> ពាក្យសម្ងាត់
+                </Label>
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="border-gold-200 rounded-xl h-11 focus-visible:ring-primary"
+                />
+              </div>
+
+              <Button type="submit" className="w-full bg-gold-gradient text-white hover:opacity-90 h-11 rounded-xl font-medium" disabled={loading}>
+                {loading ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                ) : (
+                  <ArrowRight className="h-4 w-4 mr-2" />
+                )}
+                {loading ? "កំពុងចូល..." : "ចូល Admin"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <div className="mt-6 space-y-3">
+          <Link href="/login">
+            <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10 rounded-xl h-10 text-sm">
+              ← ត្រឡប់ទៅ ចូលគណនីអតិថជន
+            </Button>
+          </Link>
+
+          <p className="text-center text-xs text-white/40">
+            <Link href="/" className="hover:text-white/60 inline-flex items-center gap-1">
+              <Heart className="h-3 w-3" /> E-Wedding
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
