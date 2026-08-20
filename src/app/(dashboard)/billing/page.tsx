@@ -28,9 +28,8 @@ export default function BillingPage() {
         if (data?.package) {
           setCurrentPlan(data.package.name);
         }
-        setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .finally(() => setLoading(false));
   }, [user]);
 
   const plans = [
