@@ -44,16 +44,23 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user && request.nextUrl.pathname.startsWith("/admin")) {
-    const { data } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const adminCheckUrl = supabaseUrl;
 
-    if (data?.role !== "admin") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/dashboard";
-      return NextResponse.redirect(url);
+    if (serviceRoleKey && adminCheckUrl) {
+      const { createClient } = await import("@supabase/supabase-js");
+      const adminClient = createClient(adminCheckUrl, serviceRoleKey);
+      const { data } = await adminClient
+        .from("users")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (data?.role !== "admin") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/dashboard";
+        return NextResponse.redirect(url);
+      }
     }
   }
 
