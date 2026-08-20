@@ -29,6 +29,7 @@ export default function BillingPage() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [qrPayload, setQrPayload] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
+  const [bankSettings, setBankSettings] = useState<Record<string, string>>({});
   const [countdown, setCountdown] = useState(300);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
@@ -95,11 +96,16 @@ export default function BillingPage() {
     try {
       const { data: settings } = await supabase
         .from("platform_settings")
-        .select("value")
-        .eq("key", "owner_khqr_image")
-        .single();
-      if (settings?.value) {
-        setQrDataUrl(settings.value);
+        .select("key, value")
+        .in("key", ["owner_khqr_image", "owner_bank_name", "owner_account_name", "owner_account_number"]);
+
+      if (settings) {
+        const map: Record<string, string> = {};
+        settings.forEach((s) => { map[s.key] = s.value; });
+        setBankSettings(map);
+        if (map.owner_khqr_image) {
+          setQrDataUrl(map.owner_khqr_image);
+        }
       }
     } catch {
       console.error("Failed to load QR");
@@ -327,9 +333,9 @@ export default function BillingPage() {
                     )}
                     <div className="mt-3 p-3 bg-gold-50 rounded-lg border border-gold-200 text-left space-y-1">
                       <p className="text-xs text-muted-foreground font-medium">ព័ត៌មានធនាគារ</p>
-                      <p className="text-sm font-bold text-secondary">ABA Bank</p>
-                      <p className="text-sm text-secondary">ឈ្មោះគណនី: <span className="font-bold">MENSOANDETH</span></p>
-                      <p className="text-sm text-secondary">លេខគណនី: <span className="font-bold">070866998</span></p>
+                      <p className="text-sm font-bold text-secondary">{bankSettings.owner_bank_name || "ABA Bank"}</p>
+                      <p className="text-sm text-secondary">ឈ្មោះគណនី: <span className="font-bold">{bankSettings.owner_account_name || "MENSOANDETH"}</span></p>
+                      <p className="text-sm text-secondary">លេខគណនី: <span className="font-bold">{bankSettings.owner_account_number || "070866998"}</span></p>
                       <p className="text-xs text-muted-foreground mt-1">ចំនួនដែលត្រូវបង់: <span className="font-bold text-primary">${selectedPrice}</span></p>
                     </div>
                   </div>

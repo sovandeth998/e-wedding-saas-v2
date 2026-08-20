@@ -8,18 +8,31 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Save, Check, Image, CreditCard } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Upload, Save, Check, Image, CreditCard, Globe, Mail } from "lucide-react";
 
 export default function AdminSettingsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const supabase = createClient();
+
   const [bankName, setBankName] = useState("ABA Bank");
   const [accountName, setAccountName] = useState("MENSOANDETH");
   const [accountNumber, setAccountNumber] = useState("070866998");
   const [qrImage, setQrImage] = useState("");
   const [qrPreview, setQrPreview] = useState("");
   const [qrFile, setQrFile] = useState<File | null>(null);
+
+  const [siteName, setSiteName] = useState("E-Wedding");
+  const [siteDescription, setSiteDescription] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [telegramLink, setTelegramLink] = useState("");
+
+  const [smtpHost, setSmtpHost] = useState("");
+  const [smtpPort, setSmtpPort] = useState("");
+  const [smtpUser, setSmtpUser] = useState("");
+
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -31,17 +44,49 @@ export default function AdminSettingsPage() {
     (async () => {
       const { data } = await supabase
         .from("platform_settings")
-        .select("key, value")
-        .in("key", ["owner_bank_name", "owner_account_name", "owner_account_number", "owner_khqr_image"]);
+        .select("key, value");
 
       if (data) {
         data.forEach((row) => {
-          if (row.key === "owner_bank_name" && row.value) setBankName(row.value);
-          if (row.key === "owner_account_name" && row.value) setAccountName(row.value);
-          if (row.key === "owner_account_number" && row.value) setAccountNumber(row.value);
-          if (row.key === "owner_khqr_image" && row.value) {
-            setQrImage(row.value);
-            setQrPreview(row.value);
+          const val = row.value ?? "";
+          switch (row.key) {
+            case "owner_bank_name":
+              setBankName(val);
+              break;
+            case "owner_account_name":
+              setAccountName(val);
+              break;
+            case "owner_account_number":
+              setAccountNumber(val);
+              break;
+            case "owner_khqr_image":
+              setQrImage(val);
+              setQrPreview(val);
+              break;
+            case "site_name":
+              setSiteName(val || "E-Wedding");
+              break;
+            case "site_description":
+              setSiteDescription(val);
+              break;
+            case "contact_email":
+              setContactEmail(val);
+              break;
+            case "contact_phone":
+              setContactPhone(val);
+              break;
+            case "telegram_link":
+              setTelegramLink(val);
+              break;
+            case "smtp_host":
+              setSmtpHost(val);
+              break;
+            case "smtp_port":
+              setSmtpPort(val);
+              break;
+            case "smtp_user":
+              setSmtpUser(val);
+              break;
           }
         });
       }
@@ -83,12 +128,23 @@ export default function AdminSettingsPage() {
       { key: "owner_account_name", value: accountName },
       { key: "owner_account_number", value: accountNumber },
       { key: "owner_khqr_image", value: qrUrl },
+      { key: "site_name", value: siteName },
+      { key: "site_description", value: siteDescription },
+      { key: "contact_email", value: contactEmail },
+      { key: "contact_phone", value: contactPhone },
+      { key: "telegram_link", value: telegramLink },
+      { key: "smtp_host", value: smtpHost },
+      { key: "smtp_port", value: smtpPort },
+      { key: "smtp_user", value: smtpUser },
     ];
 
     for (const setting of settings) {
       await supabase
         .from("platform_settings")
-        .upsert({ key: setting.key, value: setting.value, updated_at: new Date().toISOString() }, { onConflict: "key" });
+        .upsert(
+          { key: setting.key, value: setting.value, updated_at: new Date().toISOString() },
+          { onConflict: "key" }
+        );
     }
 
     setSaving(false);
@@ -177,6 +233,105 @@ export default function AdminSettingsPage() {
               <p className="text-xs text-muted-foreground mt-1">PNG, JPG រហូតដល់ 5MB</p>
             </button>
           )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-0 shadow-md">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-secondary">
+            <Globe className="h-5 w-5 text-primary" />
+            ការកំណត់ Site
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label className="text-secondary">ឈ្មោះ Site</Label>
+            <Input value={siteName} onChange={(e) => setSiteName(e.target.value)} className="border-gold-200" />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-secondary">ការពិពណ៌នា Site</Label>
+            <Textarea
+              value={siteDescription}
+              onChange={(e) => setSiteDescription(e.target.value)}
+              className="border-gold-200"
+              rows={3}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-secondary">អ៊ីមែលទំនាក់ទំនង</Label>
+            <Input
+              type="email"
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
+              className="border-gold-200"
+              placeholder="example@email.com"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-secondary">លេខទូរស័ព្ទទំនាក់ទំនង</Label>
+            <Input
+              type="tel"
+              value={contactPhone}
+              onChange={(e) => setContactPhone(e.target.value)}
+              className="border-gold-200"
+              placeholder="012 345 678"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-secondary">តំណភ្ជាប់ Telegram</Label>
+            <Input
+              value={telegramLink}
+              onChange={(e) => setTelegramLink(e.target.value)}
+              className="border-gold-200"
+              placeholder="https://t.me/..."
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-0 shadow-md">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-secondary">
+            <Mail className="h-5 w-5 text-primary" />
+            ការកំណត់ Email
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            កំណត់ SMTP សម្រាប់ផ្ញើអ៊ីមែលជូនដំណឹង
+          </p>
+          <div className="space-y-2">
+            <Label className="text-secondary">SMTP Host</Label>
+            <Input
+              value={smtpHost}
+              onChange={(e) => setSmtpHost(e.target.value)}
+              className="border-gold-200"
+              placeholder="smtp.example.com"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-secondary">SMTP Port</Label>
+            <Input
+              value={smtpPort}
+              onChange={(e) => setSmtpPort(e.target.value)}
+              className="border-gold-200"
+              placeholder="587"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-secondary">SMTP User</Label>
+            <Input
+              value={smtpUser}
+              onChange={(e) => setSmtpUser(e.target.value)}
+              className="border-gold-200"
+              placeholder="user@example.com"
+            />
+          </div>
+          <div className="rounded-lg bg-gold-50 border border-gold-200 p-3">
+            <p className="text-sm text-secondary">
+              ព័ត៌មានសម្ងាត់ SMTP ត្រូវបានកំណត់តាមរយៈ Environment Variables នៅលើស៊ីវិរប្រព័ន្ធ។
+            </p>
+          </div>
         </CardContent>
       </Card>
 
