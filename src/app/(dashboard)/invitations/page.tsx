@@ -21,15 +21,16 @@ export default function InvitationsPage() {
   useEffect(() => {
     if (!user) return;
 
-    supabase
-      .from("invitations")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        setInvitations(data || []);
-        setLoading(false);
-      });
+    (async () => {
+      const { data } = await supabase
+        .from("invitations")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      setInvitations(data || []);
+      setLoading(false);
+    })();
   }, [user]);
 
   const createNewInvitation = async () => {

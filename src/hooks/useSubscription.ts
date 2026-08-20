@@ -15,18 +15,19 @@ export function useSubscription(userId: string | undefined) {
       return;
     }
 
-    supabase
-      .from("subscriptions")
-      .select("*, package:packages(*)")
-      .eq("user_id", userId)
-      .eq("status", "active")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single()
-      .then(({ data }) => {
-        setSubscription(data as Subscription | null);
-        setLoading(false);
-      });
+    (async () => {
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("*, package:packages(*)")
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      setSubscription(data as Subscription | null);
+      setLoading(false);
+    })();
   }, [userId]);
 
   return { subscription, loading };

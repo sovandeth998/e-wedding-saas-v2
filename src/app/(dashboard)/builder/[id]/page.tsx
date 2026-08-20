@@ -50,14 +50,15 @@ export default function BuilderPage() {
   useEffect(() => {
     if (!params.id) return;
 
-    supabase
-      .from("invitations")
-      .select("*")
-      .eq("id", params.id)
-      .single()
-      .then(({ data }) => {
-        if (data) setInvitation(data);
-      });
+    (async () => {
+      const { data } = await supabase
+        .from("invitations")
+        .select("*")
+        .eq("id", params.id)
+        .single();
+
+      if (data) setInvitation(data);
+    })();
   }, [params.id]);
 
   const updateField = (field: string, value: string) => {
