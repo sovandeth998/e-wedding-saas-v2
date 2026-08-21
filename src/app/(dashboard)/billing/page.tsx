@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, CreditCard, Clock, Upload, QrCode, ArrowRight, Timer } from "lucide-react";
 import { PACKAGES } from "@/lib/constants";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -130,6 +131,9 @@ export default function BillingPage() {
             .from("uploads")
             .getPublicUrl(uploadData.path);
           receiptUrl = urlData.publicUrl;
+          toast.success("បានផ្ទុករូបភាព!");
+        } else {
+          toast.error("បរាជ័យក្នុងការផ្ទុក!");
         }
       }
 

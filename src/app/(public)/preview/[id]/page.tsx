@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Heart, Calendar, Clock, MapPin, Eye } from "lucide-react";
 import { RsvpForm } from "./rsvp-form";
+import Countdown from "./countdown";
 
 const templateStyles: Record<string, { header: string; label: string }> = {
   modern: {
@@ -76,6 +77,9 @@ export default async function PreviewPage({
               <Calendar className="h-4 w-4 text-primary" />
               {formattedDate}
             </p>
+            <div className="mt-4">
+              <Countdown weddingDate={invitation.wedding_date} />
+            </div>
             {invitation.ceremony_time && (
               <p className="text-sm text-muted-foreground flex items-center justify-center gap-1.5 mt-1">
                 <Clock className="h-3.5 w-3.5" />

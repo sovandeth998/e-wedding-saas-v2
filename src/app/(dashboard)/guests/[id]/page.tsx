@@ -157,29 +157,33 @@ export default function GuestManagerPage() {
     setTimeout(() => setAllCopied(false), 2000);
   };
 
-  const exportToCSV = () => {
-    const headers = ["ឈ្មោះ", "ភាគី", "ស្ថានភាព", "Link ផ្ទាល់"];
-    const rows = guests.map((g) => {
-      const status = !g.rsvp
+  const exportCSV = () => {
+    const headers = ["ឈ្មោះ", "ភាគី", "ស្ថានភាព", "ភ្ញៀវ", "សារ"];
+    const rows = guests.map((g) => [
+      g.name,
+      g.side === "groom" ? "កំលោះ" : g.side === "bride" ? "ក្រមុំ" : "ទាំងពីរ",
+      !g.rsvp
         ? "រង់ចាំ"
         : g.rsvp.status === "attending"
           ? "ចូលរួម"
           : g.rsvp.status === "not_attending"
             ? "មិនចូលរួម"
-            : "ពិចារណា";
-      return [
-        g.name,
-        g.side === "groom" ? "កំលោះ" : g.side === "bride" ? "ក្រមុំ" : "ទាំងពីរ",
-        status,
-        `${window.location.origin}/invite/${g.custom_link}`,
-      ];
-    });
-    const csvContent = "\uFEFF" + [headers, ...rows].map((r) => r.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            : "ពិចារណា",
+      g.rsvp?.number_of_guests || 1,
+      g.rsvp?.message || "",
+    ]);
+
+    const BOM = "\uFEFF";
+    const csv =
+      BOM +
+      [headers.join(","), ...rows.map((r) => r.map((c) => `"${c}"`).join(","))].join(
+        "\n"
+      );
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `guests-${invitationSlug || "export"}.csv`;
+    a.download = `guests-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -252,10 +256,11 @@ export default function GuestManagerPage() {
         <div className="flex gap-2 flex-wrap">
           <Button
             variant="outline"
-            onClick={exportToCSV}
+            size="sm"
+            onClick={exportCSV}
             className="gap-2 border-gold-200 text-secondary hover:bg-gold-50"
           >
-            <Download className="h-4 w-4" /> Export CSV
+            <Download className="h-4 w-4" /> ទាញយក CSV
           </Button>
           <Button
             variant="outline"

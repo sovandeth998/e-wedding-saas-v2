@@ -5,32 +5,37 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useLimits } from "@/hooks/useLimits";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, ExternalLink, Copy, Users } from "lucide-react";
+import { Plus, Edit, Trash2, ExternalLink, Users, Eye, Share2, Globe } from "lucide-react";
+import { toast } from "sonner";
 import type { Invitation } from "@/types/database";
 
 export default function InvitationsPage() {
   const { user } = useAuth();
+  const limits = useLimits();
   const router = useRouter();
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
-  useEffect(() => {
+  const fetchData = async () => {
     if (!user) return;
 
-    (async () => {
-      const { data } = await supabase
-        .from("invitations")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+    const { data } = await supabase
+      .from("invitations")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
 
-      setInvitations(data || []);
-      setLoading(false);
-    })();
+    setInvitations(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchData();
   }, [user]);
 
   const createNewInvitation = async () => {
@@ -61,9 +66,15 @@ export default function InvitationsPage() {
     setInvitations(invitations.filter((i) => i.id !== id));
   };
 
-  const copyLink = (slug: string) => {
-    navigator.clipboard.writeText(`${window.location.origin}/invite/${slug}`);
-    alert("បានចម្លង Link!");
+  const handlePublish = async (id: string) => {
+    await supabase.from("invitations").update({ status: "published" }).eq("id", id);
+    toast.success("បានផ្សាយលិខិតអញ្ជើញ!");
+    fetchData();
+  };
+
+  const shareLink = (invitation: Invitation) => {
+    navigator.clipboard.writeText(`${window.location.origin}/invite/${invitation.slug || invitation.id}`);
+    toast.success("បានចម្លង Link!");
   };
 
   return (
@@ -77,6 +88,19 @@ export default function InvitationsPage() {
           <Plus className="h-4 w-4" /> បង្កើតថ្មី
         </Button>
       </div>
+
+      {!limits.loading && limits.currentInvitations >= limits.maxInvitations && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center">
+          <p className="text-yellow-700 font-medium">
+            អ្នកបានឈានដល់កំណត់របស់គម្រោង {limits.planName}
+          </p>
+          <Link href="/billing">
+            <Button className="mt-2 bg-gold-gradient text-white" size="sm">
+              អាប់គ្រោង
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">កំពុងផ្ទុក...</div>
@@ -115,11 +139,16 @@ export default function InvitationsPage() {
                       <Edit className="h-3 w-3" /> កែប្រែ
                     </Button>
                   </Link>
-                  {invitation.status === "published" && (
+                  {invitation.status === "published" ? (
                     <>
-                      <Button variant="outline" size="sm" className="gap-1 border-gold-200 text-primary hover:bg-gold-50" onClick={() => copyLink(invitation.slug)}>
-                        <Copy className="h-3 w-3" /> ចម្លង Link
+                      <Button variant="ghost" size="sm" className="gap-1 text-green-600 hover:bg-green-50" onClick={() => shareLink(invitation)}>
+                        <Share2 className="h-4 w-4" /> ចែករំលែក
                       </Button>
+                      <Link href={`/preview/${invitation.id}`}>
+                        <Button variant="ghost" size="sm" className="gap-1 text-primary">
+                          <Eye className="h-4 w-4" /> មើលជាសាធារណៈ
+                        </Button>
+                      </Link>
                       <Link href={`/invite/${invitation.slug}`} target="_blank">
                         <Button variant="outline" size="sm" className="gap-1 border-gold-200 text-primary hover:bg-gold-50">
                           <ExternalLink className="h-3 w-3" /> មើល
@@ -135,6 +164,12 @@ export default function InvitationsPage() {
                           RSVP
                         </Button>
                       </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="ghost" size="sm" className="gap-1 text-primary" onClick={() => handlePublish(invitation.id)}>
+                        <Globe className="h-4 w-4" /> ផ្សាយ
+                      </Button>
                     </>
                   )}
                   <Button variant="outline" size="sm" className="gap-1 text-red-500 border-red-200 hover:bg-red-50" onClick={() => deleteInvitation(invitation.id)}>

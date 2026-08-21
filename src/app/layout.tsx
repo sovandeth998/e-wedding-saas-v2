@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Kantumruy_Pro } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const kantumruy = Kantumruy_Pro({
@@ -20,7 +21,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="km">
-      <body className={kantumruy.className}>{children}</body>
+      <body className={kantumruy.className}>
+        {children}
+        <Toaster position="top-center" richColors />
+      </body>
     </html>
   );
 }

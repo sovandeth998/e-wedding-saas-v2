@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle, Clock, CreditCard, TrendingUp, DollarSign } from "lucide-react";
+import { toast } from "sonner";
 
 type OrderRow = {
   id: string;
@@ -99,6 +100,7 @@ export default function AdminOrdersPage() {
       payment_id: order.id,
     });
 
+    toast.success("បានយល់ស្រាល!");
     fetchOrders();
   };
 
@@ -107,6 +109,7 @@ export default function AdminOrdersPage() {
       .from("orders")
       .update({ status: "failed" })
       .eq("id", orderId);
+    toast.success("បានបដិសេធ!");
     fetchOrders();
   };
 

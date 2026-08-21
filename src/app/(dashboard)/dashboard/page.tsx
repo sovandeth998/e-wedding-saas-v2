@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Users, CheckCircle, Crown, Plus, CreditCard } from "lucide-react";
+import { StatsSkeleton } from "@/components/skeleton-loader";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -15,6 +16,7 @@ export default function DashboardPage() {
   const [guestCount, setGuestCount] = useState(0);
   const [rsvpCount, setRsvpCount] = useState(0);
   const [packageName, setPackageName] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
@@ -44,6 +46,7 @@ export default function DashboardPage() {
         .eq("status", "active")
         .single();
       setPackageName(sub?.package?.name_kh || null);
+      setLoading(false);
     })();
   }, [user]);
 
@@ -61,23 +64,27 @@ export default function DashboardPage() {
         <p className="text-muted-foreground">នេះជាទិដ្ឋភាពទូទៅនៃការងាររបស់អ្នក</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat, index) => (
-          <Card key={index} className="border-0 shadow-md hover:shadow-lg transition-all">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="h-11 w-11 rounded-xl bg-gold-gradient flex items-center justify-center">
-                  <stat.icon className="h-5 w-5 text-white" />
+      {loading ? (
+        <StatsSkeleton />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {statCards.map((stat, index) => (
+            <Card key={index} className="border-0 shadow-md hover:shadow-lg transition-all">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-3">
+                  <div className="h-11 w-11 rounded-xl bg-gold-gradient flex items-center justify-center">
+                    <stat.icon className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-secondary">{stat.value}</p>
+                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-secondary">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground">{stat.label}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Card className="border-0 shadow-md">
         <CardHeader>

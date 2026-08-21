@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User, Lock, Trash2, Save, Check, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
   const { user, loading } = useAuth();
@@ -60,8 +61,10 @@ export default function ProfilePage() {
 
       if (error) throw error;
       setProfileMessage({ type: "success", text: "បច្ចុប្បន្នភាពព័ត៌មានផ្ទាល់ខ្លួនជោគជ័យ!" });
+      toast.success("បានរក្សាទុកព័ត៌មាន!");
     } catch {
       setProfileMessage({ type: "error", text: "មានបញ្ហាក្នុងការធ្វើបច្ចុប្បន្នភាព។ សូមព្យាយាមម្តងទៀត។" });
+      toast.error("មានកំហុស!");
     } finally {
       setSavingProfile(false);
     }
@@ -89,8 +92,10 @@ export default function ProfilePage() {
       setNewPassword("");
       setConfirmPassword("");
       setPasswordMessage({ type: "success", text: "ផ្លាស់ប្តូរពាក្យសម្ងាត់ជោគជ័យ!" });
-    } catch {
+      toast.success("បានផ្លាស់ប្តូរពាក្យសម្ងាត់!");
+    } catch (error) {
       setPasswordMessage({ type: "error", text: "មានបញ្ហាក្នុងការផ្លាស់ប្តូរពាក្យសម្ងាត់។ សូមព្យាយាមម្តងទៀត។" });
+      toast.error((error as Error).message);
     } finally {
       setSavingPassword(false);
     }
@@ -103,6 +108,7 @@ export default function ProfilePage() {
     try {
       await supabase.from("users").delete().eq("id", user.id);
       await supabase.auth.signOut();
+      toast.success("បានលុបគណនី!");
       router.push("/");
     } catch {
       setDeleting(false);

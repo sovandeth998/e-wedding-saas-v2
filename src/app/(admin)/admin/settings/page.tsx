@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Upload, Save, Check, Image, CreditCard, Globe, Mail, Palette, MessageCircle, DollarSign, Trash2, Plus } from "lucide-react";
+import { toast } from "sonner";
 
 interface Package {
   id: string;
@@ -187,6 +188,7 @@ export default function AdminSettingsPage() {
 
     setSaving(false);
     setSaved(true);
+    toast.success("បានរក្សាទុកការកំណត់!");
     setTimeout(() => setSaved(false), 3000);
   };
 

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Search, Shield, ShieldOff, Users, UserCheck, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 
 interface UserRow {
   id: string;
@@ -49,6 +50,11 @@ export default function AdminUsersPage() {
     setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, role: newRole } : u)));
     setConfirmUser(null);
     setUpdating(null);
+    if (newRole === "admin") {
+      toast.success("បានបន្ថែម Admin!");
+    } else {
+      toast.success("បានដក Admin!");
+    }
   };
 
   const filteredUsers = users.filter(
