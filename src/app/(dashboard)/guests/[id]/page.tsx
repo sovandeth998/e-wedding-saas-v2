@@ -159,23 +159,24 @@ export default function GuestManagerPage() {
     setBulkDialogOpen(false);
   };
 
-  const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const XLSX = await import("xlsx");
     const buffer = await file.arrayBuffer();
-    const text = new TextDecoder("utf-8").decode(buffer).replace(/^\uFEFF/, "").replace(/^\xEF\xBB\xBF/, "");
-    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+    const workbook = XLSX.read(buffer, { type: "array" });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows: string[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-    const headers = ["ឈ្មោះ", "name", "ឈ្មោះភ្ញៀវ", "Name", "ឈ្មោះភ្ញៀវ"];
-    const firstLine = lines[0]?.replace(/"/g, "").trim();
-    const isHeader = headers.some((h) => firstLine?.toLowerCase().includes(h.toLowerCase()));
-    const dataLines = isHeader ? lines.slice(1) : lines;
+    const headerKeywords = ["ឈ្មោះ", "name", "ឈ្មោះភ្ញៀវ", "Name", "Guest", "ភ្ញៀវ"];
+    const firstRow = (rows[0] || []).map((c: any) => String(c || "").trim().toLowerCase());
+    const isHeader = firstRow.some((cell) => headerKeywords.some((k) => cell.includes(k.toLowerCase())));
+    const dataRows = isHeader ? rows.slice(1) : rows;
 
-    const names = dataLines.map((line) => {
-      const parts = line.split(",").map((p) => p.replace(/"/g, "").trim());
-      return parts[0] || "";
-    }).filter((n) => n.length > 0);
+    const names = dataRows
+      .map((row) => String(row[0] || "").trim())
+      .filter((n) => n.length > 0);
 
     const uniqueNames = Array.from(new Set(names));
 
@@ -187,7 +188,7 @@ export default function GuestManagerPage() {
       const slugified = name
         .toLowerCase()
         .replace(/\s+/g, "-")
-        .replace(/[^\w\u1780-\u17FF\u17E0-\u17E9\u200B-\u200D\u2028\u2029-]/g, "")
+        .replace(/[^\w\u1780-\u17FF\u17E0-\u17E9-]/g, "")
         .slice(0, 40);
       const guestSlug = `${invitationSlug || "wedding"}/guest/${slugified}-${timestamp}${Math.random().toString(36).slice(2, 6)}`;
 
@@ -197,11 +198,8 @@ export default function GuestManagerPage() {
         custom_link: guestSlug,
       });
 
-      if (error) {
-        failCount++;
-      } else {
-        successCount++;
-      }
+      if (error) failCount++;
+      else successCount++;
     }
 
     if (successCount > 0) {
@@ -347,8 +345,8 @@ export default function GuestManagerPage() {
             className="gap-2 border-gold-200 text-secondary hover:bg-gold-50"
             asChild
           >
-            <a href="/sample-guests.csv" download className="cursor-pointer">
-              <Download className="h-4 w-4" /> ទាញយកគំរូ CSV
+            <a href="/sample-guests.xlsx" download className="cursor-pointer">
+              <Download className="h-4 w-4" /> ទាញយកគំរូ Excel
             </a>
           </Button>
           <Button
@@ -358,11 +356,11 @@ export default function GuestManagerPage() {
             asChild
           >
             <label className="cursor-pointer">
-              <Upload className="h-4 w-4" /> បញ្ចូល CSV
+              <Upload className="h-4 w-4" /> បញ្ចូល Excel
               <input
                 type="file"
-                accept=".csv,.txt,.tsv"
-                onChange={handleCsvUpload}
+                accept=".xlsx,.xls,.csv"
+                onChange={handleFileUpload}
                 className="hidden"
               />
             </label>
