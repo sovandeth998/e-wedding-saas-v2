@@ -190,13 +190,12 @@ function InvitationContent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: "guest_link",
+          type: "rsvp",
           data: {
-            guestName: guestName || "ភ្ញៀវ",
-            coupleName: `${invitation.groom_name_kh || invitation.groom_name} & ${invitation.bride_name_kh || invitation.bride_name}`,
-            weddingDate: new Date(invitation.wedding_date).toLocaleDateString("km-KH"),
-            venueName: invitation.venue_name || "",
-            inviteLink: typeof window !== "undefined" ? window.location.href : "",
+            guestName: displayName || guestName || "ភ្ញៀវ",
+            status: rsvpStatus,
+            numberOfGuests: rsvpGuests.toString(),
+            message: rsvpMessage,
           },
         }),
       });
@@ -214,11 +213,10 @@ function InvitationContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "wish",
-          invitation_id: invitation.id,
-          groom_name: invitation.groom_name_kh || invitation.groom_name,
-          bride_name: invitation.bride_name_kh || invitation.bride_name,
-          guest_name: wishName || "អនាមិក",
-          message: wishContent,
+          data: {
+            senderName: wishName || "អនាមិក",
+            content: wishContent,
+          },
         }),
       });
     } catch {}
