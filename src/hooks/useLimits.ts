@@ -40,12 +40,12 @@ export function useLimits(): Limits {
     (async () => {
       const { data: sub } = await supabase
         .from("subscriptions")
-        .select("*, package:packages(slug, name_kh)")
+        .select("*, package:packages(name, name_kh)")
         .eq("user_id", user.id)
         .eq("status", "active")
         .single();
 
-      const planSlug = sub?.package?.slug || "free";
+      const planSlug = sub?.package?.name || "free";
       const planLimits = PLAN_LIMITS[planSlug] || PLAN_LIMITS.free;
 
       const { count: inviteCount } = await supabase
