@@ -163,13 +163,14 @@ export default function GuestManagerPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const text = await file.text();
+    const buffer = await file.arrayBuffer();
+    const text = new TextDecoder("utf-8").decode(buffer).replace(/^\uFEFF/, "").replace(/^\xEF\xBB\xBF/, "");
     const lines = text.split(/\r?\n/).filter((l) => l.trim());
 
-    const headers = ["ឈ្មោះ", "name", "ឈ្មោះភ្ញៀវ"];
-    const firstLine = lines[0]?.replace(/"/g, "").trim().toLowerCase();
-    const startIdx = headers.includes(firstLine!) ? 1 : 0;
-    const dataLines = lines.slice(startIdx);
+    const headers = ["ឈ្មោះ", "name", "ឈ្មោះភ្ញៀវ", "Name", "ឈ្មោះភ្ញៀវ"];
+    const firstLine = lines[0]?.replace(/"/g, "").trim();
+    const isHeader = headers.some((h) => firstLine?.toLowerCase().includes(h.toLowerCase()));
+    const dataLines = isHeader ? lines.slice(1) : lines;
 
     const names = dataLines.map((line) => {
       const parts = line.split(",").map((p) => p.replace(/"/g, "").trim());
@@ -183,7 +184,12 @@ export default function GuestManagerPage() {
 
     for (const name of uniqueNames) {
       const timestamp = Date.now().toString(36);
-      const guestSlug = `${invitationSlug || "wedding"}/guest/${name.toLowerCase().replace(/\s+/g, "-")}-${timestamp}${Math.random().toString(36).slice(2, 6)}`;
+      const slugified = name
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^\w\u1780-\u17FF\u17E0-\u17E9\u200B-\u200D\u2028\u2029-]/g, "")
+        .slice(0, 40);
+      const guestSlug = `${invitationSlug || "wedding"}/guest/${slugified}-${timestamp}${Math.random().toString(36).slice(2, 6)}`;
 
       const { error } = await supabase.from("guests").insert({
         invitation_id: params.id,
