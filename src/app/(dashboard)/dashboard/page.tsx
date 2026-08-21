@@ -12,11 +12,10 @@ import { StatsSkeleton } from "@/components/skeleton-loader";
 interface RsvpRow {
   id: string;
   status: string;
-  guest_count: number;
+  number_of_guests: number;
   message: string | null;
   created_at: string;
   guest: { name: string } | { name: string }[] | null;
-  invitation: { title: string } | { title: string }[] | null;
 }
 
 export default function DashboardPage() {
@@ -37,7 +36,7 @@ export default function DashboardPage() {
     if (!user) return;
 
     (async () => {
-      const { data: invitations } = await supabase.from("invitations").select("id, title").eq("user_id", user.id);
+      const { data: invitations } = await supabase.from("invitations").select("id, groom_name_kh, groom_name, bride_name_kh, bride_name").eq("user_id", user.id);
       const invitationIds = invitations?.map((i) => i.id) || [];
       setInvitationCount(invitationIds.length);
       if (invitationIds.length > 0) setFirstInvitationId(invitationIds[0]);
@@ -75,7 +74,7 @@ export default function DashboardPage() {
 
         const { data: rsvpsData } = await supabase
           .from("rsvps")
-          .select("id, status, guest_count, message, created_at, guest:guests(name), invitation:invitations(title)")
+          .select("id, status, number_of_guests, message, created_at, guest:guests(name)")
           .in("invitation_id", invitationIds)
           .order("created_at", { ascending: false })
           .limit(5);
@@ -206,12 +205,12 @@ export default function DashboardPage() {
                       </div>
                       <div>
                         <p className="font-medium text-secondary text-sm">{Array.isArray(rsvp.guest) ? rsvp.guest[0]?.name : rsvp.guest?.name || "ភ្ញៀវ"}</p>
-                        <p className="text-xs text-muted-foreground">{Array.isArray(rsvp.invitation) ? rsvp.invitation[0]?.title : rsvp.invitation?.title || "លិខិតអញ្ជើញ"}</p>
+                        <p className="text-xs text-muted-foreground">លិខិតអញ្ជើញ</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      {rsvp.guest_count > 1 && (
-                        <span className="text-xs text-muted-foreground">+{rsvp.guest_count - 1} នាក់</span>
+                      {rsvp.number_of_guests > 1 && (
+                        <span className="text-xs text-muted-foreground">+{rsvp.number_of_guests - 1} នាក់</span>
                       )}
                       <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${rsvpStatus[rsvp.status]?.bg} ${rsvpStatus[rsvp.status]?.color}`}>
                         {rsvpStatus[rsvp.status]?.label || rsvp.status}
