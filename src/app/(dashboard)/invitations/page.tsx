@@ -9,8 +9,11 @@ import { useLimits } from "@/hooks/useLimits";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, ExternalLink, Users, Eye, Share2, Globe } from "lucide-react";
+import { Plus, Edit, Trash2, ExternalLink, Users, Eye, Share2, Globe, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import type { Invitation } from "@/types/database";
 
 export default function InvitationsPage() {
@@ -19,6 +22,11 @@ export default function InvitationsPage() {
   const router = useRouter();
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [inviteName, setInviteName] = useState("");
+  const [invitePhone, setInvitePhone] = useState("");
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [selectedInvitationId, setSelectedInvitationId] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const supabase = createClient();
 
   const fetchData = async () => {
@@ -75,6 +83,32 @@ export default function InvitationsPage() {
   const shareLink = (invitation: Invitation) => {
     navigator.clipboard.writeText(`${window.location.origin}/invite/${invitation.slug || invitation.id}`);
     toast.success("បានចម្លង Link!");
+  };
+
+  const handleInviteGuest = async () => {
+    if (!inviteName.trim() || !selectedInvitationId) return;
+    setInviteLoading(true);
+
+    const { data: guest, error: guestError } = await supabase
+      .from("guests")
+      .insert({
+        invitation_id: selectedInvitationId,
+        name: inviteName.trim(),
+        phone: invitePhone.trim() || null,
+        side: "other",
+      })
+      .select()
+      .single();
+
+    if (guest) {
+      toast.success(`បានអញ្ជើញ ${inviteName} ដោយជោគជ័យ!`);
+      setInviteName("");
+      setInvitePhone("");
+      setDialogOpen(false);
+    } else {
+      toast.error("បរាជ័យក្នុងការអញ្ជើញ");
+    }
+    setInviteLoading(false);
   };
 
   return (
@@ -141,6 +175,45 @@ export default function InvitationsPage() {
                   </Link>
                   {invitation.status === "published" ? (
                     <>
+                      <Dialog open={dialogOpen && selectedInvitationId === invitation.id} onOpenChange={(open) => { setDialogOpen(open); setSelectedInvitationId(invitation.id); if (!open) { setInviteName(""); setInvitePhone(""); } }}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="gap-1 border-gold-200 text-primary hover:bg-gold-50" onClick={() => { setSelectedInvitationId(invitation.id); setDialogOpen(true); }}>
+                            <UserPlus className="h-4 w-4" /> អញ្ជើញភ្ញៀវ
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle className="text-secondary">អញ្ជើញភ្ញៀវថ្មី</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4 pt-4">
+                            <div>
+                              <Label className="text-secondary">ឈ្មោះភ្ញៀវ *</Label>
+                              <Input
+                                placeholder="បញ្ចូលឈ្មោះភ្ញៀវ"
+                                value={inviteName}
+                                onChange={(e) => setInviteName(e.target.value)}
+                                className="border-gold-200 focus:border-primary"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-secondary">លេខទូរស័ព្ទ (ស្រេចចិត្ត)</Label>
+                              <Input
+                                placeholder="012 345 678"
+                                value={invitePhone}
+                                onChange={(e) => setInvitePhone(e.target.value)}
+                                className="border-gold-200 focus:border-primary"
+                              />
+                            </div>
+                            <Button
+                              onClick={handleInviteGuest}
+                              disabled={!inviteName.trim() || inviteLoading}
+                              className="w-full bg-gold-gradient text-white hover:opacity-90"
+                            >
+                              {inviteLoading ? "កំពុងអញ្ជើញ..." : "អញ្ជើញភ្ញៀវ"}
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                       <Button variant="ghost" size="sm" className="gap-1 text-green-600 hover:bg-green-50" onClick={() => shareLink(invitation)}>
                         <Share2 className="h-4 w-4" /> ចែករំលែក
                       </Button>
