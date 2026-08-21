@@ -11,10 +11,18 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Eye, Crown, Star, Check } from "lucide-react";
+import { Eye, Crown, Check, Heart } from "lucide-react";
 import Link from "next/link";
 
-interface Template {
+interface TemplateColors {
+  bg: string;
+  textPri: string;
+  accent: string;
+  btnFrom: string;
+  btnTo: string;
+}
+
+interface Template extends TemplateColors {
   id: string;
   name: string;
   category: string;
@@ -31,6 +39,11 @@ const templates: Template[] = [
     isPremium: false,
     description: "ធៀបគំរូរ៉ូមែនទិចជាមួយពណ៌មាសផ្កាឈូក",
     features: ["រចនាបែបទំនើប", "ពណ៌ផ្កាឈូករ៉ូមែនទិច", "ងាយស្រួលកែសម្រួល", "ឆ្លើយតបជាមួយទូរស័ព្ទ"],
+    bg: "linear-gradient(180deg, #fdf8f0, #f5edd8, #efe4c8)",
+    textPri: "#6b4c1e",
+    accent: "#b8860b",
+    btnFrom: "#d4a843",
+    btnTo: "#b8860b",
   },
   {
     id: "2",
@@ -39,6 +52,11 @@ const templates: Template[] = [
     isPremium: true,
     description: "ប្រធានបទមាសប្រណិតសម្រាប់រោងពិធីប្រណិត",
     features: ["រចនាបែបប្រណិត", "ពណ៌មាសទាំងស្រុង", "រូបភាពប្រណិត", "ការរចនាពិសេស"],
+    bg: "linear-gradient(135deg, #1a1a0e, #2d2a1e, #3d3520)",
+    textPri: "#fef3c7",
+    accent: "#f59e0b",
+    btnFrom: "#d97706",
+    btnTo: "#92400e",
   },
   {
     id: "3",
@@ -47,6 +65,11 @@ const templates: Template[] = [
     isPremium: false,
     description: "រចនាបែបប្រពៃណីខ្មែរសម្រាប់រោងពិធីបុរាណ",
     features: ["រចនាបែបប្រពៃណីខ្មែរ", "លំនាំបុរាណ", "ពណ៌ប្រពៃណី", "អក្សរខ្មែរបុរាណ"],
+    bg: "linear-gradient(135deg, #2e1a1a, #3e1616, #601010)",
+    textPri: "#fecaca",
+    accent: "#ef4444",
+    btnFrom: "#dc2626",
+    btnTo: "#991b1b",
   },
   {
     id: "4",
@@ -55,6 +78,11 @@ const templates: Template[] = [
     isPremium: false,
     description: "រចនាបែបសម័យទំនើប ស្អាត និងសាមញ្ញ",
     features: ["រចនាបែបសម័យ", "សាមញ្ញនិងស្អាត", "ងាយស្រួលអាន", "ឆ្លើយតបជាមួយទូរស័ព្ទ"],
+    bg: "linear-gradient(135deg, #0e1a2e, #16213e, #1e3a5e)",
+    textPri: "#bfdbfe",
+    accent: "#3b82f6",
+    btnFrom: "#2563eb",
+    btnTo: "#1d4ed8",
   },
   {
     id: "5",
@@ -63,6 +91,11 @@ const templates: Template[] = [
     isPremium: true,
     description: "រចនាបែបរាជវាំងប្រណិត",
     features: ["រចនាបែបរាជវាំង", "ពណ៌មាសនិងស", "រូបភាពប្រណិត", "ការរចនាពិសេស"],
+    bg: "linear-gradient(135deg, #1a0e2e, #2e1640, #401060)",
+    textPri: "#ddd6fe",
+    accent: "#a855f7",
+    btnFrom: "#9333ea",
+    btnTo: "#7e22ce",
   },
   {
     id: "6",
@@ -71,6 +104,11 @@ const templates: Template[] = [
     isPremium: false,
     description: "ប្រធានបទសួនច្បារធម្មជាតិ",
     features: ["រចនាបែបធម្មជាតិ", "ពណ៌បៃតងស្រស់ស្អាត", "ផ្កានិងសួនច្បារ", "ឆ្លើយតបជាមួយទូរស័ព្ទ"],
+    bg: "linear-gradient(135deg, #0e2e1a, #163e21, #106030)",
+    textPri: "#bbf7d0",
+    accent: "#22c55e",
+    btnFrom: "#16a34a",
+    btnTo: "#15803d",
   },
   {
     id: "7",
@@ -79,6 +117,11 @@ const templates: Template[] = [
     isPremium: false,
     description: "រចនាបែបប្រពៃណីជាមួយផ្កាឈូកពណ៌ស",
     features: ["រចនាបែបប្រពៃណី", "ផ្កាឈូកពណ៌ស", "លំនាំបុរាណ", "ពណ៌ស្រទាប់"],
+    bg: "linear-gradient(135deg, #1a1a1e, #2e2e32, #404045)",
+    textPri: "#e2e8f0",
+    accent: "#94a3b8",
+    btnFrom: "#64748b",
+    btnTo: "#475569",
   },
   {
     id: "8",
@@ -87,6 +130,11 @@ const templates: Template[] = [
     isPremium: true,
     description: "ប្រធានបទភ្លើងបំភ្លឺប្រណិត",
     features: ["រចនាបែបប្រណិត", "ភ្លើងបំភ្លឺពិសេស", "ពណ៌មាសភ្លឺ", "ប្រសិទ្ធភាពពិសេស"],
+    bg: "linear-gradient(135deg, #2e1a0e, #402e16, #604010)",
+    textPri: "#fde68a",
+    accent: "#fbbf24",
+    btnFrom: "#f59e0b",
+    btnTo: "#d97706",
   },
   {
     id: "9",
@@ -95,6 +143,11 @@ const templates: Template[] = [
     isPremium: false,
     description: "រចនាបែបធម្មជាតិជាមួយទឹកជ្រោះ",
     features: ["រចនាបែបធម្មជាតិ", "ទឹកជ្រោះស្រស់ស្អាត", "ពណ៌ខៀវនិងបៃតង", "ឆ្លើយតបជាមួយទូរស័ព្ទ"],
+    bg: "linear-gradient(135deg, #0e2e2e, #163e3e, #106060)",
+    textPri: "#a5f3fc",
+    accent: "#06b6d4",
+    btnFrom: "#0891b2",
+    btnTo: "#0e7490",
   },
   {
     id: "10",
@@ -103,6 +156,11 @@ const templates: Template[] = [
     isPremium: true,
     description: "រចនាបែបប្រណិតពណ៌ផ្កាឈូក",
     features: ["រចនាបែបប្រណិត", "ពណ៌ផ្កាឈូកទាំងស្រុង", "រូបភាពប្រណិត", "ការរចនាពិសេស"],
+    bg: "linear-gradient(135deg, #2e0e2e, #401640, #601060)",
+    textPri: "#f5d0fe",
+    accent: "#d946ef",
+    btnFrom: "#c026d3",
+    btnTo: "#a21caf",
   },
   {
     id: "11",
@@ -111,6 +169,11 @@ const templates: Template[] = [
     isPremium: false,
     description: "រចនាបែបបុរាណខ្មែរ",
     features: ["រចនាបែបបុរាណខ្មែរ", "លំនាំបុរាណ", "អក្សរបុរាណ", "ពណ៌ប្រពៃណី"],
+    bg: "linear-gradient(135deg, #2e1a0e, #3e2e16, #504010)",
+    textPri: "#fde68a",
+    accent: "#d97706",
+    btnFrom: "#b45309",
+    btnTo: "#92400e",
   },
   {
     id: "12",
@@ -119,6 +182,11 @@ const templates: Template[] = [
     isPremium: false,
     description: "រចនាបែបទំនើបសាមញ្ញ",
     features: ["រចនាបែបទំនើប", "សាមញ្ញនិងស្អាត", "ងាយស្រួលប្រើប្រាស់", "ឆ្លើយតបជាមួយទូរស័ព្ទ"],
+    bg: "linear-gradient(135deg, #1a1a1e, #2e2e32, #3e3e42)",
+    textPri: "#e5e7eb",
+    accent: "#9ca3af",
+    btnFrom: "#6b7280",
+    btnTo: "#4b5563",
   },
 ];
 
@@ -129,17 +197,66 @@ const categories = [
   { key: "luxury", label: "ប្រណិត" },
 ];
 
-const categoryColors: Record<string, string> = {
-  modern: "bg-blue-100 text-blue-700",
-  classic: "bg-amber-100 text-amber-700",
-  luxury: "bg-purple-100 text-purple-700",
-};
-
 const categoryLabels: Record<string, string> = {
   modern: "សម័យទំនើប",
   classic: "ប្រពៃណី",
   luxury: "ប្រណិត",
 };
+
+function TemplatePreview({
+  template,
+  large = false,
+}: {
+  template: Template;
+  large?: boolean;
+}) {
+  return (
+    <div
+      className={`relative w-full h-full flex flex-col items-center justify-center overflow-hidden ${
+        large ? "rounded-xl" : ""
+      }`}
+      style={{ background: template.bg }}
+    >
+      <Heart
+        className={large ? "h-10 w-10 mb-3" : "h-5 w-5 mb-2"}
+        style={{ color: template.accent }}
+        fill={template.accent}
+      />
+      <p
+        className={`${large ? "text-xs tracking-[0.25em]" : "text-[7px] tracking-[0.2em]"} uppercase mb-2`}
+        style={{ color: template.accent }}
+      >
+        Wedding Invitation
+      </p>
+      <p
+        className={`${large ? "text-2xl font-bold mb-1" : "text-sm font-bold"}`}
+        style={{ color: template.textPri }}
+      >
+        សុវណ្ណដេត
+      </p>
+      <p
+        className={`${large ? "text-xl my-1" : "text-xs my-0.5"} font-semibold`}
+        style={{ color: template.accent }}
+      >
+        &
+      </p>
+      <p
+        className={`${large ? "text-2xl font-bold mb-4" : "text-sm font-bold mb-3"}`}
+        style={{ color: template.textPri }}
+      >
+        ដារ៉ា
+      </p>
+      <span
+        className={`${large ? "text-sm px-6 py-2 rounded-full" : "text-[8px] px-3 py-1 rounded-full"} font-medium text-white`}
+        style={{
+          background: `linear-gradient(135deg, ${template.btnFrom}, ${template.btnTo})`,
+        }}
+      >
+        បើកលិខិត
+      </span>
+    </div>
+  );
+}
 
 export default function TemplatesPage() {
   const [activeCategory, setActiveCategory] = useState("all");
@@ -156,7 +273,7 @@ export default function TemplatesPage() {
         <p className="text-primary font-medium text-sm tracking-wider uppercase mb-3">
           ធៀបគំរូលិខិត
         </p>
-        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-secondary">
+        <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">
           ធៀបគំរូលិខិតអញ្ជើញរោងពិធីរៀបការ
         </h1>
         <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -193,55 +310,42 @@ export default function TemplatesPage() {
           <Card
             key={template.id}
             className="overflow-hidden group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 cursor-pointer"
+            onClick={() => setSelectedTemplate(template)}
           >
-            <div
-              className="aspect-[3/4] bg-gradient-to-br from-gold-50 via-gold-100 to-gold-50 relative overflow-hidden"
-              onClick={() => setSelectedTemplate(template)}
-            >
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-gold-300 text-sm font-medium">
-                  មើលជាមុន
-                </span>
-              </div>
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                <Button
-                  size="sm"
-                  className="bg-gold-gradient text-white hover:opacity-90 gap-2"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedTemplate(template);
-                  }}
-                >
-                  <Eye className="h-4 w-4" /> មើលជាមុន
-                </Button>
-              </div>
+            <div className="relative p-6 pb-0">
               {template.isPremium && (
-                <div className="absolute top-3 right-3">
+                <div className="absolute top-3 right-3 z-10">
                   <Badge className="bg-gold-gradient text-white gap-1 shadow-lg">
                     <Crown className="h-3 w-3" /> Premium
                   </Badge>
                 </div>
               )}
+              <div className="mx-auto w-40 aspect-[3/5] rounded-[1.25rem] border-4 border-secondary/90 shadow-lg overflow-hidden relative transition-transform duration-300 group-hover:scale-[1.03]">
+                <TemplatePreview template={template} />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <Button
+                    size="sm"
+                    className="bg-gold-gradient text-white hover:opacity-90 gap-2 pointer-events-none"
+                    tabIndex={-1}
+                  >
+                    <Eye className="h-4 w-4" /> មើលជាមុន
+                  </Button>
+                </div>
+              </div>
             </div>
-            <CardContent className="p-5">
+            <CardContent className="p-5 pt-4">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-bold text-secondary">{template.name}</h3>
-                <Badge
-                  className={`text-xs ${categoryColors[template.category] || ""}`}
-                  variant="secondary"
-                >
+                <Badge variant="secondary" className="text-xs">
                   {categoryLabels[template.category]}
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground mb-4">
                 {template.description}
               </p>
-              <Link href={`/templates/${template.id}`}>
-                <Button
-                  className="w-full bg-gold-gradient text-white hover:opacity-90"
-                  size="sm"
-                >
-                  ប្រើធៀបគំរូនេះ
+              <Link href="/register">
+                <Button className="w-full bg-gold-gradient text-white hover:opacity-90 gap-2">
+                  <Check className="h-4 w-4" /> ប្រើធៀបគំរូនេះ
                 </Button>
               </Link>
             </CardContent>
@@ -258,7 +362,7 @@ export default function TemplatesPage() {
       )}
 
       <Dialog open={!!selectedTemplate} onOpenChange={() => setSelectedTemplate(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           {selectedTemplate && (
             <>
               <DialogHeader>
@@ -275,11 +379,8 @@ export default function TemplatesPage() {
                 <DialogDescription>{selectedTemplate.description}</DialogDescription>
               </DialogHeader>
 
-              <div className="aspect-[16/10] bg-gradient-to-br from-gold-50 via-gold-100 to-gold-50 rounded-lg flex items-center justify-center border border-gold-200">
-                <div className="text-center">
-                  <Star className="h-12 w-12 text-gold-300 mx-auto mb-3" />
-                  <p className="text-gold-400 font-medium">មើលជាមុនធៀបគំរូ</p>
-                </div>
+              <div className="mx-auto w-56 aspect-[3/5] rounded-[1.75rem] border-4 border-secondary/90 shadow-xl overflow-hidden">
+                <TemplatePreview template={selectedTemplate} large />
               </div>
 
               <div>
@@ -287,7 +388,7 @@ export default function TemplatesPage() {
                 <div className="grid grid-cols-2 gap-2">
                   {selectedTemplate.features.map((feature) => (
                     <div key={feature} className="flex items-center gap-2 text-sm">
-                      <Check className="h-4 w-4 text-green-500" />
+                      <Check className="h-4 w-4 text-green-500 shrink-0" />
                       <span>{feature}</span>
                     </div>
                   ))}
@@ -295,19 +396,18 @@ export default function TemplatesPage() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <Link href={`/templates/${selectedTemplate.id}`} className="flex-1">
-                  <Button className="w-full bg-gold-gradient text-white hover:opacity-90 gap-2">
-                    <Eye className="h-4 w-4" /> មើលព័ត៌មានពេញ
-                  </Button>
-                </Link>
                 <Link href="/register" className="flex-1">
-                  <Button
-                    variant="outline"
-                    className="w-full border-gold-300 text-primary hover:bg-gold-50"
-                  >
+                  <Button className="w-full bg-gold-gradient text-white hover:opacity-90">
                     ប្រើធៀបគំរូនេះ
                   </Button>
                 </Link>
+                <Button
+                  variant="outline"
+                  className="flex-1 border-gold-300 text-primary hover:bg-gold-50"
+                  onClick={() => setSelectedTemplate(null)}
+                >
+                  បិទ
+                </Button>
               </div>
             </>
           )}
