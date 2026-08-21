@@ -45,6 +45,12 @@ export interface Subscription {
   package?: Package;
 }
 
+export interface TimelineEvent {
+  time: string;
+  title: string;
+  description: string;
+}
+
 export interface Invitation {
   id: string;
   user_id: string;
@@ -65,6 +71,10 @@ export interface Invitation {
   story: string | null;
   quote: string | null;
   background_music: string | null;
+  video_url: string | null;
+  timeline: TimelineEvent[];
+  dress_code: string | null;
+  dress_code_color: string | null;
   status: "draft" | "published" | "archived";
   published_at: string | null;
   created_at: string;

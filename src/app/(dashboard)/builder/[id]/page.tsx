@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, ArrowRight, Save, Eye, Music, MapPin, Users, Heart, Image, CreditCard, Trash2, Check, Copy, ExternalLink } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save, Eye, Music, MapPin, Users, Heart, Image, CreditCard, Trash2, Check, Copy, ExternalLink, Video, Shirt, Clock } from "lucide-react";
 import Link from "next/link";
 import { FileUpload } from "@/components/FileUpload";
 import { toast } from "sonner";
@@ -47,6 +47,10 @@ export default function BuilderPage() {
     story: "",
     quote: "",
     background_music: "",
+    video_url: "",
+    timeline: [],
+    dress_code: "",
+    dress_code_color: "#b8860b",
     status: "draft",
   });
   const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>([]);
@@ -518,8 +522,67 @@ export default function BuilderPage() {
                     </h3>
                     <div className="space-y-2">
                       <Label htmlFor="background_music" className="text-secondary">URL តន្ត្រីផ្ទៃខាងក្រោយ</Label>
-                      <Input id="background_music" value={invitation.background_music || ""} onChange={(e) => updateField("background_music", e.target.value)} placeholder="YouTube ឬ URL តន្ត្រី..." className="border-gold-200 focus-visible:ring-primary" />
+                      <Input id="background_music" value={invitation.background_music || ""} onChange={(e) => updateField("background_music", e.target.value)} placeholder="URL បទចម្រៀង (MP3, YouTube...)" className="border-gold-200 focus-visible:ring-primary" />
                     </div>
+                  </div>
+                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
+                    <h3 className="font-medium text-secondary flex items-center gap-2">
+                      <Video className="h-4 w-4 text-primary" /> វីដេអូ
+                    </h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="video_url" className="text-secondary">URL វីដេអូរៀបការ</Label>
+                      <Input id="video_url" value={invitation.video_url || ""} onChange={(e) => updateField("video_url", e.target.value)} placeholder="YouTube embed URL ឬវីដេអូ URL..." className="border-gold-200 focus-visible:ring-primary" />
+                    </div>
+                  </div>
+                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
+                    <h3 className="font-medium text-secondary flex items-center gap-2">
+                      <Shirt className="h-4 w-4 text-primary" /> ការស្លៀកពាក់
+                    </h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="dress_code" className="text-secondary">សេចក្ដីណែនាំការស្លៀកពាក់</Label>
+                      <Input id="dress_code" value={invitation.dress_code || ""} onChange={(e) => updateField("dress_code", e.target.value)} placeholder="ឧ. ពណ៌ស្វាយ, សំលៀកបំពាក់ផ្លូវការ" className="border-gold-200 focus-visible:ring-primary" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="dress_code_color" className="text-secondary">ពណ៌សំខាន់</Label>
+                      <div className="flex items-center gap-2">
+                        <Input id="dress_code_color" type="color" value={invitation.dress_code_color || "#b8860b"} onChange={(e) => updateField("dress_code_color", e.target.value)} className="w-12 h-10 p-1 cursor-pointer border-gold-200" />
+                        <Input value={invitation.dress_code_color || "#b8860b"} onChange={(e) => updateField("dress_code_color", e.target.value)} placeholder="#b8860b" className="border-gold-200 focus-visible:ring-primary" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
+                    <h3 className="font-medium text-secondary flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-primary" /> កាលវិភាគពិធី
+                    </h3>
+                    <p className="text-sm text-muted-foreground">បន្ថែមកាលវិភាគពិធីរបស់អ្នក។ ទុកទទេប្រសិនបើមិនចង់ប្រើ។</p>
+                    {((invitation.timeline || []) as any[]).map((ev: any, i: number) => (
+                      <div key={i} className="flex gap-2 items-start">
+                        <Input value={ev.time || ""} onChange={(e) => {
+                          const tl = [...(invitation.timeline || []) as any[]];
+                          tl[i] = { ...tl[i], time: e.target.value };
+                          updateField("timeline" as any, tl as any);
+                        }} placeholder="ម៉ោង" className="w-24 border-gold-200 focus-visible:ring-primary text-sm" />
+                        <Input value={ev.title || ""} onChange={(e) => {
+                          const tl = [...(invitation.timeline || []) as any[]];
+                          tl[i] = { ...tl[i], title: e.target.value };
+                          updateField("timeline" as any, tl as any);
+                        }} placeholder="ពិធី..." className="flex-1 border-gold-200 focus-visible:ring-primary text-sm" />
+                        <Input value={ev.description || ""} onChange={(e) => {
+                          const tl = [...(invitation.timeline || []) as any[]];
+                          tl[i] = { ...tl[i], description: e.target.value };
+                          updateField("timeline" as any, tl as any);
+                        }} placeholder="ពិស្តារ..." className="flex-1 border-gold-200 focus-visible:ring-primary text-sm" />
+                        <Button variant="ghost" size="icon" onClick={() => {
+                          const tl = [...(invitation.timeline || []) as any[]];
+                          tl.splice(i, 1);
+                          updateField("timeline" as any, tl as any);
+                        }} className="text-red-500 shrink-0"><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    ))}
+                    <Button variant="outline" size="sm" onClick={() => {
+                      const tl = [...(invitation.timeline || []) as any[], { time: "", title: "", description: "" }];
+                      updateField("timeline" as any, tl as any);
+                    }} className="border-gold-200 text-secondary hover:bg-gold-50">+ បន្ថែមពិធី</Button>
                   </div>
                   <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
                     <h3 className="font-medium text-secondary flex items-center gap-2">

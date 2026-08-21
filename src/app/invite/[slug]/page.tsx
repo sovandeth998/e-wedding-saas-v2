@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useRef, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Heart, MapPin, Clock, Camera, Gift, MessageCircle, Calendar, ChevronDown } from "lucide-react";
-import type { Invitation, Guest, Wish, QRCode, GalleryPhoto } from "@/types/database";
+import { Heart, MapPin, Clock, Camera, Gift, MessageCircle, Calendar, ChevronDown, Play, Pause, Share2, Video, Shirt, X } from "lucide-react";
+import type { Invitation, Guest, Wish, QRCode, GalleryPhoto, TimelineEvent } from "@/types/database";
 
 function InvitationContent() {
   const params = useParams();
@@ -29,6 +29,10 @@ function InvitationContent() {
   const [wishSubmitted, setWishSubmitted] = useState(false);
   const [opened, setOpened] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [musicPlaying, setMusicPlaying] = useState(false);
+  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const timeline = ((invitation as any)?.timeline || []) as TimelineEvent[];
   const supabase = createClient();
 
   const T: Record<string, {
@@ -80,6 +84,28 @@ function InvitationContent() {
     return () => clearInterval(timer);
   }, [invitation]);
 
+  useEffect(() => {
+    if (opened && invitation?.background_music) {
+      if (!audioRef.current) {
+        audioRef.current = new Audio(invitation.background_music);
+        audioRef.current.loop = true;
+        audioRef.current.volume = 0.4;
+      }
+      audioRef.current.play().then(() => setMusicPlaying(true)).catch(() => {});
+    }
+  }, [opened, invitation?.background_music]);
+
+  const toggleMusic = () => {
+    if (!audioRef.current) return;
+    if (musicPlaying) { audioRef.current.pause(); setMusicPlaying(false); }
+    else { audioRef.current.play().then(() => setMusicPlaying(true)).catch(() => {}); }
+  };
+
+  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+  const shareText = invitation
+    ? `💌 សូមអញ្ជើញចូលរួមពិធីរៀបអាពាហ៍ពិពាហ៍ ${invitation.groom_name_kh || invitation.groom_name} & ${invitation.bride_name_kh || invitation.bride_name}`
+    : "";
+
   const fetchInvitation = async () => {
     const { data: inv } = await supabase
       .from("invitations")
@@ -117,6 +143,22 @@ function InvitationContent() {
     if (!finalGuestId) return;
     await supabase.from("rsvps").insert({ guest_id: finalGuestId, invitation_id: invitation.id, status: rsvpStatus, number_of_guests: rsvpGuests, message: rsvpMessage });
     setRsvpSubmitted(true);
+    try {
+      fetch("/api/telegram/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "guest_link",
+          data: {
+            guestName: guestName || "ភ្ញៀវ",
+            coupleName: `${invitation.groom_name_kh || invitation.groom_name} & ${invitation.bride_name_kh || invitation.bride_name}`,
+            weddingDate: new Date(invitation.wedding_date).toLocaleDateString("km-KH"),
+            venueName: invitation.venue_name || "",
+            inviteLink: typeof window !== "undefined" ? window.location.href : "",
+          },
+        }),
+      });
+    } catch {}
   };
 
   const submitWish = async () => {
@@ -226,6 +268,7 @@ function InvitationContent() {
 
   return (
     <div className="min-h-screen" style={{ background: t.bgMain }}>
+      <style dangerouslySetInnerHTML={{ __html: `@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}.fade-up{animation:fadeUp .7s ease-out both}` }} />
       <section className="relative py-20 px-4 text-center overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full blur-[120px]" style={{ background: `${t.accent}08` }} />
@@ -253,6 +296,23 @@ function InvitationContent() {
           )}
           {invitation.quote && <p className="italic text-base max-w-sm mx-auto" style={{ color: t.textSec }}>&ldquo;{invitation.quote}&rdquo;</p>}
           <div className="mt-8">{goldDot(t.accent)}</div>
+          <div className="flex items-center justify-center gap-4 mt-6">
+            <a href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener noreferrer">
+              <div className="h-10 w-10 rounded-full flex items-center justify-center" style={{ background: `${t.accent}20`, border: `1px solid ${t.accent}30` }}>
+                <Share2 className="h-4 w-4" style={{ color: t.accent }} />
+              </div>
+            </a>
+            <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer">
+              <div className="h-10 w-10 rounded-full flex items-center justify-center" style={{ background: `${t.accent}20`, border: `1px solid ${t.accent}30` }}>
+                <span className="text-sm font-bold" style={{ color: t.accent }}>f</span>
+              </div>
+            </a>
+            <a href={`https://wa.me/?text=${encodeURIComponent(shareText + "\n" + shareUrl)}`} target="_blank" rel="noopener noreferrer">
+              <div className="h-10 w-10 rounded-full flex items-center justify-center" style={{ background: `${t.accent}20`, border: `1px solid ${t.accent}30` }}>
+                <span className="text-sm font-bold" style={{ color: t.accent }}>W</span>
+              </div>
+            </a>
+          </div>
         </div>
       </section>
 
@@ -308,11 +368,68 @@ function InvitationContent() {
           </div>
         </div>
 
+        {timeline.length > 0 && (
+          <div className="rounded-2xl p-6 fade-up" style={cardStyle}>
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Calendar className="h-5 w-5" style={{ color: t.accent }} />
+              <h2 className="text-lg font-bold tracking-wide" style={{ color: t.textPri }}>កាលវិភាគពិធី</h2>
+            </div>
+            <div className="h-px w-16 mx-auto mb-6" style={{ background: `${t.accent}25` }} />
+            <div className="relative pl-8">
+              <div className="absolute left-3 top-0 bottom-0 w-0.5" style={{ background: `${t.accent}30` }} />
+              {timeline.map((ev, i) => (
+                <div key={i} className="relative mb-5 last:mb-0">
+                  <div className="absolute -left-5 top-1 h-3 w-3 rounded-full border-2" style={{ borderColor: t.accent, background: t.accentBg }} />
+                  <p className="text-xs font-bold" style={{ color: t.accent }}>{ev.time}</p>
+                  <p className="font-medium text-sm" style={{ color: t.textPri }}>{ev.title}</p>
+                  {ev.description && <p className="text-xs mt-0.5" style={{ color: t.textMut }}>{ev.description}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {invitation.dress_code && (
+          <div className="rounded-2xl p-6 fade-up" style={cardStyle}>
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <Shirt className="h-5 w-5" style={{ color: t.accent }} />
+              <h2 className="text-lg font-bold tracking-wide" style={{ color: t.textPri }}>ការស្លៀកពាក់</h2>
+            </div>
+            <div className="h-px w-16 mx-auto mb-3" style={{ background: `${t.accent}25` }} />
+            <p className="text-sm text-center" style={{ color: t.textSec }}>{invitation.dress_code}</p>
+            {invitation.dress_code_color && (
+              <div className="flex items-center justify-center gap-2 mt-3">
+                <div className="h-5 w-5 rounded-full border" style={{ background: invitation.dress_code_color, borderColor: `${t.accent}30` }} />
+                <span className="text-xs" style={{ color: t.textMut }}>{invitation.dress_code_color}</span>
+              </div>
+            )}
+          </div>
+        )}
+
         {invitation.story && (
           <div className="rounded-2xl p-6" style={cardStyle}>
             <h2 className="text-lg font-bold mb-4 text-center tracking-wide" style={{ color: t.textPri }}>រឿងស្នេហារបស់យើង</h2>
             <div className="h-px w-16 mx-auto mb-4" style={{ background: `${t.accent}25` }} />
             <p className="whitespace-pre-line leading-relaxed text-sm text-center" style={{ color: t.textSec }}>{invitation.story}</p>
+          </div>
+        )}
+
+        {invitation.video_url && (
+          <div className="rounded-2xl p-6 fade-up" style={cardStyle}>
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Video className="h-5 w-5" style={{ color: t.accent }} />
+              <h2 className="text-lg font-bold tracking-wide" style={{ color: t.textPri }}>វីដេអូរៀបការ</h2>
+            </div>
+            <div className="h-px w-16 mx-auto mb-4" style={{ background: `${t.accent}25` }} />
+            <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+              <iframe
+                src={invitation.video_url}
+                className="absolute inset-0 w-full h-full rounded-xl"
+                style={{ border: `1px solid ${t.accent}20` }}
+                allowFullScreen
+                allow="autoplay; encrypted-media"
+              />
+            </div>
           </div>
         )}
 
@@ -324,7 +441,7 @@ function InvitationContent() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               {photos.map((photo) => (
-                <div key={photo.id} className="aspect-square rounded-xl overflow-hidden" style={{ border: `1px solid ${t.accent}15` }}>
+                <div key={photo.id} className="aspect-square rounded-xl overflow-hidden cursor-pointer" style={{ border: `1px solid ${t.accent}15` }} onClick={() => setLightboxPhoto(photo.url)}>
                   <img src={photo.url} alt={photo.caption || "រូបភាពរៀបការ"} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
                 </div>
               ))}
@@ -425,6 +542,21 @@ function InvitationContent() {
           <p className="text-xs tracking-widest uppercase" style={{ color: t.textMut }}>E-Wedding</p>
         </div>
       </div>
+
+      {invitation.background_music && (
+        <button onClick={toggleMusic} className="fixed bottom-6 right-6 z-50 h-12 w-12 rounded-full flex items-center justify-center shadow-lg" style={{ background: `linear-gradient(135deg, ${t.btnFrom}, ${t.btnTo})` }}>
+          {musicPlaying ? <Pause className="h-5 w-5 text-white" /> : <Play className="h-5 w-5 text-white ml-0.5" />}
+        </button>
+      )}
+
+      {lightboxPhoto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90" onClick={() => setLightboxPhoto(null)}>
+          <button onClick={() => setLightboxPhoto(null)} className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
+            <X className="h-5 w-5 text-white" />
+          </button>
+          <img src={lightboxPhoto} alt="រូបភាព" className="max-w-[90vw] max-h-[90vh] rounded-lg object-contain" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
     </div>
   );
 }
