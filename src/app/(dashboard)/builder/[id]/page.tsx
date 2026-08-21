@@ -85,6 +85,15 @@ export default function BuilderPage() {
     { title: "ពិធីជប់លៀង", description: "ពិធីជប់លៀងរាត្រី" },
   ];
 
+  const musicPresets = [
+    { title: "🎵 គោព្រៃក្បាលថ្នល់ — ប្រពៃណីខ្មែរ", url: "https://cdn.pixabay.com/audio/2022/10/18/audio_2ab830925c.mp3" },
+    { title: "🎵 រាំវង់ — តន្ត្រីប្រពៃណី", url: "https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3" },
+    { title: "🎵 ព្រហ្មចារី — ភ្លេងខ្មែរ", url: "https://cdn.pixabay.com/audio/2024/11/04/audio_d37df7e3df.mp3" },
+    { title: "🎵 Wedding Love — Romantic", url: "https://cdn.pixabay.com/audio/2023/09/04/audio_459d5f9e1d.mp3" },
+    { title: "🎵 Sweet Wedding Day", url: "https://cdn.pixabay.com/audio/2024/02/19/audio_05e3bfb3db.mp3" },
+    { title: "🎵 ស្នេហ៍អមរៀត — រ៉ូមែនទិច", url: "https://cdn.pixabay.com/audio/2023/03/21/audio_2d6e2e5f38.mp3" },
+  ];
+
   useEffect(() => {
     if (!params.id) return;
 
@@ -534,9 +543,28 @@ export default function BuilderPage() {
                       <Music className="h-4 w-4 text-primary" /> តន្ត្រី
                     </h3>
                     <div className="space-y-2">
-                      <Label htmlFor="background_music" className="text-secondary">URL តន្ត្រីផ្ទៃខាងក្រោយ</Label>
-                      <Input id="background_music" value={invitation.background_music || ""} onChange={(e) => updateField("background_music", e.target.value)} placeholder="URL បទចម្រៀង (MP3, YouTube...)" className="border-gold-200 focus-visible:ring-primary" />
+                      <Label htmlFor="background_music" className="text-secondary">បទចម្រៀងផ្ទៃខាងក្រោយ</Label>
+                      <select
+                        id="background_music"
+                        value={invitation.background_music || ""}
+                        onChange={(e) => updateField("background_music", e.target.value)}
+                        className="w-full border border-gold-200 rounded-lg px-3 py-2 text-sm bg-white text-secondary focus:ring-2 focus:ring-primary outline-none"
+                      >
+                        <option value="">គ្មានតន្ត្រី</option>
+                        {musicPresets.map((m) => (
+                          <option key={m.url} value={m.url}>{m.title}</option>
+                        ))}
+                        <option value="__custom__">🔗 បញ្ចូល URL ផ្ទាល់...</option>
+                      </select>
                     </div>
+                    {invitation.background_music && invitation.background_music !== "__custom__" && (
+                      <audio controls src={invitation.background_music} className="w-full h-10 rounded-lg" style={{ filter: "sepia(20%) saturate(70%)" }} />
+                    )}
+                    {(!invitation.background_music || invitation.background_music === "__custom__") && (
+                      <div className="space-y-2">
+                        <Input value={invitation.background_music === "__custom__" ? "" : (invitation.background_music || "")} onChange={(e) => updateField("background_music", e.target.value)} placeholder="បញ្ចូល URL តន្ត្រី (MP3)..." className="border-gold-200 focus-visible:ring-primary" />
+                      </div>
+                    )}
                   </div>
                   <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
                     <h3 className="font-medium text-secondary flex items-center gap-2">
