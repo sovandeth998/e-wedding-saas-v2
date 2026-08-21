@@ -20,23 +20,14 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
     if (authError) {
       setError("អ៊ីមែល ឬ ពាក្យសម្ងាត់មិនត្រឹមត្រូវ");
       setLoading(false);
       return;
     }
-    if (data.user) {
-      const { data: profile } = await supabase.from("users").select("role").eq("id", data.user.id).single();
-      if (profile?.role !== "admin") {
-        setError("គណនីនេះមិនមែនជា Admin");
-        await supabase.auth.signOut();
-        setLoading(false);
-        return;
-      }
-      router.push("/admin");
-      router.refresh();
-    }
+    router.push("/admin");
+    router.refresh();
   };
 
   return (
