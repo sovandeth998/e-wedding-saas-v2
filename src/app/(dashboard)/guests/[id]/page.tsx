@@ -245,6 +245,37 @@ export default function GuestManagerPage() {
     setGuests(guests.filter((g) => g.id !== id));
   };
 
+  const removeDuplicates = async () => {
+    const nameMap = new Map<string, typeof guests[0]>();
+    const duplicateIds: string[] = [];
+
+    const sorted = [...guests].sort((a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+
+    for (const guest of sorted) {
+      const key = guest.name.trim().normalize("NFC").toLowerCase();
+      if (nameMap.has(key)) {
+        duplicateIds.push(guest.id);
+        const existing = nameMap.get(key)!;
+        if (guest.rsvp && !existing.rsvp) {
+          existing.rsvp = guest.rsvp;
+        }
+      } else {
+        nameMap.set(key, guest);
+      }
+    }
+
+    if (duplicateIds.length === 0) {
+      toast.info("មិនមានឈ្មោះស្ទួនទេ!");
+      return;
+    }
+
+    await supabase.from("guests").delete().in("id", duplicateIds);
+    toast.success(`បានលុបឈ្មោះស្ទួន ${duplicateIds.length} នាក់!`);
+    fetchGuests();
+  };
+
   const copyLink = async (link: string, id: string) => {
     await navigator.clipboard.writeText(
       `${window.location.origin}/invite/${link}`
@@ -351,6 +382,14 @@ export default function GuestManagerPage() {
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={removeDuplicates}
+            className="gap-2 border-orange-200 text-orange-600 hover:bg-orange-50"
+          >
+            <Trash2 className="h-4 w-4" /> លុបឈ្មោះស្ទួន
+          </Button>
           <Button
             variant="outline"
             size="sm"
