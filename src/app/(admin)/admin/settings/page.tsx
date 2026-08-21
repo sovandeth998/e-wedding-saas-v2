@@ -45,9 +45,12 @@ export default function AdminSettingsPage() {
   const [facebookUrl, setFacebookUrl] = useState("");
   const [instagramUrl, setInstagramUrl] = useState("");
   const [telegramGroupUrl, setTelegramGroupUrl] = useState("");
+  const [telegramUrl, setTelegramUrl] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
 
   const [primaryColor, setPrimaryColor] = useState("#b8860b");
   const [secondaryColor, setSecondaryColor] = useState("#1a1a2e");
+  const [backgroundColor, setBackgroundColor] = useState("#ffffff");
 
   const [telegramBotToken, setTelegramBotToken] = useState("");
   const [telegramChatId, setTelegramChatId] = useState("");
@@ -82,12 +85,15 @@ export default function AdminSettingsPage() {
             case "contact_email": setContactEmail(val); break;
             case "contact_phone": setContactPhone(val); break;
             case "telegram_link": setTelegramLink(val); break;
-            case "site_logo": setLogoImage(val); setLogoPreview(val); break;
+            case "site_logo_url": setLogoImage(val); setLogoPreview(val); break;
             case "facebook_url": setFacebookUrl(val); break;
             case "instagram_url": setInstagramUrl(val); break;
             case "telegram_group_url": setTelegramGroupUrl(val); break;
+            case "telegram_url": setTelegramUrl(val); break;
+            case "phone": setPhoneNumber(val); break;
             case "primary_color": setPrimaryColor(val || "#b8860b"); break;
             case "secondary_color": setSecondaryColor(val || "#1a1a2e"); break;
+            case "background_color": setBackgroundColor(val || "#ffffff"); break;
             case "telegram_bot_token": setTelegramBotToken(val); break;
             case "telegram_chat_id": setTelegramChatId(val); break;
           }
@@ -160,12 +166,15 @@ export default function AdminSettingsPage() {
       { key: "contact_email", value: contactEmail },
       { key: "contact_phone", value: contactPhone },
       { key: "telegram_link", value: telegramLink },
-      { key: "site_logo", value: logoUrl },
+      { key: "site_logo_url", value: logoUrl },
       { key: "facebook_url", value: facebookUrl },
       { key: "instagram_url", value: instagramUrl },
       { key: "telegram_group_url", value: telegramGroupUrl },
+      { key: "telegram_url", value: telegramUrl },
+      { key: "phone", value: phoneNumber },
       { key: "primary_color", value: primaryColor },
       { key: "secondary_color", value: secondaryColor },
+      { key: "background_color", value: backgroundColor },
       { key: "telegram_bot_token", value: telegramBotToken },
       { key: "telegram_chat_id", value: telegramChatId },
     ];
@@ -351,6 +360,14 @@ export default function AdminSettingsPage() {
             <Label className="text-secondary">Telegram Group URL</Label>
             <Input value={telegramGroupUrl} onChange={(e) => setTelegramGroupUrl(e.target.value)} className="border-gold-200" placeholder="https://t.me/..." />
           </div>
+          <div className="space-y-2">
+            <Label className="text-secondary">Telegram URL</Label>
+            <Input value={telegramUrl} onChange={(e) => setTelegramUrl(e.target.value)} className="border-gold-200" placeholder="https://t.me/..." />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-secondary">លេខទូរស័ព្ទ</Label>
+            <Input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="border-gold-200" placeholder="012 345 678" />
+          </div>
         </CardContent>
       </Card>
 
@@ -375,6 +392,27 @@ export default function AdminSettingsPage() {
               <div className="flex gap-2">
                 <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="h-10 w-10 rounded border border-gold-200 cursor-pointer" />
                 <Input value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="border-gold-200 font-mono" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-secondary">ពណ៌ផ្ទៃខាងក្រោយ</Label>
+              <div className="flex gap-2">
+                <input type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} className="h-10 w-10 rounded border border-gold-200 cursor-pointer" />
+                <Input value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} className="border-gold-200 font-mono" />
+              </div>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-secondary">មើលសាកល្បងពណ៌</Label>
+            <div className="rounded-lg border border-gold-200 overflow-hidden shadow-sm" style={{ backgroundColor: backgroundColor }}>
+              <div className="p-4 flex items-center justify-between gap-3">
+                <span className="font-bold text-lg" style={{ color: primaryColor }}>E-Wedding</span>
+                <span className="px-4 py-1.5 rounded-full text-white text-sm font-medium" style={{ backgroundColor: secondaryColor }}>ប៊ូតុង</span>
+              </div>
+              <div className="flex h-8">
+                <div className="flex-1" style={{ backgroundColor: primaryColor }} />
+                <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
+                <div className="flex-1 border-t border-gold-200" style={{ backgroundColor: backgroundColor }} />
               </div>
             </div>
           </div>
