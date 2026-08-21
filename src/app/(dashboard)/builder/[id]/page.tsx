@@ -54,18 +54,18 @@ export default function BuilderPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<string>("1");
 
   const templateList = [
-    { id: "1", name: "ផ្កាឈូករ៉ូមែនទិច", category: "modern", colors: "from-pink-100 to-rose-50", accent: "bg-pink-500" },
-    { id: "2", name: "មាសប្រណិត", category: "luxury", colors: "from-yellow-100 to-amber-50", accent: "bg-yellow-600" },
-    { id: "3", name: "ប្រពៃណីខ្មែរ", category: "classic", colors: "from-red-100 to-orange-50", accent: "bg-red-600" },
-    { id: "4", name: "សម័យទំនើប", category: "modern", colors: "from-blue-100 to-indigo-50", accent: "bg-blue-600" },
-    { id: "5", name: "រាជវាំង", category: "luxury", colors: "from-purple-100 to-violet-50", accent: "bg-purple-600" },
-    { id: "6", name: "សួនច្បារ", category: "modern", colors: "from-green-100 to-emerald-50", accent: "bg-green-600" },
-    { id: "7", name: "ផ្កាឈូកពណ៌ស", category: "classic", colors: "from-slate-100 to-gray-50", accent: "bg-slate-600" },
-    { id: "8", name: "ភ្លើងបំភ្លឺ", category: "luxury", colors: "from-amber-100 to-yellow-50", accent: "bg-amber-600" },
-    { id: "9", name: "ទឹកជ្រោះ", category: "modern", colors: "from-cyan-100 to-blue-50", accent: "bg-cyan-600" },
-    { id: "10", name: "ពណ៌ផ្កាឈូក", category: "luxury", colors: "from-fuchsia-100 to-pink-50", accent: "bg-fuchsia-600" },
-    { id: "11", name: "បុរាណ", category: "classic", colors: "from-amber-100 to-orange-50", accent: "bg-amber-700" },
-    { id: "12", name: "ទំនើប", category: "modern", colors: "from-gray-100 to-slate-50", accent: "bg-gray-700" },
+    { id: "1",  name: "ផ្កាឈូករ៉ូមែនទិច", category: "modern", isPremium: false, bg: "linear-gradient(180deg, #fdf8f0, #f5edd8, #efe4c8)", textPri: "#6b4c1e", accent: "#b8860b", btnFrom: "#d4a843", btnTo: "#b8860b" },
+    { id: "2",  name: "មាសប្រណិត",         category: "luxury", isPremium: true,  bg: "linear-gradient(135deg, #1a1a0e, #2d2a1e, #3d3520)", textPri: "#fef3c7", accent: "#f59e0b", btnFrom: "#d97706", btnTo: "#92400e" },
+    { id: "3",  name: "ប្រពៃណីខ្មែរ",       category: "classic", isPremium: false, bg: "linear-gradient(135deg, #2e1a1a, #3e1616, #601010)", textPri: "#fecaca", accent: "#ef4444", btnFrom: "#dc2626", btnTo: "#991b1b" },
+    { id: "4",  name: "សម័យទំនើប",         category: "modern", isPremium: false, bg: "linear-gradient(135deg, #0e1a2e, #16213e, #1e3a5e)", textPri: "#bfdbfe", accent: "#3b82f6", btnFrom: "#2563eb", btnTo: "#1d4ed8" },
+    { id: "5",  name: "រាជវាំង",           category: "luxury", isPremium: true,  bg: "linear-gradient(135deg, #1a0e2e, #2e1640, #401060)", textPri: "#ddd6fe", accent: "#a855f7", btnFrom: "#9333ea", btnTo: "#7e22ce" },
+    { id: "6",  name: "សួនច្បារ",           category: "modern", isPremium: false, bg: "linear-gradient(135deg, #0e2e1a, #163e21, #106030)", textPri: "#bbf7d0", accent: "#22c55e", btnFrom: "#16a34a", btnTo: "#15803d" },
+    { id: "7",  name: "ផ្កាឈូកពណ៌ស",       category: "classic", isPremium: false, bg: "linear-gradient(135deg, #1a1a1e, #2e2e32, #404045)", textPri: "#e2e8f0", accent: "#94a3b8", btnFrom: "#64748b", btnTo: "#475569" },
+    { id: "8",  name: "ភ្លើងបំភ្លឺ",        category: "luxury", isPremium: true,  bg: "linear-gradient(135deg, #2e1a0e, #402e16, #604010)", textPri: "#fde68a", accent: "#fbbf24", btnFrom: "#f59e0b", btnTo: "#d97706" },
+    { id: "9",  name: "ទឹកជ្រោះ",           category: "modern", isPremium: false, bg: "linear-gradient(135deg, #0e2e2e, #163e3e, #106060)", textPri: "#a5f3fc", accent: "#06b6d4", btnFrom: "#0891b2", btnTo: "#0e7490" },
+    { id: "10", name: "ពណ៌ផ្កាឈូក",        category: "luxury", isPremium: true,  bg: "linear-gradient(135deg, #2e0e2e, #401640, #601060)", textPri: "#f5d0fe", accent: "#d946ef", btnFrom: "#c026d3", btnTo: "#a21caf" },
+    { id: "11", name: "បុរាណ",              category: "classic", isPremium: false, bg: "linear-gradient(135deg, #2e1a0e, #3e2e16, #504010)", textPri: "#fde68a", accent: "#d97706", btnFrom: "#b45309", btnTo: "#92400e" },
+    { id: "12", name: "ទំនើប",              category: "modern", isPremium: false, bg: "linear-gradient(135deg, #1a1a1e, #2e2e32, #3e3e42)", textPri: "#e5e7eb", accent: "#9ca3af", btnFrom: "#6b7280", btnTo: "#4b5563" },
   ];
 
   useEffect(() => {
@@ -526,26 +526,43 @@ export default function BuilderPage() {
                       <Eye className="h-4 w-4 text-primary" /> ជ្រើសរើសធៀបគំរូ
                     </h3>
                     <p className="text-sm text-muted-foreground">ជ្រើសរើសធៀបគំរូដែលអ្នកពេញចិត្ត។ ធៀបគំរូនឹងត្រូវបានប្រើសម្រាប់លិខិតអញ្ជើញរបស់អ្នក។</p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                       {templateList.map((tpl) => (
                         <button
                           key={tpl.id}
                           onClick={() => handleSelectTemplate(tpl.id)}
-                          className={`border-2 rounded-xl p-4 text-center transition-all hover:shadow-lg ${
+                          className={`relative group rounded-2xl p-4 text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
                             selectedTemplate === tpl.id
-                              ? "border-primary shadow-md ring-2 ring-primary/20"
-                              : "border-gold-200 hover:border-primary/50"
+                              ? "ring-3 ring-primary shadow-xl bg-gold-50"
+                              : "bg-white hover:bg-gold-50/50"
                           }`}
                         >
-                          <div className={`aspect-[3/4] bg-gradient-to-br ${tpl.colors} rounded-lg mb-2 relative overflow-hidden`}>
-                            {selectedTemplate === tpl.id && (
-                              <div className="absolute top-2 right-2 h-6 w-6 rounded-full bg-gold-gradient flex items-center justify-center">
-                                <Check className="h-3 w-3 text-white" />
-                              </div>
-                            )}
-                            <div className={`absolute bottom-2 left-2 right-2 h-1 ${tpl.accent} rounded-full opacity-30`} />
+                          {selectedTemplate === tpl.id && (
+                            <div className="absolute -top-2 -right-2 z-10 h-7 w-7 rounded-full bg-gold-gradient flex items-center justify-center shadow-lg">
+                              <Check className="h-4 w-4 text-white" />
+                            </div>
+                          )}
+                          {tpl.isPremium && (
+                            <div className="absolute -top-2 left-4 z-10">
+                              <span className="text-[10px] font-bold bg-gold-gradient text-white px-2 py-0.5 rounded-full shadow">Premium</span>
+                            </div>
+                          )}
+                          <div className="mx-auto w-28 aspect-[3/5] rounded-[1.25rem] border-4 border-secondary/90 shadow-lg overflow-hidden relative transition-transform duration-300 group-hover:scale-[1.03]">
+                            <div className="relative w-full h-full flex flex-col items-center justify-center overflow-hidden" style={{ background: tpl.bg }}>
+                              <Heart className="h-5 w-5 mb-2" style={{ color: tpl.accent }} fill={tpl.accent} />
+                              <p className="text-[6px] tracking-[0.2em] uppercase mb-1" style={{ color: tpl.accent }}>Wedding</p>
+                              <p className="text-[10px] font-bold" style={{ color: tpl.textPri }}>សុវណ្ណដេត</p>
+                              <p className="text-[8px] font-semibold my-0.5" style={{ color: tpl.accent }}>&amp;</p>
+                              <p className="text-[10px] font-bold mb-2" style={{ color: tpl.textPri }}>ដារ៉ា</p>
+                              <span className="text-[6px] px-2 py-0.5 rounded-full font-medium text-white" style={{ background: `linear-gradient(135deg, ${tpl.btnFrom}, ${tpl.btnTo})` }}>បើកលិខិត</span>
+                            </div>
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                              <span className="text-xs font-medium text-white bg-black/50 px-3 py-1 rounded-full flex items-center gap-1">
+                                <Eye className="h-3 w-3" /> ជ្រើសរើស
+                              </span>
+                            </div>
                           </div>
-                          <p className="text-sm font-medium text-secondary">{tpl.name}</p>
+                          <p className="text-sm font-bold text-secondary mt-3">{tpl.name}</p>
                           <p className="text-xs text-muted-foreground capitalize">{tpl.category}</p>
                         </button>
                       ))}
