@@ -237,7 +237,7 @@ export default function BuilderPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-secondary">បង្កើងលិខិតអញ្ជើញ</h1>
+            <h1 className="text-2xl font-bold text-secondary">បង្កើតលិខិតអញ្ជើញ</h1>
             <p className="text-muted-foreground">ជំហាន {currentStep} / 6</p>
           </div>
         </div>

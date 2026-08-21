@@ -104,7 +104,7 @@ function formatWeddingReminderMessage(data: Record<string, string>) {
     ``,
     `សួស្តី <b>${data.guestName || "ភ្ញៀវជាទីស្រឡាញ់"}</b> 👋`,
     ``,
-    `យើងខ្ញុំសូមរំលឹកថា ពិធីរៀបអាពាហ៍ពិពាហ៍របស់យើងខ្ញុំនឹងចាប់ផ្តើមនៅថ្ងៃទី <b>${data.weddingDate || ""}</b>។`,
+    `យើងខ្ញុំសូមរំលឹកថា ពិធីរៀបអាពាហ៍ពិពាហ៍របស់យើងខ្ញុំនឹងចាប់ផ្ដើមនៅថ្ងៃទី <b>${data.weddingDate || ""}</b>។`,
     ``,
     `⏰ <b>ម៉ោងចូលរួម៖</b> ${data.ceremonyTime || ""}`,
     `📍 <b>ទីតាំង៖</b> ${data.venueName || ""}`,

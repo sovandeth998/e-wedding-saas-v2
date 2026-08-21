@@ -85,7 +85,7 @@ ${
 </div>
 <div style="padding:30px;">
 <p style="color:#333;font-size:16px;line-height:1.8;">សួស្តី <strong>${data.guestName || "ភ្ញៀវជាទីស្រឡាញ់"}</strong>,</p>
-<p style="color:#555;font-size:15px;line-height:1.8;">យើងខ្ញុំសូមរំលឹកថា ពិធីរៀបអាពាហ៍ពិពាហ៍របស់យើងខ្ញុំនឹងចាប់ផ្តើមនៅថ្ងៃខាងក្រោម។</p>
+<p style="color:#555;font-size:15px;line-height:1.8;">យើងខ្ញុំសូមរំលឹកថា ពិធីរៀបអាពាហ៍ពិពាហ៍របស់យើងខ្ញុំនឹងចាប់ផ្ដើមនៅថ្ងៃខាងក្រោម។</p>
 <div style="background-color:#fdf8ef;border-radius:8px;padding:20px;margin:20px 0;">
 <p style="margin:8px 0;color:#333;font-size:15px;"><strong>📅 កាលបរិច្ឆេទ៖</strong> ${data.weddingDate || ""}</p>
 <p style="margin:8px 0;color:#333;font-size:15px;"><strong>⏰ ម៉ោងចូលរួម៖</strong> ${data.ceremonyTime || ""}</p>
@@ -167,7 +167,7 @@ ${data.transactionId ? `<p style="margin:8px 0;color:#333;font-size:15px;"><stro
 </ul>
 </div>
 <div style="text-align:center;margin:25px 0;">
-<a href="${data.dashboardUrl || "#"}" style="background:linear-gradient(135deg,#d4911a,#e2a832);color:#ffffff;padding:14px 30px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:16px;">🚀 ចាប់ផ្តើមឥឡូវនេះ</a>
+<a href="${data.dashboardUrl || "#"}" style="background:linear-gradient(135deg,#d4911a,#e2a832);color:#ffffff;padding:14px 30px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:16px;">🚀 ចាប់ផ្ដើមឥឡូវនេះ</a>
 </div>
 <p style="color:#555;font-size:15px;line-height:1.8;">ប្រសិនបើលោកអ្នកមានសំណួរណាមួយ សូមទាក់ទងមកយើងខ្ញុំ។</p>
 </div>

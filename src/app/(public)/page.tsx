@@ -141,7 +141,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {[
               { step: "១", title: "ជ្រើសរើសធៀបគំរូ", desc: "ជ្រើសរើសពីស្តុកធៀបគំរូដ៏ស្អាតរបស់យើង។", icon: Palette },
-              { step: "២", title: "ប្ដូរតាមបំណង", desc: "ដាក់ព័ត៌មាន រូបថត និងប្ដូរតាមបំណងអ្វីៗ។", icon: Heart },
+              { step: "២", title: "ប្តូរតាមបំណង", desc: "ដាក់ព័ត៌មាន រូបថត និងប្តូរតាមបំណងអ្វីៗ។", icon: Heart },
               { step: "៣", title: "ចែករំលែក និងតាមដាន", desc: "ចែករំលែក Link ទៅភ្ញៀវ និងតាមដាន RSVP។", icon: Users },
             ].map((item, index) => (
               <div key={index} className="text-center group">
