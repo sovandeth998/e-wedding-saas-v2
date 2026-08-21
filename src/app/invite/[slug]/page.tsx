@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense, useRef, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { startBuiltinMusic, stopMusic, pauseMusic, resumeMusic, isBuiltinMusic } from "@/lib/wedding-music";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -85,8 +86,22 @@ function InvitationContent() {
   }, [invitation]);
 
   const toggleMusic = () => {
-    if (!audioRef.current && invitation?.background_music) {
-      audioRef.current = new Audio(invitation.background_music);
+    const music = invitation?.background_music;
+    if (!music) return;
+
+    if (isBuiltinMusic(music)) {
+      if (musicPlaying) {
+        pauseMusic();
+        setMusicPlaying(false);
+      } else {
+        resumeMusic();
+        setMusicPlaying(true);
+      }
+      return;
+    }
+
+    if (!audioRef.current && music && !music.startsWith("builtin:")) {
+      audioRef.current = new Audio(music);
       audioRef.current.loop = true;
       audioRef.current.volume = 0.4;
       audioRef.current.addEventListener("error", () => {
@@ -104,8 +119,17 @@ function InvitationContent() {
 
   const openEnvelope = () => {
     setOpened(true);
-    if (invitation?.background_music) {
-      const audio = new Audio(invitation.background_music);
+    const music = invitation?.background_music;
+    if (!music) return;
+
+    if (isBuiltinMusic(music)) {
+      startBuiltinMusic(music);
+      setMusicPlaying(true);
+      return;
+    }
+
+    if (music && !music.startsWith("builtin:")) {
+      const audio = new Audio(music);
       audio.loop = true;
       audio.volume = 0.4;
       audio.play().then(() => {

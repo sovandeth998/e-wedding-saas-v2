@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { isBuiltinMusic } from "@/lib/wedding-music";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,12 +87,12 @@ export default function BuilderPage() {
   ];
 
   const musicPresets = [
-    { title: "🎵 គោព្រៃក្បាលថ្នល់ — ប្រពៃណីខ្មែរ", url: "https://cdn.pixabay.com/download/audio/2022/10/18/audio_2ab830925c.mp3" },
-    { title: "🎵 រាំវង់ — តន្ត្រីប្រពៃណី", url: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3" },
-    { title: "🎵 ព្រហ្មចារី — ភ្លេងខ្មែរ", url: "https://cdn.pixabay.com/download/audio/2024/11/04/audio_d37df7e3df.mp3" },
-    { title: "🎵 Wedding Love — Romantic", url: "https://cdn.pixabay.com/download/audio/2023/09/04/audio_459d5f9e1d.mp3" },
-    { title: "🎵 Sweet Wedding Day", url: "https://cdn.pixabay.com/download/audio/2024/02/19/audio_05e3bfb3db.mp3" },
-    { title: "🎵 ស្នេហ៍អមរៀត — រ៉ូមែនទិច", url: "https://cdn.pixabay.com/download/audio/2023/03/21/audio_2d6e2e5f38.mp3" },
+    { id: "wedding_classical",  title: "🎵 Wedding March — ពិធីរៀបការ" },
+    { id: "wedding_romantic",   title: "🎵 Romantic Love — ស្នេហ៍រ៉ូមែនទិច" },
+    { id: "wedding_traditional",title: "🎵 Traditional Khmer — ភ្លេងប្រពៃណី" },
+    { id: "wedding_celebration",title: "🎵 Celebration — ការអបអរ" },
+    { id: "wedding_gentle",     title: "🎵 Gentle Piano — ស្តើងរ៉ូយ៉ាង" },
+    { id: "wedding_ethereal",   title: "🎵 Ethereal — ឋានសួគ៌" },
   ];
 
   useEffect(() => {
@@ -552,13 +553,16 @@ export default function BuilderPage() {
                       >
                         <option value="">គ្មានតន្ត្រី</option>
                         {musicPresets.map((m) => (
-                          <option key={m.url} value={m.url}>{m.title}</option>
+                          <option key={m.id} value={m.id}>{m.title}</option>
                         ))}
                         <option value="__custom__">🔗 បញ្ចូល URL ផ្ទាល់...</option>
                       </select>
                     </div>
-                    {invitation.background_music && invitation.background_music !== "__custom__" && (
+                    {invitation.background_music && invitation.background_music !== "__custom__" && !isBuiltinMusic(invitation.background_music) && (
                       <audio controls src={invitation.background_music} className="w-full h-10 rounded-lg" style={{ filter: "sepia(20%) saturate(70%)" }} />
+                    )}
+                    {invitation.background_music && isBuiltinMusic(invitation.background_music) && (
+                      <p className="text-xs text-muted-foreground bg-gold-50 rounded-lg p-2">🎵 តន្ត្រីនឹងចាក់ដោយស្វ័យប្រវត្តិនៅពេលភ្ញៀវបើកលិខិត</p>
                     )}
                     {(!invitation.background_music || invitation.background_music === "__custom__") && (
                       <div className="space-y-2">
