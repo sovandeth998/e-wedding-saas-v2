@@ -51,6 +51,22 @@ export default function BuilderPage() {
   });
   const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>([]);
   const [qrImageUrl, setQrImageUrl] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("1");
+
+  const templateList = [
+    { id: "1", name: "ផ្កាឈូករ៉ូមែនទិច", category: "modern", colors: "from-pink-100 to-rose-50", accent: "bg-pink-500" },
+    { id: "2", name: "មាសប្រណិត", category: "luxury", colors: "from-yellow-100 to-amber-50", accent: "bg-yellow-600" },
+    { id: "3", name: "ប្រពៃណីខ្មែរ", category: "classic", colors: "from-red-100 to-orange-50", accent: "bg-red-600" },
+    { id: "4", name: "សម័យទំនើប", category: "modern", colors: "from-blue-100 to-indigo-50", accent: "bg-blue-600" },
+    { id: "5", name: "រាជវាំង", category: "luxury", colors: "from-purple-100 to-violet-50", accent: "bg-purple-600" },
+    { id: "6", name: "សួនច្បារ", category: "modern", colors: "from-green-100 to-emerald-50", accent: "bg-green-600" },
+    { id: "7", name: "ផ្កាឈូកពណ៌ស", category: "classic", colors: "from-slate-100 to-gray-50", accent: "bg-slate-600" },
+    { id: "8", name: "ភ្លើងបំភ្លឺ", category: "luxury", colors: "from-amber-100 to-yellow-50", accent: "bg-amber-600" },
+    { id: "9", name: "ទឹកជ្រោះ", category: "modern", colors: "from-cyan-100 to-blue-50", accent: "bg-cyan-600" },
+    { id: "10", name: "ពណ៌ផ្កាឈូក", category: "luxury", colors: "from-fuchsia-100 to-pink-50", accent: "bg-fuchsia-600" },
+    { id: "11", name: "បុរាណ", category: "classic", colors: "from-amber-100 to-orange-50", accent: "bg-amber-700" },
+    { id: "12", name: "ទំនើប", category: "modern", colors: "from-gray-100 to-slate-50", accent: "bg-gray-700" },
+  ];
 
   useEffect(() => {
     if (!params.id) return;
@@ -62,7 +78,10 @@ export default function BuilderPage() {
         .eq("id", params.id)
         .single();
 
-      if (data) setInvitation(data);
+      if (data) {
+        setInvitation(data);
+        if (data.template_id) setSelectedTemplate(data.template_id);
+      }
 
       const { data: photos } = await supabase
         .from("gallery_photos")
@@ -149,7 +168,7 @@ export default function BuilderPage() {
     setSaving(true);
     const { error } = await supabase
       .from("invitations")
-      .update(invitation)
+      .update({ ...invitation, template_id: selectedTemplate })
       .eq("id", params.id);
 
     if (!error) {
@@ -491,12 +510,29 @@ export default function BuilderPage() {
                     <h3 className="font-medium text-secondary flex items-center gap-2">
                       <Eye className="h-4 w-4 text-primary" /> ជ្រើសរើសធៀបគំរូ
                     </h3>
+                    <p className="text-sm text-muted-foreground">ជ្រើសរើសធៀបគំរូដែលអ្នកពេញចិត្ត។ ធៀបគំរូនឹងត្រូវបានប្រើសម្រាប់លិខិតអញ្ជើញរបស់អ្នក។</p>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {["ផ្កាឈូករ៉ូមែនទិច", "មាសប្រណិត", "ប្រពៃណីខ្មែរ", "សម័យទំនើប", "រាជវាំង", "សួនច្បារ"].map((name) => (
-                        <div key={name} className="border border-gold-200 rounded-xl p-4 text-center hover:border-primary cursor-pointer transition-all hover:shadow-md hover:bg-gold-50">
-                          <div className="aspect-[3/4] bg-gradient-to-br from-gold-50 to-gold-100 rounded-lg mb-2" />
-                          <p className="text-sm font-medium text-secondary">{name}</p>
-                        </div>
+                      {templateList.map((tpl) => (
+                        <button
+                          key={tpl.id}
+                          onClick={() => setSelectedTemplate(tpl.id)}
+                          className={`border-2 rounded-xl p-4 text-center transition-all hover:shadow-lg ${
+                            selectedTemplate === tpl.id
+                              ? "border-primary shadow-md ring-2 ring-primary/20"
+                              : "border-gold-200 hover:border-primary/50"
+                          }`}
+                        >
+                          <div className={`aspect-[3/4] bg-gradient-to-br ${tpl.colors} rounded-lg mb-2 relative overflow-hidden`}>
+                            {selectedTemplate === tpl.id && (
+                              <div className="absolute top-2 right-2 h-6 w-6 rounded-full bg-gold-gradient flex items-center justify-center">
+                                <Check className="h-3 w-3 text-white" />
+                              </div>
+                            )}
+                            <div className={`absolute bottom-2 left-2 right-2 h-1 ${tpl.accent} rounded-full opacity-30`} />
+                          </div>
+                          <p className="text-sm font-medium text-secondary">{tpl.name}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{tpl.category}</p>
+                        </button>
                       ))}
                     </div>
                   </div>
