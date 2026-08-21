@@ -21,6 +21,7 @@ import {
   Users,
   UserPlus,
   Download,
+  Send,
   Trash2,
   CheckCircle2,
   XCircle,
@@ -619,6 +620,22 @@ export default function GuestManagerPage() {
                               >
                                 <ExternalLink className="h-4 w-4" />
                               </a>
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                const slug = invitationSlug || "wedding";
+                                const inviteLink = `${window.location.origin}/invite/${guest.custom_link}`;
+                                const coupleName = invitation
+                                  ? `${invitation.groom_name_kh || invitation.groom_name} & ${invitation.bride_name_kh || invitation.bride_name}`
+                                  : "";
+                                const text = `💌 សូមស្វាគមន៍មកកាន់ពិធីរៀបអាពាហ៍ពិពាហ៍!\n\nសួស្តី ${guest.name} 👋\n\n👫 ${coupleName}\n📅 ${invitation?.wedding_date ? new Date(invitation.wedding_date).toLocaleDateString("km-KH") : ""}\n📍 ${invitation?.venue_name || ""}\n\n🔗 សូមចុចមើលលិខិតអញ្ជើញ៖\n${inviteLink}`;
+                                window.open(`https://t.me/share/url?url=${encodeURIComponent(text)}`, "_blank");
+                              }}
+                              title="ចែករំលែក Telegram"
+                            >
+                              <Send className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
