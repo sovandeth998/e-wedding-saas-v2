@@ -6,12 +6,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Heart, LayoutDashboard, Mail, CreditCard, LogOut, Menu, X } from "lucide-react";
+import { Heart, LayoutDashboard, Mail, CreditCard, User, LogOut, Menu, X } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "ទំព័រដើម", icon: LayoutDashboard },
   { href: "/invitations", label: "លិខិតអញ្ជើញរបស់ខ្ញុំ", icon: Mail },
   { href: "/billing", label: "ការទូទាត់", icon: CreditCard },
+  { href: "/profile", label: "គណនីរបស់ខ្ញុំ", icon: User },
 ];
 
 export default function DashboardLayout({
@@ -84,9 +85,12 @@ export default function DashboardLayout({
             ))}
           </nav>
           <div className="p-4 border-t border-gold-200/50">
-            <div className="text-xs text-muted-foreground mb-2 truncate">
-              {user?.email}
-            </div>
+            <Link href="/profile" className="flex items-center gap-2 text-xs text-muted-foreground mb-2 truncate hover:text-secondary transition-colors">
+              <div className="h-6 w-6 rounded-full bg-gold-gradient flex items-center justify-center shrink-0">
+                <User className="h-3 w-3 text-white" />
+              </div>
+              <span className="truncate">{user?.email}</span>
+            </Link>
             <Button variant="outline" size="sm" className="w-full gap-2 border-gold-200 text-secondary hover:bg-gold-50" onClick={handleLogout}>
               <LogOut className="h-4 w-4" /> ចេញ
             </Button>
