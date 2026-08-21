@@ -3,11 +3,21 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, Shield, ShieldOff, Users, UserCheck, AlertTriangle } from "lucide-react";
+import {
+  Search,
+  Shield,
+  ShieldOff,
+  Users,
+  UserCheck,
+  AlertTriangle,
+  Crown,
+  CreditCard,
+  Star,
+} from "lucide-react";
 import { toast } from "sonner";
 
 interface UserRow {
@@ -15,12 +25,32 @@ interface UserRow {
   email: string;
   full_name: string | null;
   role: string;
+  plan: string; // "free" | "standard" | "vip"
   created_at: string;
 }
+
+interface PackageRow {
+  id: string;
+  slug: string;
+  name_kh: string | null;
+}
+
+const PLAN_LABELS: Record<string, string> = {
+  free: "ឥតគិតថ្លៃ",
+  standard: "Standard",
+  vip: "VIP / Luxury",
+};
+
+const PLAN_BADGE: Record<string, string> = {
+  free: "bg-gray-100 text-gray-600 border-transparent hover:bg-gray-100",
+  standard: "bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-50",
+  vip: "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-50",
+};
 
 export default function AdminUsersPage() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [packages, setPackages] = useState<PackageRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
@@ -32,11 +62,31 @@ export default function AdminUsersPage() {
   }, []);
 
   const fetchUsers = async () => {
-    const { data } = await supabase
-      .from("users")
-      .select("*")
-      .order("created_at", { ascending: false });
-    setUsers(data || []);
+    setLoading(true);
+    const [{ data: usersData }, { data: subsData }, { data: pkgsData }] =
+      await Promise.all([
+        supabase.from("users").select("*").order("created_at", { ascending: false }),
+        supabase.from("subscriptions").select("user_id, package_id").eq("status", "active"),
+        supabase.from("packages").select("id, slug, name_kh"),
+      ]);
+
+    setPackages(pkgsData || []);
+
+    const slugByPkgId = new Map<string, string>();
+    (pkgsData || []).forEach((p) => slugByPkgId.set(p.id, p.slug));
+
+    const planByUserId = new Map<string, string>();
+    (subsData || []).forEach((s) => {
+      const slug = slugByPkgId.get(s.package_id);
+      if (slug) planByUserId.set(s.user_id, slug);
+    });
+
+    setUsers(
+      (usersData || []).map((u) => ({
+        ...u,
+        plan: planByUserId.get(u.id) || "free",
+      }))
+    );
     setLoading(false);
   };
 
@@ -57,6 +107,35 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handlePlanChange = async (userId: string, newPlan: string) => {
+    setUpdating(userId);
+
+    await supabase
+      .from("subscriptions")
+      .update({ status: "cancelled" })
+      .eq("user_id", userId)
+      .eq("status", "active");
+
+    if (newPlan !== "free") {
+      const pkg = packages.find((p) => p.slug === newPlan);
+      if (pkg) {
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 365);
+        await supabase.from("subscriptions").insert({
+          user_id: userId,
+          package_id: pkg.id,
+          status: "active",
+          started_at: new Date().toISOString(),
+          expires_at: expiresAt.toISOString(),
+        });
+      }
+    }
+
+    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, plan: newPlan } : u)));
+    setUpdating(null);
+    toast.success(`បានផ្លាស់ប្តូរទៅកញ្ចប់ ${PLAN_LABELS[newPlan]}!`);
+  };
+
   const filteredUsers = users.filter(
     (u) =>
       u.email.toLowerCase().includes(search.toLowerCase()) ||
@@ -65,6 +144,10 @@ export default function AdminUsersPage() {
 
   const adminCount = users.filter((u) => u.role === "admin").length;
   const clientCount = users.filter((u) => u.role !== "admin").length;
+
+  const freeCount = users.filter((u) => u.plan === "free").length;
+  const standardCount = users.filter((u) => u.plan === "standard").length;
+  const vipCount = users.filter((u) => u.plan === "vip").length;
 
   return (
     <div className="space-y-6">
@@ -94,6 +177,27 @@ export default function AdminUsersPage() {
         </Card>
       </div>
 
+      <div className="grid grid-cols-3 gap-4">
+        <Card className="border-0 shadow-md">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center"><CreditCard className="h-5 w-5 text-gray-500" /></div>
+            <div><p className="text-2xl font-bold text-secondary">{freeCount}</p><p className="text-xs text-muted-foreground">ឥតគិតថ្លៃ</p></div>
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-md">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center"><Star className="h-5 w-5 text-blue-500" /></div>
+            <div><p className="text-2xl font-bold text-secondary">{standardCount}</p><p className="text-xs text-muted-foreground">Standard</p></div>
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-md">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-amber-50 flex items-center justify-center"><Crown className="h-5 w-5 text-amber-500" /></div>
+            <div><p className="text-2xl font-bold text-secondary">{vipCount}</p><p className="text-xs text-muted-foreground">VIP / Luxury</p></div>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="relative w-full max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input placeholder="ស្វែងរកអ្នកប្រើប្រាស់..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 border-gold-200" />
@@ -110,6 +214,7 @@ export default function AdminUsersPage() {
                   <tr className="border-b border-gold-200/50 bg-gold-50/50">
                     <th className="text-left p-3 text-sm font-medium text-secondary">អ្នកប្រើប្រាស់</th>
                     <th className="text-left p-3 text-sm font-medium text-secondary">អ៊ីមែល</th>
+                    <th className="text-left p-3 text-sm font-medium text-secondary">កញ្ចប់</th>
                     <th className="text-left p-3 text-sm font-medium text-secondary">តួនាទី</th>
                     <th className="text-left p-3 text-sm font-medium text-secondary">ថ្ងៃចូលរួម</th>
                     <th className="text-right p-3 text-sm font-medium text-secondary">សកម្មភាព</th>
@@ -127,6 +232,23 @@ export default function AdminUsersPage() {
                         </div>
                       </td>
                       <td className="p-3 text-sm text-muted-foreground">{u.email}</td>
+                      <td className="p-3">
+                        <div className="flex flex-col gap-1.5 items-start">
+                          <Badge variant="outline" className={PLAN_BADGE[u.plan] || PLAN_BADGE.free}>
+                            {PLAN_LABELS[u.plan] || PLAN_LABELS.free}
+                          </Badge>
+                          <select
+                            value={u.plan}
+                            disabled={updating === u.id}
+                            onChange={(e) => handlePlanChange(u.id, e.target.value)}
+                            className="rounded-md border border-gold-200 bg-white text-xs text-secondary px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <option value="free">ឥតគិតថ្លៃ</option>
+                            <option value="standard">Standard</option>
+                            <option value="vip">VIP / Luxury</option>
+                          </select>
+                        </div>
+                      </td>
                       <td className="p-3">
                         <Badge variant={u.role === "admin" ? "default" : "secondary"} className={u.role === "admin" ? "bg-gold-gradient text-white border-0" : ""}>
                           {u.role === "admin" ? "Admin" : "Client"}
