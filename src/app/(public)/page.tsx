@@ -6,8 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 const features = [
   {
     icon: Palette,
-    title: "ពុម្ពស្អាតៗ",
-    description: "ជ្រើសរើសពីពុម្ពលិខិតអញ្ជើញរោងពិធីរៀបការដ៏ស្អាត ដែលរចនាដោយអ្នកជំនាញ។",
+    title: "ធៀបគំរូស្អាតៗ",
+    description: "ជ្រើសរើសពីធៀបគំរូលិខិតអញ្ជើញរោងពិធីរៀបការដ៏ស្អាត ដែលរចនាដោយអ្នកជំនាញ។",
   },
   {
     icon: Users,
@@ -44,7 +44,7 @@ const testimonials = [
   },
   {
     name: "បុរី និង ស្រីលិខ",
-    text: "ងាយស្រួលប្រើខ្លាំង និងពុម្ពស្អាតៗ។ ផ្ដល់អនុសាសន៍ខ្លាំង!",
+    text: "ងាយស្រួលប្រើខ្លាំង និងធៀបគំរូស្អាតៗ។ ផ្ដល់អនុសាសន៍ខ្លាំង!",
     rating: 5,
   },
   {
@@ -88,7 +88,7 @@ export default function HomePage() {
             </Link>
             <Link href="/templates">
               <Button size="lg" variant="outline" className="text-base px-10 border-gold-300 text-primary hover:bg-gold-50 h-12">
-                មើលពុម្ព
+                មើលធៀបគំរូ
               </Button>
             </Link>
           </div>
@@ -140,7 +140,7 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {[
-              { step: "១", title: "ជ្រើសរើសពុម្ព", desc: "ជ្រើសរើសពីស្តុកពុម្ពដ៏ស្អាតរបស់យើង។", icon: Palette },
+              { step: "១", title: "ជ្រើសរើសធៀបគំរូ", desc: "ជ្រើសរើសពីស្តុកធៀបគំរូដ៏ស្អាតរបស់យើង។", icon: Palette },
               { step: "២", title: "ប្ដូរតាមបំណង", desc: "ដាក់ព័ត៌មាន រូបថត និងប្ដូរតាមបំណងអ្វីៗ។", icon: Heart },
               { step: "៣", title: "ចែករំលែក និងតាមដាន", desc: "ចែករំលែក Link ទៅភ្ញៀវ និងតាមដាន RSVP។", icon: Users },
             ].map((item, index) => (

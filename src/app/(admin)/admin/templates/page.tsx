@@ -47,7 +47,7 @@ export default function AdminTemplatesPage() {
   };
 
   const deleteTemplate = async (id: string) => {
-    if (!confirm("តើអ្នកពិតជាចង់លុបពុម្ពនេះទេ?")) return;
+    if (!confirm("តើអ្នកពិតជាចង់លុបធៀបគំរូនេះទេ?")) return;
     await supabase.from("templates").delete().eq("id", id);
     setTemplates(templates.filter((t) => t.id !== id));
   };
@@ -62,18 +62,18 @@ export default function AdminTemplatesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-secondary">គ្រប់គ្រងពុម្ព</h1>
-          <p className="text-muted-foreground">ពុម្ពសរុប {templates.length}</p>
+          <h1 className="text-2xl font-bold text-secondary">គ្រប់គ្រងធៀបគំរូ</h1>
+          <p className="text-muted-foreground">ធៀបគំរូសរុប {templates.length}</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2 bg-gold-gradient text-white hover:opacity-90">
-              <Plus className="h-4 w-4" /> បន្ថែមពុម្ព
+              <Plus className="h-4 w-4" /> បន្ថែមធៀបគំរូ
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="text-secondary">បន្ថែមពុម្ពថ្មី</DialogTitle>
+              <DialogTitle className="text-secondary">បន្ថែមធៀបគំរូថ្មី</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -81,7 +81,7 @@ export default function AdminTemplatesPage() {
                 <Input
                   value={newTemplate.name}
                   onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
-                  placeholder="ឈ្មោះពុម្ព"
+                  placeholder="ឈ្មោះធៀបគំរូ"
                   className="border-gold-200"
                 />
               </div>
@@ -118,9 +118,9 @@ export default function AdminTemplatesPage() {
                   id="premium"
                   className="accent-primary"
                 />
-                <Label htmlFor="premium" className="text-secondary">ពុម្ព Premium</Label>
+                <Label htmlFor="premium" className="text-secondary">ធៀបគំរូ Premium</Label>
               </div>
-              <Button onClick={addTemplate} className="w-full bg-gold-gradient text-white hover:opacity-90">បន្ថែមពុម្ព</Button>
+              <Button onClick={addTemplate} className="w-full bg-gold-gradient text-white hover:opacity-90">បន្ថែមធៀបគំរូ</Button>
             </div>
           </DialogContent>
         </Dialog>

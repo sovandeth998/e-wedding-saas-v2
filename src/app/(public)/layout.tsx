@@ -20,7 +20,7 @@ export default function PublicLayout({
           </Link>
           <nav className="hidden md:flex items-center gap-8">
             <Link href="/templates" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-              ពុម្ព
+              ធៀបគំរូ
             </Link>
             <Link href="/pricing" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
               តម្លៃ
@@ -64,7 +64,7 @@ export default function PublicLayout({
             <div>
               <h3 className="font-semibold text-gold-300 mb-4">ផលិតផល</h3>
               <ul className="space-y-3 text-sm text-gray-400">
-                <li><Link href="/templates" className="hover:text-gold-300 transition-colors">ពុម្ពលិខិត</Link></li>
+                <li><Link href="/templates" className="hover:text-gold-300 transition-colors">ធៀបគំរូលិខិត</Link></li>
                 <li><Link href="/pricing" className="hover:text-gold-300 transition-colors">តម្លៃសេវា</Link></li>
                 <li><Link href="/how-it-works" className="hover:text-gold-300 transition-colors">របៀបប្រើប្រាស់</Link></li>
               </ul>

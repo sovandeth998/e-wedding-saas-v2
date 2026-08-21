@@ -29,7 +29,7 @@ const templates: Template[] = [
     name: "ផ្កាឈូករ៉ូមែនទិច",
     category: "modern",
     isPremium: false,
-    description: "ពុម្ពរ៉ូមែនទិចជាមួយពណ៌មាសផ្កាឈូក",
+    description: "ធៀបគំរូរ៉ូមែនទិចជាមួយពណ៌មាសផ្កាឈូក",
     features: ["រចនាបែបទំនើប", "ពណ៌ផ្កាឈូករ៉ូមែនទិច", "ងាយស្រួលកែសម្រួល", "ឆ្លើយតបជាមួយទូរស័ព្ទ"],
   },
   {
@@ -154,14 +154,14 @@ export default function TemplatesPage() {
     <div className="container mx-auto px-4 py-16 max-w-6xl">
       <div className="text-center mb-16">
         <p className="text-primary font-medium text-sm tracking-wider uppercase mb-3">
-          ពុម្ពលិខិត
+          ធៀបគំរូលិខិត
         </p>
         <h1 className="text-4xl md:text-5xl font-bold mb-4 text-secondary">
-          ពុម្ពលិខិតអញ្ជើញរោងពិធីរៀបការ
+          ធៀបគំរូលិខិតអញ្ជើញរោងពិធីរៀបការ
         </h1>
         <p className="text-muted-foreground max-w-2xl mx-auto">
-          ជ្រើសរើសពីស្តុកពុម្ពដ៏ស្អាតរបស់យើងដែលរចនាដោយអ្នកជំនាញ។
-          យើងមានពុម្ពសម្រាប់រោងពិធីគ្រប់ប្រភេទ។
+          ជ្រើសរើសពីស្តុកធៀបគំរូដ៏ស្អាតរបស់យើងដែលរចនាដោយអ្នកជំនាញ។
+          យើងមានធៀបគំរូសម្រាប់រោងពិធីគ្រប់ប្រភេទ។
         </p>
       </div>
 
@@ -241,7 +241,7 @@ export default function TemplatesPage() {
                   className="w-full bg-gold-gradient text-white hover:opacity-90"
                   size="sm"
                 >
-                  ប្រើពុម្ពនេះ
+                  ប្រើធៀបគំរូនេះ
                 </Button>
               </Link>
             </CardContent>
@@ -252,7 +252,7 @@ export default function TemplatesPage() {
       {filtered.length === 0 && (
         <div className="text-center py-20">
           <p className="text-muted-foreground text-lg">
-            មិនមានពុម្ពក្នុងប្រភេទនេះទេ
+            មិនមានធៀបគំរូក្នុងប្រភេទនេះទេ
           </p>
         </div>
       )}
@@ -278,7 +278,7 @@ export default function TemplatesPage() {
               <div className="aspect-[16/10] bg-gradient-to-br from-gold-50 via-gold-100 to-gold-50 rounded-lg flex items-center justify-center border border-gold-200">
                 <div className="text-center">
                   <Star className="h-12 w-12 text-gold-300 mx-auto mb-3" />
-                  <p className="text-gold-400 font-medium">មើលជាមុនពុម្ព</p>
+                  <p className="text-gold-400 font-medium">មើលជាមុនធៀបគំរូ</p>
                 </div>
               </div>
 
@@ -305,7 +305,7 @@ export default function TemplatesPage() {
                     variant="outline"
                     className="w-full border-gold-300 text-primary hover:bg-gold-50"
                   >
-                    ប្រើពុម្ពនេះ
+                    ប្រើធៀបគំរូនេះ
                   </Button>
                 </Link>
               </div>

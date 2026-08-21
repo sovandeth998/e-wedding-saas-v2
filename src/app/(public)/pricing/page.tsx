@@ -12,7 +12,7 @@ const pricingTiers = [
     popular: false,
     icon: Sparkles,
     features: [
-      { name: "ពុម្ពធម្មតា (1-2)", included: true },
+      { name: "ធៀបគំរូធម្មតា (1-2)", included: true },
       { name: "រយៈពេល Link: 30 ថ្ងៃ", included: true },
       { name: "ភ្ញៀវរហូតដល់ 50 នាក់", included: true },
       { name: "រូបថត 2 សន្លឹក", included: true },
@@ -31,7 +31,7 @@ const pricingTiers = [
     popular: true,
     icon: Crown,
     features: [
-      { name: "ពុម្ពសម័យទំនើប (5+)", included: true },
+      { name: "ធៀបគំរូសម័យទំនើប (5+)", included: true },
       { name: "រយៈពេល Link: 6 ខែ", included: true },
       { name: "ភ្ញៀវមិនកំណត់", included: true },
       { name: "រូបថត 6-10 សន្លឹក", included: true },
@@ -50,7 +50,7 @@ const pricingTiers = [
     popular: false,
     icon: Crown,
     features: [
-      { name: "ពុម្ពប្រណិតទាំងអស់", included: true },
+      { name: "ធៀបគំរូប្រណិតទាំងអស់", included: true },
       { name: "រយៈពេល Link: អចិន្ត្រៃយ៍ (1 ឆ្នាំ)", included: true },
       { name: "ភ្ញៀវមិនកំណត់", included: true },
       { name: "រូបថត 20+ (HD Gallery)", included: true },

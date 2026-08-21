@@ -21,7 +21,7 @@ const templates: Record<
     name: "ផ្កាឈូករ៉ូមែនទិច",
     category: "modern",
     isPremium: false,
-    description: "ពុម្ពរ៉ូមែនទិចជាមួយពណ៌មាសផ្កាឈូក សមស្របសម្រាប់คู่ស្នេហ៍ដែលចូលចិត្តរចនាបែបថ្មីនិងទាន់សម័យ។",
+    description: "ធៀបគំរូរ៉ូមែនទិចជាមួយពណ៌មាសផ្កាឈូក សមស្របសម្រាប់คู่ស្នេហ៍ដែលចូលចិត្តរចនាបែបថ្មីនិងទាន់សម័យ។",
     features: ["រចនាបែបទំនើប", "ពណ៌ផ្កាឈូករ៉ូមែនទិច", "ងាយស្រួលកែសម្រួល", "ឆ្លើយតបជាមួយទូរស័ព្ទ", "គាំទ្ររូបភាពច្រើន"],
     includes: ["ទំព័រគោល", "លិខិតអញ្ជើញឌីជីថល", "ទំព័ររៀបការ", "ទំព័រត្រួតពិនិត្យ"],
   },
@@ -153,14 +153,14 @@ export default function TemplateDetailPage({
     return (
       <div className="container mx-auto px-4 py-20 text-center">
         <h1 className="text-3xl font-bold text-secondary mb-4">
-          មិនមានពុម្ពនេះទេ
+          មិនមានធៀបគំរូនេះទេ
         </h1>
         <p className="text-muted-foreground mb-8">
-          ពុម្ពដែលអ្នកស្វែងរកមិនមាននៅឡើយទេ។
+          ធៀបគំរូដែលអ្នកស្វែងរកមិនមាននៅឡើយទេ។
         </p>
         <Link href="/templates">
           <Button className="bg-gold-gradient text-white hover:opacity-90">
-            ត្រឡប់ទៅពុម្ព
+            ត្រឡប់ទៅធៀបគំរូ
           </Button>
         </Link>
       </div>
@@ -178,7 +178,7 @@ export default function TemplateDetailPage({
           href="/templates"
           className="text-primary hover:underline text-sm font-medium"
         >
-          &larr; ត្រឡប់ទៅពុម្ពទាំងអស់
+          &larr; ត្រឡប់ទៅធៀបគំរូទាំងអស់
         </Link>
       </div>
 
@@ -188,7 +188,7 @@ export default function TemplateDetailPage({
             <div className="text-center">
               <Star className="h-16 w-16 text-gold-300 mx-auto mb-4" />
               <p className="text-gold-400 font-medium text-lg">
-                មើលជាមុនពុម្ព
+                មើលជាមុនធៀបគំរូ
               </p>
               <p className="text-gold-300 text-sm mt-1">
                 {template.name}
@@ -252,7 +252,7 @@ export default function TemplateDetailPage({
           <div className="flex gap-3 pt-4">
             <Link href="/register" className="flex-1">
               <Button className="w-full bg-gold-gradient text-white hover:opacity-90 gap-2">
-                <Eye className="h-4 w-4" /> ប្រើពុម្ពនេះ
+                <Eye className="h-4 w-4" /> ប្រើធៀបគំរូនេះ
               </Button>
             </Link>
             <Link href="/dashboard" className="flex-1">
@@ -260,7 +260,7 @@ export default function TemplateDetailPage({
                 variant="outline"
                 className="w-full border-gold-300 text-primary hover:bg-gold-50"
               >
-                គ្រប់គ្រងពុម្ព
+                គ្រប់គ្រងធៀបគំរូ
               </Button>
             </Link>
           </div>
@@ -270,7 +270,7 @@ export default function TemplateDetailPage({
       {related.length > 0 && (
         <div className="mt-20">
           <h2 className="text-2xl font-bold text-secondary mb-8 text-center">
-            ពុម្ពដែលពាក់ព័ន្ធ
+            ធៀបគំរូដែលពាក់ព័ន្ធ
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {related.map((rel) => (

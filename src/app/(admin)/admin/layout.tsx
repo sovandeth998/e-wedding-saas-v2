@@ -12,7 +12,7 @@ const navItems = [
   { href: "/admin", label: "ស្ថិតិ", icon: BarChart3 },
   { href: "/admin/users", label: "អ្នកប្រើប្រាស់", icon: Users },
   { href: "/admin/orders", label: "ការបញ្ជាទិញ", icon: CreditCard },
-  { href: "/admin/templates", label: "ពុម្ព", icon: Palette },
+  { href: "/admin/templates", label: "ធៀបគំរូ", icon: Palette },
   { href: "/admin/settings", label: "ការកំណត់", icon: Settings },
 ];
 

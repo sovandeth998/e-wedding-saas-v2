@@ -390,7 +390,7 @@ export default function BuilderPage() {
                     <Input id="background_music" value={invitation.background_music || ""} onChange={(e) => updateField("background_music", e.target.value)} placeholder="YouTube ឬ URL តន្ត្រី..." className="border-gold-200 focus-visible:ring-primary" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-secondary">ជ្រើសរើសពុម្ព</Label>
+                    <Label className="text-secondary">ជ្រើសរើសធៀបគំរូ</Label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       {["ផ្កាឈូករ៉ូមែនទិច", "មាសប្រណិត", "ប្រពៃណីខ្មែរ", "សម័យទំនើប", "រាជវាំង", "សួនច្បារ"].map((name) => (
                         <div key={name} className="border border-gold-200 rounded-lg p-4 text-center hover:border-primary cursor-pointer transition-colors hover:shadow-md">

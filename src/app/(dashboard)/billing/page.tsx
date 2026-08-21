@@ -90,7 +90,7 @@ export default function BillingPage() {
     const { data: settings } = await supabase
       .from("platform_settings")
       .select("key, value")
-      .in("key", ["owner_bank_name", "owner_account_name", "owner_account_number"]);
+      .in("key", ["owner_bank_name", "owner_account_name", "owner_account_number", "owner_khqr_image"]);
     if (settings) {
       const map: Record<string, string> = {};
       settings.forEach((s) => { map[s.key] = s.value; });
@@ -301,6 +301,11 @@ export default function BillingPage() {
                         {formatCountdown(countdown)}
                       </span>
                     </div>
+                    {bankSettings.owner_khqr_image ? (
+                      <div className="flex justify-center mb-3">
+                        <img src={bankSettings.owner_khqr_image} alt="KHQR" className="w-[220px] h-[220px] object-contain rounded-xl border border-gold-200" />
+                      </div>
+                    ) : null}
                     <div className="p-6 bg-gold-50 rounded-xl border border-gold-200 text-left space-y-3 mx-auto max-w-sm">
                       <div className="text-center mb-3">
                         <p className="text-lg font-bold text-primary">{bankSettings.owner_bank_name || "ABA Bank"}</p>
