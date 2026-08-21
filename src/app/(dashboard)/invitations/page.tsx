@@ -9,7 +9,7 @@ import { useLimits } from "@/hooks/useLimits";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, ExternalLink, Share2, Globe, Palette, Check, Crown, Eye } from "lucide-react";
+import { Plus, Edit, Trash2, ExternalLink, Share2, Globe, Palette, Check, Crown, Eye, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import type { Invitation } from "@/types/database";
@@ -220,11 +220,17 @@ export default function InvitationsPage() {
                   )}
 
                   {/* ជួរប៊ូតុងបន្ទាប់បន្សំ */}
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-5 gap-2">
                     <Link href={`/invite/${invitation.slug || invitation.id}`} target="_blank">
                       <Button variant="outline" size="sm" className="w-full gap-1 text-xs">
                         {isPublished ? <ExternalLink className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                         មើល
+                      </Button>
+                    </Link>
+
+                    <Link href={`/guests/${invitation.id}`}>
+                      <Button variant="outline" size="sm" className="w-full gap-1 text-xs border-blue-200 text-blue-700 hover:bg-blue-50">
+                        <Users className="h-3 w-3" /> ភ្ញៀវ
                       </Button>
                     </Link>
 
