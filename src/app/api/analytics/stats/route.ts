@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, serviceKey || anonKey);
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
 export async function GET(request: Request) {
   try {
@@ -14,14 +10,32 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "invitation_id required" }, { status: 400 });
     }
 
-    const wishesQuery = serviceKey
-      ? supabase.from("wishes").select("id, sender_name, content, is_approved, created_at").eq("invitation_id", invitation_id).order("created_at", { ascending: false })
-      : supabase.from("wishes").select("id, sender_name, content, is_approved, created_at").eq("invitation_id", invitation_id).eq("is_approved", true).order("created_at", { ascending: false });
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll() {},
+        },
+      }
+    );
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const [viewsRes, rsvpsRes, wishesRes, guestsRes, dailyViewsRes] = await Promise.all([
       supabase.from("page_views").select("id, guest_name, viewed_at, ip_hash").eq("invitation_id", invitation_id).order("viewed_at", { ascending: false }),
       supabase.from("rsvps").select("id, status, number_of_guests, created_at, guest:guests(name)").eq("invitation_id", invitation_id),
-      wishesQuery,
+      supabase.from("wishes").select("id, sender_name, content, is_approved, created_at").eq("invitation_id", invitation_id).order("created_at", { ascending: false }),
       supabase.from("guests").select("id, name, side").eq("invitation_id", invitation_id),
       supabase.from("page_views").select("viewed_at, ip_hash").eq("invitation_id", invitation_id).order("viewed_at", { ascending: true }),
     ]);
