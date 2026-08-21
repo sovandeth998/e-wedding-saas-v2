@@ -343,7 +343,7 @@ export default function TemplatesPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 {template.description}
               </p>
-              <Link href="/register">
+              <Link href={`/register?template=${template.id}`}>
                 <Button className="w-full bg-gold-gradient text-white hover:opacity-90 gap-2">
                   <Check className="h-4 w-4" /> ប្រើធៀបគំរូនេះ
                 </Button>
@@ -396,7 +396,7 @@ export default function TemplatesPage() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <Link href="/register" className="flex-1">
+                <Link href={`/register?template=${selectedTemplate.id}`} className="flex-1">
                   <Button className="w-full bg-gold-gradient text-white hover:opacity-90">
                     ប្រើធៀបគំរូនេះ
                   </Button>

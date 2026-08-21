@@ -46,7 +46,15 @@ export default function InvitationsPage() {
     fetchData();
   }, [user]);
 
-  const createNewInvitation = async () => {
+  useEffect(() => {
+    const pendingTemplateId = localStorage.getItem("pendingTemplateId");
+    if (pendingTemplateId && user && !loading && invitations.length === 0) {
+      localStorage.removeItem("pendingTemplateId");
+      createNewInvitation(pendingTemplateId);
+    }
+  }, [user, loading, invitations]);
+
+  const createNewInvitation = async (templateId?: string) => {
     if (!user) return;
 
     const { data, error } = await supabase
@@ -58,6 +66,7 @@ export default function InvitationsPage() {
         bride_name: "",
         wedding_date: new Date().toISOString(),
         status: "draft",
+        template_id: templateId || "1",
       })
       .select()
       .single();
@@ -118,7 +127,7 @@ export default function InvitationsPage() {
           <h1 className="text-2xl font-bold text-secondary">លិខិតអញ្ជើញរបស់ខ្ញុំ</h1>
           <p className="text-muted-foreground">គ្រប់គ្រងលិខិតអញ្ជើញរោងពិធីរបស់អ្នក</p>
         </div>
-        <Button className="gap-2 bg-gold-gradient text-white hover:opacity-90" onClick={createNewInvitation}>
+        <Button className="gap-2 bg-gold-gradient text-white hover:opacity-90" onClick={() => createNewInvitation()}>
           <Plus className="h-4 w-4" /> បង្កើតថ្មី
         </Button>
       </div>
@@ -142,7 +151,7 @@ export default function InvitationsPage() {
         <Card className="border-0 shadow-md">
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground mb-4">អ្នកមិនទាន់បង្កើតលិខិតអញ្ជើញណាមួយទេ។</p>
-            <Button onClick={createNewInvitation} className="gap-2 bg-gold-gradient text-white hover:opacity-90">
+            <Button onClick={() => createNewInvitation()} className="gap-2 bg-gold-gradient text-white hover:opacity-90">
               <Plus className="h-4 w-4" /> បង្កើតលិខិតអញ្ជើញដំបូង
             </Button>
           </CardContent>

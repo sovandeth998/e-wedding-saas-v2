@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -18,8 +18,14 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [templateId, setTemplateId] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setTemplateId(params.get("template"));
+  }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +58,9 @@ export default function RegisterPage() {
     }
 
     setSuccess("បង្កើតគណនីជោគជ័យ! សូមពិនិត្យអ៊ីមែលរបស់អ្នក។");
+    if (templateId) {
+      localStorage.setItem("pendingTemplateId", templateId);
+    }
     setLoading(false);
   };
 
