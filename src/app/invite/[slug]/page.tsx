@@ -14,7 +14,8 @@ import type { Invitation, Guest, Wish, QRCode, GalleryPhoto, TimelineEvent } fro
 function InvitationContent() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const guestName = searchParams.get("to") || "";
+  const rawTo = searchParams.get("to") || "";
+  const guestName = (() => { try { return decodeURIComponent(rawTo); } catch { return rawTo; } })();
   const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [guest, setGuest] = useState<Guest | null>(null);
   const displayName = guest?.name || guestName.replace(/-[a-z0-9]{12}$/i, "").trim() || "";
