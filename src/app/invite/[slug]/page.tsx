@@ -512,7 +512,7 @@ function InvitationContent() {
         )}
 
         <div className="rounded-2xl p-6" style={cardStyle}>
-          <h2 className="text-lg font-bold mb-4 text-center tracking-wide" style={{ color: t.textPri }}>RSVP</h2>
+          <h2 className="text-lg font-bold mb-4 text-center tracking-wide" style={{ color: t.textPri }}>បញ្ជាក់ការចូលរួម</h2>
           <div className="h-px w-16 mx-auto mb-4" style={{ background: `${t.accent}25` }} />
           {rsvpSubmitted ? (
             <div className="text-center py-6">
@@ -525,7 +525,7 @@ function InvitationContent() {
           ) : (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-sm" style={{ color: t.textSec }}>ការឆ្លើយតបរបស់អ្នក</Label>
+                <Label className="text-sm" style={{ color: t.textSec }}>តើអ្នកនឹងមកចូលរួមទេ?</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {([{ value: "attending" as const, label: "✓ នឹងមក" }, { value: "not_attending" as const, label: "✗ មិនមក" }]).map((opt) => (
                     <Button key={opt.value} variant="outline" className="rounded-xl h-11"
@@ -538,15 +538,15 @@ function InvitationContent() {
               </div>
               {rsvpStatus === "attending" && (
                 <div className="space-y-2">
-                  <Label className="text-sm" style={{ color: t.textSec }}>ចំនួនភ្ញៀវ</Label>
+                  <Label className="text-sm" style={{ color: t.textSec }}>អ្នកមកជាមួយប៉ុន្មាននាក់?</Label>
                   <Input type="number" min={1} max={10} value={rsvpGuests} onChange={(e) => setRsvpGuests(parseInt(e.target.value) || 1)} className="rounded-xl" style={{ borderColor: `${t.accent}25`, background: t.accentBg, color: t.textPri }} />
                 </div>
               )}
               <div className="space-y-2">
-                <Label className="text-sm" style={{ color: t.textSec }}>សារ (ជម្រើស)</Label>
-                <Textarea value={rsvpMessage} onChange={(e) => setRsvpMessage(e.target.value)} placeholder="សរសេរសារជូនគូស្នេហ៍..." rows={3} className="rounded-xl" style={{ borderColor: `${t.accent}25`, background: t.accentBg, color: t.textPri }} />
+                <Label className="text-sm" style={{ color: t.textSec }}>សារជូនពរ (ជម្រើស)</Label>
+                <Textarea value={rsvpMessage} onChange={(e) => setRsvpMessage(e.target.value)} placeholder="សរសេរពាក្យជូនពរដល់គូស្នេហ៍..." rows={3} className="rounded-xl" style={{ borderColor: `${t.accent}25`, background: t.accentBg, color: t.textPri }} />
               </div>
-              <Button onClick={submitRSVP} className="w-full text-white rounded-xl h-11 shadow-lg" style={{ background: `linear-gradient(to right, ${t.btnFrom}, ${t.btnTo})` }} disabled={!rsvpStatus}>ផ្ញើ RSVP</Button>
+              <Button onClick={submitRSVP} className="w-full text-white rounded-xl h-11 shadow-lg" style={{ background: `linear-gradient(to right, ${t.btnFrom}, ${t.btnTo})` }} disabled={!rsvpStatus}>ផ្ញើការឆ្លើយតប</Button>
             </div>
           )}
         </div>
