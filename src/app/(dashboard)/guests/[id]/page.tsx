@@ -90,7 +90,8 @@ export default function GuestManagerPage() {
   const addGuest = async () => {
     if (!newGuestName.trim()) return;
 
-    const guestSlug = getGuestSlug(newGuestName);
+    const timestamp = Date.now().toString(36);
+    const guestSlug = `${invitationSlug || "wedding"}/guest/${newGuestName.trim().toLowerCase().replace(/\s+/g, "-")}-${timestamp}${Math.random().toString(36).slice(2, 6)}`;
 
     const { error } = await supabase.from("guests").insert({
       invitation_id: params.id,
@@ -102,27 +103,45 @@ export default function GuestManagerPage() {
     if (!error) {
       setNewGuestName("");
       setDialogOpen(false);
+      toast.success("បានបន្ថែមភ្ញៀវដោយជោគជ័យ!");
       fetchGuests();
+    } else {
+      toast.error("បរាជ័យក្នុងការបន្ថែមភ្ញៀវ");
     }
   };
 
   const addBulkGuests = async () => {
     const names = bulkText.split("\n").filter((n) => n.trim());
 
-    const guestInserts = names.map((name) => ({
-      invitation_id: params.id,
-      name: name.trim(),
-      custom_link: getGuestSlug(name.trim()),
-      side: "both" as const,
-    }));
+    let successCount = 0;
+    let failCount = 0;
 
-    const { error } = await supabase.from("guests").insert(guestInserts);
+    for (const name of names) {
+      const trimmed = name.trim();
+      const timestamp = Date.now().toString(36);
+      const guestSlug = `${invitationSlug || "wedding"}/guest/${trimmed.toLowerCase().replace(/\s+/g, "-")}-${timestamp}${Math.random().toString(36).slice(2, 6)}`;
 
-    if (!error) {
-      setBulkText("");
-      setBulkDialogOpen(false);
+      const { error } = await supabase.from("guests").insert({
+        invitation_id: params.id,
+        name: trimmed,
+        custom_link: guestSlug,
+        side: "both",
+      });
+
+      if (error) failCount++;
+      else successCount++;
+    }
+
+    if (successCount > 0) {
+      toast.success(`បានបញ្ចូលភ្ញៀវ ${successCount} នាក់ដោយជោគជ័យ!`);
       fetchGuests();
     }
+    if (failCount > 0) {
+      toast.error(`បរាជ័យ ${failCount} នាក់`);
+    }
+
+    setBulkText("");
+    setBulkDialogOpen(false);
   };
 
   const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,23 +151,45 @@ export default function GuestManagerPage() {
     const text = await file.text();
     const lines = text.split(/\r?\n/).filter((l) => l.trim());
 
-    const guestInserts = lines.map((line) => {
-      const name = line.replace(/"/g, "").trim();
-      return {
+    const headers = ["ឈ្មោះ", "name", "ឈ្មោះភ្ញៀវ"];
+    const firstLine = lines[0]?.replace(/"/g, "").trim().toLowerCase();
+    const startIdx = headers.includes(firstLine!) ? 1 : 0;
+    const dataLines = lines.slice(startIdx);
+
+    const names = dataLines.map((line) => {
+      const parts = line.split(",").map((p) => p.replace(/"/g, "").trim());
+      return parts[0] || "";
+    }).filter((n) => n.length > 0);
+
+    const uniqueNames = Array.from(new Set(names));
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const name of uniqueNames) {
+      const timestamp = Date.now().toString(36);
+      const guestSlug = `${invitationSlug || "wedding"}/guest/${name.toLowerCase().replace(/\s+/g, "-")}-${timestamp}${Math.random().toString(36).slice(2, 6)}`;
+
+      const { error } = await supabase.from("guests").insert({
         invitation_id: params.id,
         name,
-        custom_link: getGuestSlug(name),
-        side: "both" as const,
-      };
-    });
+        custom_link: guestSlug,
+        side: "both",
+      });
 
-    const { error } = await supabase.from("guests").insert(guestInserts);
+      if (error) {
+        failCount++;
+      } else {
+        successCount++;
+      }
+    }
 
-    if (!error) {
-      toast.success(`បានបញ្ចូលភ្ញៀវ ${guestInserts.length} នាក់ដោយជោគជ័យ!`);
+    if (successCount > 0) {
+      toast.success(`បានបញ្ចូលភ្ញៀវ ${successCount} នាក់ដោយជោគជ័យ!`);
       fetchGuests();
-    } else {
-      toast.error("បរាជ័យក្នុងការបញ្ចូលភ្ញៀវ");
+    }
+    if (failCount > 0) {
+      toast.error(`បរាជ័យ ${failCount} នាក់`);
     }
 
     e.target.value = "";
