@@ -86,12 +86,12 @@ export default function BuilderPage() {
   ];
 
   const musicPresets = [
-    { title: "🎵 គោព្រៃក្បាលថ្នល់ — ប្រពៃណីខ្មែរ", url: "https://cdn.pixabay.com/audio/2022/10/18/audio_2ab830925c.mp3" },
-    { title: "🎵 រាំវង់ — តន្ត្រីប្រពៃណី", url: "https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3" },
-    { title: "🎵 ព្រហ្មចារី — ភ្លេងខ្មែរ", url: "https://cdn.pixabay.com/audio/2024/11/04/audio_d37df7e3df.mp3" },
-    { title: "🎵 Wedding Love — Romantic", url: "https://cdn.pixabay.com/audio/2023/09/04/audio_459d5f9e1d.mp3" },
-    { title: "🎵 Sweet Wedding Day", url: "https://cdn.pixabay.com/audio/2024/02/19/audio_05e3bfb3db.mp3" },
-    { title: "🎵 ស្នេហ៍អមរៀត — រ៉ូមែនទិច", url: "https://cdn.pixabay.com/audio/2023/03/21/audio_2d6e2e5f38.mp3" },
+    { title: "🎵 គោព្រៃក្បាលថ្នល់ — ប្រពៃណីខ្មែរ", url: "https://cdn.pixabay.com/download/audio/2022/10/18/audio_2ab830925c.mp3" },
+    { title: "🎵 រាំវង់ — តន្ត្រីប្រពៃណី", url: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3" },
+    { title: "🎵 ព្រហ្មចារី — ភ្លេងខ្មែរ", url: "https://cdn.pixabay.com/download/audio/2024/11/04/audio_d37df7e3df.mp3" },
+    { title: "🎵 Wedding Love — Romantic", url: "https://cdn.pixabay.com/download/audio/2023/09/04/audio_459d5f9e1d.mp3" },
+    { title: "🎵 Sweet Wedding Day", url: "https://cdn.pixabay.com/download/audio/2024/02/19/audio_05e3bfb3db.mp3" },
+    { title: "🎵 ស្នេហ៍អមរៀត — រ៉ូមែនទិច", url: "https://cdn.pixabay.com/download/audio/2023/03/21/audio_2d6e2e5f38.mp3" },
   ];
 
   useEffect(() => {

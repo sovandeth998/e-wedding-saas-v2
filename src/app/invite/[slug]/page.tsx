@@ -84,21 +84,35 @@ function InvitationContent() {
     return () => clearInterval(timer);
   }, [invitation]);
 
-  useEffect(() => {
-    if (opened && invitation?.background_music) {
-      if (!audioRef.current) {
-        audioRef.current = new Audio(invitation.background_music);
-        audioRef.current.loop = true;
-        audioRef.current.volume = 0.4;
-      }
+  const toggleMusic = () => {
+    if (!audioRef.current && invitation?.background_music) {
+      audioRef.current = new Audio(invitation.background_music);
+      audioRef.current.loop = true;
+      audioRef.current.volume = 0.4;
+      audioRef.current.addEventListener("error", () => {
+        setMusicPlaying(false);
+      });
+    }
+    if (!audioRef.current) return;
+    if (musicPlaying) {
+      audioRef.current.pause();
+      setMusicPlaying(false);
+    } else {
       audioRef.current.play().then(() => setMusicPlaying(true)).catch(() => {});
     }
-  }, [opened, invitation?.background_music]);
+  };
 
-  const toggleMusic = () => {
-    if (!audioRef.current) return;
-    if (musicPlaying) { audioRef.current.pause(); setMusicPlaying(false); }
-    else { audioRef.current.play().then(() => setMusicPlaying(true)).catch(() => {}); }
+  const openEnvelope = () => {
+    setOpened(true);
+    if (invitation?.background_music) {
+      const audio = new Audio(invitation.background_music);
+      audio.loop = true;
+      audio.volume = 0.4;
+      audio.play().then(() => {
+        audioRef.current = audio;
+        setMusicPlaying(true);
+      }).catch(() => {});
+    }
   };
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
@@ -230,7 +244,7 @@ function InvitationContent() {
                   </div>
                 )}
                 <p className="text-sm mb-8" style={{ color: t.textSec }}>{weddingDate.toLocaleDateString("km-KH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
-                <Button onClick={() => setOpened(true)} className="w-full text-white rounded-2xl h-12 font-semibold tracking-wide shadow-lg" style={{ background: `linear-gradient(135deg, ${t.btnFrom}, ${t.btnTo})`, boxShadow: `0 6px 24px ${t.accent}40` }}>បើកលិខិតអញ្ជើញ</Button>
+                <Button onClick={openEnvelope} className="w-full text-white rounded-2xl h-12 font-semibold tracking-wide shadow-lg" style={{ background: `linear-gradient(135deg, ${t.btnFrom}, ${t.btnTo})`, boxShadow: `0 6px 24px ${t.accent}40` }}>បើកលិខិតអញ្ជើញ</Button>
                 <div className="mt-6 flex items-center justify-center"><ChevronDown className="h-5 w-5 animate-bounce" style={{ color: `${t.accent}50` }} /></div>
               </div>
             </div>
@@ -256,7 +270,7 @@ function InvitationContent() {
                   </div>
                 )}
                 <p className="text-sm mb-6" style={{ color: t.textSec }}>{weddingDate.toLocaleDateString("km-KH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
-                <Button onClick={() => setOpened(true)} className="w-full text-white rounded-xl h-12 font-medium tracking-wide shadow-lg" style={{ background: `linear-gradient(to right, ${t.btnFrom}, ${t.btnTo})` }}>បើកលិខិតអញ្ជើញ</Button>
+                <Button onClick={openEnvelope} className="w-full text-white rounded-xl h-12 font-medium tracking-wide shadow-lg" style={{ background: `linear-gradient(to right, ${t.btnFrom}, ${t.btnTo})` }}>បើកលិខិតអញ្ជើញ</Button>
                 <div className="mt-6 flex items-center justify-center"><ChevronDown className="h-4 w-4 animate-bounce" style={{ color: `${t.accent}40` }} /></div>
               </div>
             </div>
