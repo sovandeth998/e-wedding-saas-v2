@@ -235,7 +235,8 @@ export default function GuestManagerPage() {
     setTimeout(() => setAllCopied(false), 2000);
   };
 
-  const exportCSV = () => {
+  const exportExcel = async () => {
+    const XLSX = await import("xlsx");
     const headers = ["ឈ្មោះ", "ស្ថានភាព", "ភ្ញៀវ", "សារ"];
     const rows = guests.map((g) => [
       g.name,
@@ -250,19 +251,11 @@ export default function GuestManagerPage() {
       g.rsvp?.message || "",
     ]);
 
-    const BOM = "\uFEFF";
-    const csv =
-      BOM +
-      [headers.join(","), ...rows.map((r) => r.map((c) => `"${c}"`).join(","))].join(
-        "\n"
-      );
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `guests-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const data = [headers, ...rows];
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "ភ្ញៀវ");
+    XLSX.writeFile(wb, `guests-${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   const sendTelegramToGuest = async (guest: GuestWithRsvp) => {
@@ -334,10 +327,10 @@ export default function GuestManagerPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={exportCSV}
+            onClick={exportExcel}
             className="gap-2 border-gold-200 text-secondary hover:bg-gold-50"
           >
-            <Download className="h-4 w-4" /> ទាញយក CSV
+            <Download className="h-4 w-4" /> ទាញយក Excel
           </Button>
           <Button
             variant="outline"
