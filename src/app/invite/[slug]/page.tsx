@@ -263,7 +263,7 @@ function InvitationContent() {
                 <h1 className="text-3xl font-bold mb-6" style={{ color: t.textPri }}>{invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}</h1>
                 {guestName && (
                   <div className="mb-6 py-3 px-5 rounded-2xl" style={{ border: `1px solid ${t.accent}20`, background: `${t.accent}08` }}>
-                    <p className="text-xs tracking-wider uppercase" style={{ color: t.accent }}>ជូនពរ</p>
+                    <p className="text-xs tracking-wider uppercase" style={{ color: t.accent }}>សូមអញ្ជើញ</p>
                     <p className="font-semibold text-lg mt-1" style={{ color: t.textPri }}>{guestName}</p>
                   </div>
                 )}
@@ -289,7 +289,7 @@ function InvitationContent() {
                 <h1 className="text-3xl font-bold mb-6" style={{ color: t.textPri }}>{invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}</h1>
                 {guestName && (
                   <div className="mb-6 py-3 px-4 rounded-xl" style={{ border: `1px solid ${t.accent}25`, background: t.accentBg }}>
-                    <p className="text-xs" style={{ color: t.textMut }}>ជូនពរ</p>
+                    <p className="text-xs" style={{ color: t.textMut }}>សូមអញ្ជើញ</p>
                     <p className="font-semibold" style={{ color: t.textPri }}>{guestName}</p>
                   </div>
                 )}
@@ -328,7 +328,7 @@ function InvitationContent() {
           <h1 className="text-4xl md:text-5xl font-bold mb-8 tracking-wide" style={{ color: t.textPri }}>{invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}</h1>
           {guestName && (
             <div className="inline-block rounded-full px-8 py-3 mb-6" style={{ border: `1.5px solid ${t.accent}25`, background: isLight ? `linear-gradient(135deg, #ffffffee, ${t.accent}08)` : t.accentBg }}>
-              <p className="text-xs tracking-wider uppercase" style={{ color: t.accent }}>ជូនពរ</p>
+              <p className="text-xs tracking-wider uppercase" style={{ color: t.accent }}>សូមអញ្ជើញ</p>
               <p className="font-semibold text-lg" style={{ color: t.textPri }}>{guestName}</p>
             </div>
           )}
