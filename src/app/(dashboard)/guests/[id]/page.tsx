@@ -70,11 +70,28 @@ export default function GuestManagerPage() {
 
     const { data } = await supabase
       .from("guests")
-      .select("*, rsvp:rsvp(*)")
+      .select("*")
       .eq("invitation_id", params.id)
       .order("created_at", { ascending: false });
 
-    setGuests((data as GuestWithRsvp[]) || []);
+    const guestIds = (data || []).map((g: any) => g.id);
+    let rsvpMap = new Map<string, any>();
+
+    if (guestIds.length > 0) {
+      const { data: rsvps } = await supabase
+        .from("rsvps")
+        .select("*")
+        .in("guest_id", guestIds);
+
+      (rsvps || []).forEach((r: any) => rsvpMap.set(r.guest_id, r));
+    }
+
+    const guestsWithRsvp = (data || []).map((g: any) => ({
+      ...g,
+      rsvp: rsvpMap.get(g.id) || null,
+    }));
+
+    setGuests(guestsWithRsvp as GuestWithRsvp[]);
     setLoading(false);
   }, [params.id, supabase]);
 
@@ -97,7 +114,6 @@ export default function GuestManagerPage() {
       invitation_id: params.id,
       name: newGuestName,
       custom_link: guestSlug,
-      side: "both",
     });
 
     if (!error) {
@@ -125,7 +141,6 @@ export default function GuestManagerPage() {
         invitation_id: params.id,
         name: trimmed,
         custom_link: guestSlug,
-        side: "both",
       });
 
       if (error) failCount++;
@@ -174,7 +189,6 @@ export default function GuestManagerPage() {
         invitation_id: params.id,
         name,
         custom_link: guestSlug,
-        side: "both",
       });
 
       if (error) {
@@ -320,6 +334,16 @@ export default function GuestManagerPage() {
             className="gap-2 border-gold-200 text-secondary hover:bg-gold-50"
           >
             <Download className="h-4 w-4" /> ទាញយក CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 border-gold-200 text-secondary hover:bg-gold-50"
+            asChild
+          >
+            <a href="/sample-guests.csv" download className="cursor-pointer">
+              <Download className="h-4 w-4" /> ទាញយកគំរូ CSV
+            </a>
           </Button>
           <Button
             variant="outline"
