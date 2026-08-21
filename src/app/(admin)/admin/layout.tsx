@@ -48,7 +48,7 @@ export default function AdminLayout({
 
   useEffect(() => {
     if (!loading && isAdmin === false) {
-      router.push("/admin/login");
+      router.push("/dashboard");
     }
   }, [isAdmin, loading]);
 
