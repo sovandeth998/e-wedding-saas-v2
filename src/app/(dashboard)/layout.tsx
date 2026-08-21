@@ -6,11 +6,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Heart, LayoutDashboard, Mail, CreditCard, User, LogOut, Menu, X } from "lucide-react";
+import { Heart, LayoutDashboard, Mail, BarChart3, CreditCard, User, LogOut, Menu, X } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "ទំព័រដើម", icon: LayoutDashboard },
   { href: "/invitations", label: "លិខិតអញ្ជើញរបស់ខ្ញុំ", icon: Mail },
+  { href: "/analytics", label: "ស្ថិតិវិភាគទាន", icon: BarChart3 },
   { href: "/billing", label: "ការទូទាត់", icon: CreditCard },
   { href: "/profile", label: "គណនីរបស់ខ្ញុំ", icon: User },
 ];

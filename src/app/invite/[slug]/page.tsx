@@ -159,6 +159,16 @@ function InvitationContent() {
     if (!inv) { setLoading(false); return; }
     setInvitation(inv);
 
+    fetch("/api/analytics/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        invitation_id: inv.id,
+        guest_id: null,
+        guest_name: guestName || null,
+      }),
+    }).catch(() => {});
+
     const [guestData, wishesData, qrData, photoData] = await Promise.all([
       guestName
         ? supabase.from("guests").select("*").eq("invitation_id", inv.id).ilike("custom_link", `%${guestName.toLowerCase().replace(/\s+/g, "-")}%`).single()
