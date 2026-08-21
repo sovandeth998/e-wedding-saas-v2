@@ -83,17 +83,54 @@ export default function AnalyticsPage() {
   useEffect(() => {
     if (!selectedId) return;
     (async () => {
-      const res = await fetch(`/api/analytics/stats?invitation_id=${selectedId}`, {
-        credentials: "include",
+      const [viewsRes, rsvpsRes, wishesRes, guestsRes] = await Promise.all([
+        supabase.from("page_views").select("id, guest_name, viewed_at, ip_hash").eq("invitation_id", selectedId),
+        supabase.from("rsvps").select("id, status, number_of_guests, created_at, guest:guests(name)").eq("invitation_id", selectedId),
+        supabase.from("wishes").select("id, sender_name, content, is_approved, created_at").eq("invitation_id", selectedId).order("created_at", { ascending: false }),
+        supabase.from("guests").select("id, name, side").eq("invitation_id", selectedId),
+      ]);
+
+      const views = viewsRes.data || [];
+      const rsvps = rsvpsRes.data || [];
+      const wishes = wishesRes.data || [];
+      const guests = guestsRes.data || [];
+
+      const uniqueIps = new Set(views.map((v: any) => v.ip_hash));
+      const attending = rsvps.filter((r: any) => r.status === "attending");
+      const notAttending = rsvps.filter((r: any) => r.status === "not_attending");
+      const totalGuestsComing = attending.reduce((sum: number, r: any) => sum + (r.number_of_guests || 1), 0);
+
+      const dailyMap: Record<string, number> = {};
+      views.forEach((v: any) => {
+        const day = new Date(v.viewed_at).toISOString().split("T")[0];
+        dailyMap[day] = (dailyMap[day] || 0) + 1;
       });
-      if (res.ok) {
-        const data = await res.json();
-        setOverview(data.overview);
-        setDailyViews(data.daily_views || []);
-        setRsvpDaily(data.rsvp_daily || []);
-        setRecentRsvps(data.recent_rsvps || []);
-        setRecentWishes(data.recent_wishes || []);
-      }
+      const dailyData = Object.entries(dailyMap).map(([date, count]) => ({ date, views: count })).slice(-30);
+
+      const rsvpDailyMap: Record<string, { attending: number; not_attending: number }> = {};
+      rsvps.forEach((r: any) => {
+        const day = new Date(r.created_at).toISOString().split("T")[0];
+        if (!rsvpDailyMap[day]) rsvpDailyMap[day] = { attending: 0, not_attending: 0 };
+        if (r.status === "attending") rsvpDailyMap[day].attending++;
+        else if (r.status === "not_attending") rsvpDailyMap[day].not_attending++;
+      });
+      const rsvpDailyData = Object.entries(rsvpDailyMap).map(([date, v]) => ({ date, ...v })).slice(-30);
+
+      setOverview({
+        total_views: views.length,
+        unique_views: uniqueIps.size,
+        total_guests: guests.length,
+        total_rsvps: rsvps.length,
+        attending: attending.length,
+        not_attending: notAttending.length,
+        total_guests_coming: totalGuestsComing,
+        total_wishes: wishes.length,
+        approved_wishes: wishes.filter((w: any) => w.is_approved).length,
+      });
+      setDailyViews(dailyData);
+      setRsvpDaily(rsvpDailyData);
+      setRecentRsvps(rsvps.slice(0, 10));
+      setRecentWishes(wishes.slice(0, 10));
     })();
   }, [selectedId]);
 
