@@ -127,19 +127,19 @@ export default function GuestManagerPage() {
   };
 
   const addBulkGuests = async () => {
-    const names = bulkText.split("\n").filter((n) => n.trim());
+    const names = bulkText.split("\n").map((n) => n.trim().replace(/\s+/g, " ")).filter((n) => n.length > 0);
+    const normalizedNames = Array.from(new Map(names.map((n) => [n.toLowerCase(), n])).values());
 
     let successCount = 0;
     let failCount = 0;
 
-    for (const name of names) {
-      const trimmed = name.trim();
+    for (const name of normalizedNames) {
       const timestamp = Date.now().toString(36);
-      const guestSlug = `${invitationSlug || "wedding"}/guest/${trimmed.toLowerCase().replace(/\s+/g, "-")}-${timestamp}${Math.random().toString(36).slice(2, 6)}`;
+      const guestSlug = `${invitationSlug || "wedding"}/guest/${name.toLowerCase().replace(/\s+/g, "-")}-${timestamp}${Math.random().toString(36).slice(2, 6)}`;
 
       const { error } = await supabase.from("guests").insert({
         invitation_id: params.id,
-        name: trimmed,
+        name,
         custom_link: guestSlug,
       });
 
@@ -175,15 +175,15 @@ export default function GuestManagerPage() {
     const dataRows = isHeader ? rows.slice(1) : rows;
 
     const names = dataRows
-      .map((row) => String(row[0] || "").trim())
+      .map((row) => String(row[0] || "").trim().replace(/\s+/g, " "))
       .filter((n) => n.length > 0);
 
-    const uniqueNames = Array.from(new Set(names));
+    const normalizedNames = Array.from(new Map(names.map((n) => [n.toLowerCase(), n])).values());
 
     let successCount = 0;
     let failCount = 0;
 
-    for (const name of uniqueNames) {
+    for (const name of normalizedNames) {
       const timestamp = Date.now().toString(36);
       const slugified = name
         .toLowerCase()
