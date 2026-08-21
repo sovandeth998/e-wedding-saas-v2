@@ -27,7 +27,8 @@ function InvitationContent() {
   const [rsvpStatus, setRsvpStatus] = useState<"attending" | "not_attending" | "">("");
   const [rsvpGuests, setRsvpGuests] = useState(1);
   const [rsvpMessage, setRsvpMessage] = useState("");
-  const [wishName, setWishName] = useState(guestName);
+  const [wishName, setWishName] = useState("");
+  useEffect(() => { if (displayName && !wishName) setWishName(displayName); }, [displayName]);
   const [wishContent, setWishContent] = useState("");
   const [rsvpSubmitted, setRsvpSubmitted] = useState(false);
   const [wishSubmitted, setWishSubmitted] = useState(false);
@@ -565,7 +566,7 @@ function InvitationContent() {
             ) : (
               wishes.map((wish) => (
                 <div key={wish.id} className="rounded-xl p-3" style={{ border: `1px solid ${t.accent}15`, background: t.accentBg }}>
-                  <p className="font-medium text-sm" style={{ color: t.textPri }}>{wish.sender_name}</p>
+                  <p className="font-medium text-sm" style={{ color: t.textPri }}>{cleanName(wish.sender_name)}</p>
                   <p className="text-sm mt-1" style={{ color: t.textMut }}>{wish.content}</p>
                 </div>
               ))
