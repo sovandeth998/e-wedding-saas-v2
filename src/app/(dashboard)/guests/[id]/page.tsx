@@ -17,13 +17,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Copy,
   Users,
   UserPlus,
@@ -39,6 +32,7 @@ import {
   Check,
 } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 import type { Guest, Invitation, RSVP } from "@/types/database";
 
 interface GuestWithRsvp extends Guest {
@@ -52,9 +46,6 @@ export default function GuestManagerPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [newGuestName, setNewGuestName] = useState("");
-  const [newGuestSide, setNewGuestSide] = useState<"groom" | "bride" | "both">(
-    "both"
-  );
   const [bulkText, setBulkText] = useState("");
   const [invitationSlug, setInvitationSlug] = useState("");
   const [invitation, setInvitation] = useState<Invitation | null>(null);
@@ -105,12 +96,11 @@ export default function GuestManagerPage() {
       invitation_id: params.id,
       name: newGuestName,
       custom_link: guestSlug,
-      side: newGuestSide,
+      side: "both",
     });
 
     if (!error) {
       setNewGuestName("");
-      setNewGuestSide("both");
       setDialogOpen(false);
       fetchGuests();
     }
@@ -133,6 +123,35 @@ export default function GuestManagerPage() {
       setBulkDialogOpen(false);
       fetchGuests();
     }
+  };
+
+  const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const text = await file.text();
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+
+    const guestInserts = lines.map((line) => {
+      const name = line.replace(/"/g, "").trim();
+      return {
+        invitation_id: params.id,
+        name,
+        custom_link: getGuestSlug(name),
+        side: "both" as const,
+      };
+    });
+
+    const { error } = await supabase.from("guests").insert(guestInserts);
+
+    if (!error) {
+      toast.success(`បានបញ្ចូលភ្ញៀវ ${guestInserts.length} នាក់ដោយជោគជ័យ!`);
+      fetchGuests();
+    } else {
+      toast.error("បរាជ័យក្នុងការបញ្ចូលភ្ញៀវ");
+    }
+
+    e.target.value = "";
   };
 
   const deleteGuest = async (id: string) => {
@@ -158,10 +177,9 @@ export default function GuestManagerPage() {
   };
 
   const exportCSV = () => {
-    const headers = ["ឈ្មោះ", "ភាគី", "ស្ថានភាព", "ភ្ញៀវ", "សារ"];
+    const headers = ["ឈ្មោះ", "ស្ថានភាព", "ភ្ញៀវ", "សារ"];
     const rows = guests.map((g) => [
       g.name,
-      g.side === "groom" ? "កំលោះ" : g.side === "bride" ? "ក្រមុំ" : "ទាំងពីរ",
       !g.rsvp
         ? "រង់ចាំ"
         : g.rsvp.status === "attending"
@@ -264,6 +282,22 @@ export default function GuestManagerPage() {
           </Button>
           <Button
             variant="outline"
+            size="sm"
+            className="gap-2 border-gold-200 text-secondary hover:bg-gold-50"
+            asChild
+          >
+            <label className="cursor-pointer">
+              <Upload className="h-4 w-4" /> បញ្ចូល CSV
+              <input
+                type="file"
+                accept=".csv,.txt,.tsv"
+                onChange={handleCsvUpload}
+                className="hidden"
+              />
+            </label>
+          </Button>
+          <Button
+            variant="outline"
             onClick={copyAllLinks}
             className="gap-2 border-gold-200 text-secondary hover:bg-gold-50"
           >
@@ -329,24 +363,6 @@ export default function GuestManagerPage() {
                     placeholder="បញ្ចូលឈ្មោះភ្ញៀវ"
                     className="border-gold-200"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label>ភាគី</Label>
-                  <Select
-                    value={newGuestSide}
-                    onValueChange={(v) =>
-                      setNewGuestSide(v as "groom" | "bride" | "both")
-                    }
-                  >
-                    <SelectTrigger className="border-gold-200">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="groom">កំលោះ</SelectItem>
-                      <SelectItem value="bride">ក្រមុំ</SelectItem>
-                      <SelectItem value="both">ទាំងពីរ</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
                 {newGuestName.trim() && (
                   <div className="text-sm text-muted-foreground bg-gold-50 p-3 rounded-lg">
@@ -439,9 +455,6 @@ export default function GuestManagerPage() {
                       ឈ្មោះ
                     </th>
                     <th className="text-left p-3 text-sm font-medium text-secondary">
-                      ភាគី
-                    </th>
-                    <th className="text-left p-3 text-sm font-medium text-secondary">
                       ស្ថានភាព
                     </th>
                     <th className="text-left p-3 text-sm font-medium text-secondary">
@@ -477,18 +490,6 @@ export default function GuestManagerPage() {
                       >
                         <td className="p-3 font-medium text-secondary">
                           {guest.name}
-                        </td>
-                        <td className="p-3">
-                          <Badge
-                            variant="outline"
-                            className="capitalize border-gold-200"
-                          >
-                            {guest.side === "groom"
-                              ? "កំលោះ"
-                              : guest.side === "bride"
-                                ? "ក្រមុំ"
-                                : "ទាំងពីរ"}
-                          </Badge>
                         </td>
                         <td className="p-3">
                           <span
