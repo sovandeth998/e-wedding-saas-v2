@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, serviceKey || anonKey);
 
 export async function GET(request: Request) {
   try {
@@ -14,10 +14,14 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "invitation_id required" }, { status: 400 });
     }
 
+    const wishesQuery = serviceKey
+      ? supabase.from("wishes").select("id, sender_name, content, is_approved, created_at").eq("invitation_id", invitation_id).order("created_at", { ascending: false })
+      : supabase.from("wishes").select("id, sender_name, content, is_approved, created_at").eq("invitation_id", invitation_id).eq("is_approved", true).order("created_at", { ascending: false });
+
     const [viewsRes, rsvpsRes, wishesRes, guestsRes, dailyViewsRes] = await Promise.all([
       supabase.from("page_views").select("id, guest_name, viewed_at, ip_hash").eq("invitation_id", invitation_id).order("viewed_at", { ascending: false }),
       supabase.from("rsvps").select("id, status, number_of_guests, created_at, guest:guests(name)").eq("invitation_id", invitation_id),
-      supabase.from("wishes").select("id, sender_name, content, is_approved, created_at").eq("invitation_id", invitation_id).order("created_at", { ascending: false }),
+      wishesQuery,
       supabase.from("guests").select("id, name, side").eq("invitation_id", invitation_id),
       supabase.from("page_views").select("viewed_at, ip_hash").eq("invitation_id", invitation_id).order("viewed_at", { ascending: true }),
     ]);
@@ -27,6 +31,11 @@ export async function GET(request: Request) {
     const wishes = wishesRes.data || [];
     const guests = guestsRes.data || [];
     const dailyViews = dailyViewsRes.data || [];
+
+    if (viewsRes.error) console.error("page_views error:", viewsRes.error.message);
+    if (rsvpsRes.error) console.error("rsvps error:", rsvpsRes.error.message);
+    if (wishesRes.error) console.error("wishes error:", wishesRes.error.message);
+    if (guestsRes.error) console.error("guests error:", guestsRes.error.message);
 
     const uniqueIps = new Set(views.map((v: any) => v.ip_hash));
     const attending = rsvps.filter((r: any) => r.status === "attending");
