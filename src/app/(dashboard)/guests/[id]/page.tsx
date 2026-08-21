@@ -21,7 +21,6 @@ import {
   Users,
   UserPlus,
   Download,
-  Send,
   Trash2,
   CheckCircle2,
   XCircle,
@@ -51,7 +50,6 @@ export default function GuestManagerPage() {
   const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [allCopied, setAllCopied] = useState(false);
-  const [sendingTelegram, setSendingTelegram] = useState<string | null>(null);
   const supabase = createClient();
 
   const fetchGuests = useCallback(async () => {
@@ -314,45 +312,6 @@ export default function GuestManagerPage() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "ភ្ញៀវ");
     XLSX.writeFile(wb, `guests-${new Date().toISOString().slice(0, 10)}.xlsx`);
-  };
-
-  const sendTelegramToGuest = async (guest: GuestWithRsvp) => {
-    setSendingTelegram(guest.id);
-
-    const slug = invitationSlug || "wedding";
-    const inviteLink = `${window.location.origin}/invite/${slug}/guest/${guest.name.toLowerCase().replace(/\s+/g, "-")}`;
-
-    try {
-      const res = await fetch("/api/telegram/notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "guest_link",
-          data: {
-            guestName: guest.name,
-            coupleName: invitation
-              ? `${invitation.groom_name_kh || invitation.groom_name} & ${invitation.bride_name_kh || invitation.bride_name}`
-              : "",
-            weddingDate: invitation?.wedding_date
-              ? new Date(invitation.wedding_date).toLocaleDateString("km-KH")
-              : "",
-            venueName: invitation?.venue_name || "",
-            inviteLink,
-          },
-        }),
-      });
-
-      if (res.ok) {
-        alert(`បានផ្ញើសារ Telegram ទៅ ${guest.name} ដោយជោគជ័យ!`);
-      } else {
-        const err = await res.json();
-        alert(err.error || "បរាជ័យក្នុងការផ្ញើសារ");
-      }
-    } catch {
-      alert("បរាជ័យក្នុងការផ្ញើសារ Telegram");
-    }
-
-    setSendingTelegram(null);
   };
 
   const stats = {
@@ -660,17 +619,6 @@ export default function GuestManagerPage() {
                               >
                                 <ExternalLink className="h-4 w-4" />
                               </a>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => sendTelegramToGuest(guest)}
-                              disabled={sendingTelegram === guest.id}
-                              title="ផ្ញើ Telegram"
-                            >
-                              <Send
-                                className={`h-4 w-4 ${sendingTelegram === guest.id ? "animate-pulse text-gold-500" : ""}`}
-                              />
                             </Button>
                             <Button
                               variant="ghost"
