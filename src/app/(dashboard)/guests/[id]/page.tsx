@@ -127,13 +127,23 @@ export default function GuestManagerPage() {
   };
 
   const addBulkGuests = async () => {
-    const names = bulkText.split("\n").map((n) => n.trim().replace(/\s+/g, " ")).filter((n) => n.length > 0);
-    const normalizedNames = Array.from(new Map(names.map((n) => [n.toLowerCase(), n])).values());
+    const names = bulkText.split("\n").map((n) => n.trim().normalize("NFC").replace(/\s+/g, " ")).filter((n) => n.length > 0);
+    const normalizedNames = Array.from(new Map(names.map((n) => [n.normalize("NFC").toLowerCase(), n])).values());
+
+    const { data: existingGuests } = await supabase
+      .from("guests")
+      .select("name")
+      .eq("invitation_id", params.id);
+    const existingSet = new Set(
+      (existingGuests || []).map((g: any) => g.name.normalize("NFC").toLowerCase())
+    );
+    const newNames = normalizedNames.filter((n) => !existingSet.has(n.normalize("NFC").toLowerCase()));
+    const skippedCount = normalizedNames.length - newNames.length;
 
     let successCount = 0;
     let failCount = 0;
 
-    for (const name of normalizedNames) {
+    for (const name of newNames) {
       const timestamp = Date.now().toString(36);
       const guestSlug = `${invitationSlug || "wedding"}/guest/${name.toLowerCase().replace(/\s+/g, "-")}-${timestamp}${Math.random().toString(36).slice(2, 6)}`;
 
@@ -148,8 +158,11 @@ export default function GuestManagerPage() {
     }
 
     if (successCount > 0) {
-      toast.success(`បានបញ្ចូលភ្ញៀវ ${successCount} នាក់ដោយជោគជ័យ!`);
+      const skipMsg = skippedCount > 0 ? ` (${skippedCount} នាក់មានរួច)` : "";
+      toast.success(`បានបញ្ចូលភ្ញៀវ ${successCount} នាក់ដោយជោគជ័យ!${skipMsg}`);
       fetchGuests();
+    } else if (skippedCount > 0) {
+      toast.info(`ឈ្មោះទាំងអស់មានរួចហើយ (${skippedCount} នាក់)`);
     }
     if (failCount > 0) {
       toast.error(`បរាជ័យ ${failCount} នាក់`);
@@ -175,15 +188,25 @@ export default function GuestManagerPage() {
     const dataRows = isHeader ? rows.slice(1) : rows;
 
     const names = dataRows
-      .map((row) => String(row[0] || "").trim().replace(/\s+/g, " "))
+      .map((row) => String(row[0] || "").trim().normalize("NFC").replace(/\s+/g, " "))
       .filter((n) => n.length > 0);
 
-    const normalizedNames = Array.from(new Map(names.map((n) => [n.toLowerCase(), n])).values());
+    const normalizedNames = Array.from(new Map(names.map((n) => [n.normalize("NFC").toLowerCase(), n])).values());
+
+    const { data: existingGuests } = await supabase
+      .from("guests")
+      .select("name")
+      .eq("invitation_id", params.id);
+    const existingSet = new Set(
+      (existingGuests || []).map((g: any) => g.name.normalize("NFC").toLowerCase())
+    );
+    const newNames = normalizedNames.filter((n) => !existingSet.has(n.normalize("NFC").toLowerCase()));
+    const skippedCount = normalizedNames.length - newNames.length;
 
     let successCount = 0;
     let failCount = 0;
 
-    for (const name of normalizedNames) {
+    for (const name of newNames) {
       const timestamp = Date.now().toString(36);
       const slugified = name
         .toLowerCase()
@@ -203,11 +226,15 @@ export default function GuestManagerPage() {
     }
 
     if (successCount > 0) {
-      toast.success(`បានបញ្ចូលភ្ញៀវ ${successCount} នាក់ដោយជោគជ័យ!`);
+      const skipMsg = skippedCount > 0 ? ` (${skippedCount} នាក់មានរួច)` : "";
+      toast.success(`បានបញ្ចូលភ្ញៀវ ${successCount} នាក់ដោយជោគជ័យ!${skipMsg}`);
       fetchGuests();
     }
     if (failCount > 0) {
       toast.error(`បរាជ័យ ${failCount} នាក់`);
+    }
+    if (successCount === 0 && failCount === 0 && skippedCount > 0) {
+      toast.info(`ឈ្មោះទាំងអស់មានរួចហើយ (${skippedCount} នាក់)`);
     }
 
     e.target.value = "";
