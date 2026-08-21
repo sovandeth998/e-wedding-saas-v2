@@ -18,7 +18,8 @@ function InvitationContent() {
   const guestName = (() => { try { return decodeURIComponent(rawTo); } catch { return rawTo; } })();
   const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [guest, setGuest] = useState<Guest | null>(null);
-  const displayName = guest?.name || guestName.replace(/-[a-z0-9]{12}$/i, "").trim() || "";
+  const cleanName = (s: string) => s.replace(/-[a-z0-9]{10,}$/i, "").trim();
+  const displayName = guest?.name ? cleanName(guest.name) : cleanName(guestName);
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [qrCodes, setQrCodes] = useState<QRCode[]>([]);
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
