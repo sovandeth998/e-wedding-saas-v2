@@ -164,6 +164,20 @@ export default function BuilderPage() {
     setQrImageUrl(url);
   };
 
+  const handleSelectTemplate = async (templateId: string) => {
+    setSelectedTemplate(templateId);
+    const { error } = await supabase
+      .from("invitations")
+      .update({ template_id: templateId })
+      .eq("id", params.id);
+    if (!error) {
+      const t = templateList.find((t) => t.id === templateId);
+      toast.success(`ប្ដូរគំរូទៅ "${t?.name || templateId}" រួចរាល់`);
+    } else {
+      toast.error("រក្សាទុកគំរូមិនបានជោគជ័យ");
+    }
+  };
+
   const saveInvitation = async () => {
     setSaving(true);
     const { error } = await supabase
@@ -205,6 +219,7 @@ export default function BuilderPage() {
       .from("invitations")
       .update({
         ...invitation,
+        template_id: selectedTemplate,
         status: "published",
         published_at: new Date().toISOString(),
       })
@@ -515,7 +530,7 @@ export default function BuilderPage() {
                       {templateList.map((tpl) => (
                         <button
                           key={tpl.id}
-                          onClick={() => setSelectedTemplate(tpl.id)}
+                          onClick={() => handleSelectTemplate(tpl.id)}
                           className={`border-2 rounded-xl p-4 text-center transition-all hover:shadow-lg ${
                             selectedTemplate === tpl.id
                               ? "border-primary shadow-md ring-2 ring-primary/20"
