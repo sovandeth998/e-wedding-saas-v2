@@ -17,6 +17,7 @@ function InvitationContent() {
   const guestName = searchParams.get("to") || "";
   const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [guest, setGuest] = useState<Guest | null>(null);
+  const displayName = guest?.name || guestName.replace(/-[a-z0-9]{12}$/i, "").trim() || "";
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [qrCodes, setQrCodes] = useState<QRCode[]>([]);
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
@@ -261,10 +262,10 @@ function InvitationContent() {
                   <div className="h-px flex-1" style={{ background: `linear-gradient(to left, transparent, ${t.accent}40)` }} />
                 </div>
                 <h1 className="text-3xl font-bold mb-6" style={{ color: t.textPri }}>{invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}</h1>
-                {guestName && (
+                {displayName && (
                   <div className="mb-6 py-3 px-5 rounded-2xl" style={{ border: `1px solid ${t.accent}20`, background: `${t.accent}08` }}>
                     <p className="text-xs tracking-wider uppercase" style={{ color: t.accent }}>សូមអញ្ជើញ</p>
-                    <p className="font-semibold text-lg mt-1" style={{ color: t.textPri }}>{guestName}</p>
+                    <p className="font-semibold text-lg mt-1" style={{ color: t.textPri }}>{displayName}</p>
                   </div>
                 )}
                 <p className="text-sm mb-8" style={{ color: t.textSec }}>{weddingDate.toLocaleDateString("km-KH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
@@ -287,10 +288,10 @@ function InvitationContent() {
                   <div className="h-px flex-1" style={{ background: `linear-gradient(to left, transparent, ${t.accent}40)` }} />
                 </div>
                 <h1 className="text-3xl font-bold mb-6" style={{ color: t.textPri }}>{invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}</h1>
-                {guestName && (
+                {displayName && (
                   <div className="mb-6 py-3 px-4 rounded-xl" style={{ border: `1px solid ${t.accent}25`, background: t.accentBg }}>
                     <p className="text-xs" style={{ color: t.textMut }}>សូមអញ្ជើញ</p>
-                    <p className="font-semibold" style={{ color: t.textPri }}>{guestName}</p>
+                    <p className="font-semibold" style={{ color: t.textPri }}>{displayName}</p>
                   </div>
                 )}
                 <p className="text-sm mb-6" style={{ color: t.textSec }}>{weddingDate.toLocaleDateString("km-KH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
@@ -326,10 +327,10 @@ function InvitationContent() {
             <div className="h-px w-20" style={{ background: `linear-gradient(to left, transparent, ${t.accent}50)` }} />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-8 tracking-wide" style={{ color: t.textPri }}>{invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}</h1>
-          {guestName && (
+          {displayName && (
             <div className="inline-block rounded-full px-8 py-3 mb-6" style={{ border: `1.5px solid ${t.accent}25`, background: isLight ? `linear-gradient(135deg, #ffffffee, ${t.accent}08)` : t.accentBg }}>
               <p className="text-xs tracking-wider uppercase" style={{ color: t.accent }}>សូមអញ្ជើញ</p>
-              <p className="font-semibold text-lg" style={{ color: t.textPri }}>{guestName}</p>
+              <p className="font-semibold text-lg" style={{ color: t.textPri }}>{displayName}</p>
             </div>
           )}
           {invitation.quote && <p className="italic text-base max-w-sm mx-auto" style={{ color: t.textSec }}>&ldquo;{invitation.quote}&rdquo;</p>}
