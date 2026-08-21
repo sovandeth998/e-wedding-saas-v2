@@ -10,18 +10,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, ArrowRight, Save, Eye, Music, MapPin, Users, Heart, Image, CreditCard, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save, Eye, Music, MapPin, Users, Heart, Image, CreditCard, Trash2, Check, Copy, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { FileUpload } from "@/components/FileUpload";
+import { toast } from "sonner";
 import type { Invitation, GalleryPhoto } from "@/types/database";
 
 const steps = [
-  { id: 1, icon: Heart, title: "ព័ត៌មានកូនកំលោះ-កូនក្រមុំ" },
-  { id: 2, icon: MapPin, title: "ទីតាំង និងពេលវេលា" },
-  { id: 3, icon: Image, title: "រូបថត" },
-  { id: 4, icon: CreditCard, title: "QR Code ចំណងដៃ" },
-  { id: 5, icon: Music, title: "តន្ត្រី និងការរចនា" },
-  { id: 6, icon: Eye, title: "មើល និងផ្សាយ" },
+  { id: 1, icon: Heart, title: "ព័ត៌មានកូនកំលោះ-កូនក្រមុំ", short: "ព័ត៌មាន" },
+  { id: 2, icon: MapPin, title: "ទីតាំង និងពេលវេលា", short: "ទីតាំង" },
+  { id: 3, icon: Image, title: "រូបថត", short: "រូបភាព" },
+  { id: 4, icon: CreditCard, title: "QR Code ចំណងដៃ", short: "QR Code" },
+  { id: 5, icon: Music, title: "តន្ត្រី និងការរចនា", short: "រចនា" },
+  { id: 6, icon: Eye, title: "មើល និងផ្សាយ", short: "ផ្សាយ" },
 ];
 
 export default function BuilderPage() {
@@ -31,6 +32,7 @@ export default function BuilderPage() {
   const supabase = createClient();
   const [currentStep, setCurrentStep] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [invitation, setInvitation] = useState<Partial<Invitation>>({
     groom_name: "",
     groom_name_kh: "",
@@ -82,6 +84,33 @@ export default function BuilderPage() {
 
   const updateField = (field: string, value: string) => {
     setInvitation((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const checkStepComplete = (step: number) => {
+    switch (step) {
+      case 1: return !!(invitation.groom_name || invitation.groom_name_kh) && !!(invitation.bride_name || invitation.bride_name_kh);
+      case 2: return !!invitation.wedding_date && !!invitation.venue_name;
+      case 3: return galleryPhotos.length > 0;
+      case 4: return !!qrImageUrl;
+      case 5: return true;
+      case 6: return true;
+      default: return false;
+    }
+  };
+
+  const handleNext = () => {
+    if (checkStepComplete(currentStep)) {
+      setCompletedSteps((prev) => new Set(Array.from(prev).concat([currentStep])));
+    }
+    if (currentStep < 6) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
   };
 
   const handleGalleryUpload = async (url: string) => {
@@ -144,7 +173,9 @@ export default function BuilderPage() {
           });
         }
       }
-      alert("បានរក្សាទុកជោគជ័យ!");
+      toast.success("បានរក្សាទុកជោគជ័យ!");
+    } else {
+      toast.error("បរាជ័យក្នុងការរក្សាទុក");
     }
     setSaving(false);
   };
@@ -161,11 +192,20 @@ export default function BuilderPage() {
       .eq("id", params.id);
 
     if (!error) {
-      alert("បានផ្សាយលិខិតអញ្ជើញ!");
+      toast.success("បានផ្សាយលិខិតអញ្ជើញ!");
       router.push("/invitations");
+    } else {
+      toast.error("បរាជ័យក្នុងការផ្សាយ");
     }
     setSaving(false);
   };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(`${window.location.origin}/invite/${invitation.slug || params.id}`);
+    toast.success("បានចម្លង Link!");
+  };
+
+  const progress = Math.round((completedSteps.size / 6) * 100);
 
   return (
     <div className="space-y-6">
@@ -179,20 +219,60 @@ export default function BuilderPage() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-secondary">បង្កើងលិខិតអញ្ជើញ</h1>
-            <p className="text-muted-foreground">ប្ដូរតាមបំណងលិខិតអញ្ជើញរបស់អ្នក</p>
+            <p className="text-muted-foreground">ជំហាន {currentStep} / 6</p>
           </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={saveInvitation} disabled={saving} className="border-gold-200 text-secondary hover:bg-gold-50">
-            <Save className="h-4 w-4 mr-2" /> រក្សាទុក
+            <Save className="h-4 w-4 mr-2" /> {saving ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}
           </Button>
-          {invitation.status !== "published" && (
-            <Button onClick={publishInvitation} disabled={saving} className="bg-gold-gradient text-white hover:opacity-90">
-              ផ្សាយ
-            </Button>
-          )}
         </div>
       </div>
+
+      {/* Progress Bar */}
+      <Card className="border-0 shadow-md">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-medium text-secondary">រីកចម្រើន</span>
+            <span className="text-sm text-primary font-bold">{progress}%</span>
+          </div>
+          <div className="w-full bg-gray-100 rounded-full h-2 mb-4">
+            <div
+              className="bg-gold-gradient h-2 rounded-full transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          {/* Step Indicators */}
+          <div className="flex items-center justify-between relative">
+            <div className="absolute top-4 left-0 right-0 h-0.5 bg-gray-200" />
+            <div className="absolute top-4 left-0 h-0.5 bg-gold-gradient transition-all duration-500" style={{ width: `${((currentStep - 1) / 5) * 100}%` }} />
+
+            {steps.map((step) => (
+              <button
+                key={step.id}
+                onClick={() => setCurrentStep(step.id)}
+                className="relative flex flex-col items-center z-10 group"
+              >
+                <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+                  currentStep === step.id
+                    ? "bg-gold-gradient text-white scale-110 shadow-lg"
+                    : completedSteps.has(step.id)
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-200 text-gray-500 group-hover:bg-gold-100"
+                }`}>
+                  {completedSteps.has(step.id) ? <Check className="h-4 w-4" /> : step.id}
+                </div>
+                <span className={`text-xs mt-1.5 hidden md:block ${
+                  currentStep === step.id ? "text-primary font-medium" : "text-muted-foreground"
+                }`}>
+                  {step.short}
+                </span>
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Step Navigation */}
@@ -204,13 +284,23 @@ export default function BuilderPage() {
                   <button
                     key={step.id}
                     onClick={() => setCurrentStep(step.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
                       currentStep === step.id
-                        ? "bg-gold-50 text-primary font-medium border border-gold-200"
+                        ? "bg-gold-50 text-primary font-medium border border-gold-200 shadow-sm"
+                        : completedSteps.has(step.id)
+                        ? "text-green-600 hover:bg-green-50"
                         : "text-muted-foreground hover:bg-muted"
                     }`}
                   >
-                    <step.icon className="h-4 w-4" />
+                    <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs ${
+                      currentStep === step.id
+                        ? "bg-gold-gradient text-white"
+                        : completedSteps.has(step.id)
+                        ? "bg-green-500 text-white"
+                        : "bg-gray-200 text-gray-500"
+                    }`}>
+                      {completedSteps.has(step.id) ? <Check className="h-3 w-3" /> : step.id}
+                    </div>
                     <span>{step.title}</span>
                   </button>
                 ))}
@@ -233,54 +323,53 @@ export default function BuilderPage() {
               {currentStep === 1 && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <h3 className="font-medium text-lg text-secondary">កូនកំលោះ</h3>
+                    <div className="space-y-4 p-4 bg-gold-50/50 rounded-xl border border-gold-200/50">
+                      <h3 className="font-medium text-lg text-secondary flex items-center gap-2">
+                        <Heart className="h-4 w-4 text-primary" /> កូនកំលោះ
+                      </h3>
                       <div className="space-y-2">
                         <Label htmlFor="groom_name" className="text-secondary">ឈ្មោះ (អង់គ្លេស)</Label>
-                        <Input id="groom_name" value={invitation.groom_name || ""} onChange={(e) => updateField("groom_name", e.target.value)} placeholder="ឧ. Kim Sun" className="border-gold-200 focus-visible:ring-primary" />
+                        <Input id="groom_name" value={invitation.groom_name || ""} onChange={(e) => updateField("groom_name", e.target.value)} placeholder="ឧ. Sovandeth" className="border-gold-200 focus-visible:ring-primary" />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="groom_name_kh" className="text-secondary">ឈ្មោះ (ខ្មែរ)</Label>
-                        <Input id="groom_name_kh" value={invitation.groom_name_kh || ""} onChange={(e) => updateField("groom_name_kh", e.target.value)} placeholder="ឧ. គឹម សុន" className="border-gold-200 focus-visible:ring-primary" />
+                        <Input id="groom_name_kh" value={invitation.groom_name_kh || ""} onChange={(e) => updateField("groom_name_kh", e.target.value)} placeholder="ឧ. សុវណ្ណដេត" className="border-gold-200 focus-visible:ring-primary" />
                       </div>
                       <div className="space-y-2">
                         <Label className="text-secondary">រូបថត</Label>
-                        <FileUpload
-                          bucket="uploads"
-                          path={`invitations/${params.id}/groom`}
-                          onUpload={(url) => updateField("groom_photo", url)}
-                          className="aspect-square max-w-[200px]"
-                        />
+                        <FileUpload bucket="uploads" path={`invitations/${params.id}/groom`} onUpload={(url) => updateField("groom_photo", url)} className="aspect-square max-w-[180px]" />
                       </div>
                     </div>
-                    <div className="space-y-4">
-                      <h3 className="font-medium text-lg text-secondary">កូនក្រមុំ</h3>
+                    <div className="space-y-4 p-4 bg-gold-50/50 rounded-xl border border-gold-200/50">
+                      <h3 className="font-medium text-lg text-secondary flex items-center gap-2">
+                        <Heart className="h-4 w-4 text-pink-500" /> កូនក្រមុំ
+                      </h3>
                       <div className="space-y-2">
                         <Label htmlFor="bride_name" className="text-secondary">ឈ្មោះ (អង់គ្លេស)</Label>
-                        <Input id="bride_name" value={invitation.bride_name || ""} onChange={(e) => updateField("bride_name", e.target.value)} placeholder="ឧ. Channet" className="border-gold-200 focus-visible:ring-primary" />
+                        <Input id="bride_name" value={invitation.bride_name || ""} onChange={(e) => updateField("bride_name", e.target.value)} placeholder="ឧ. Dara" className="border-gold-200 focus-visible:ring-primary" />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="bride_name_kh" className="text-secondary">ឈ្មោះ (ខ្មែរ)</Label>
-                        <Input id="bride_name_kh" value={invitation.bride_name_kh || ""} onChange={(e) => updateField("bride_name_kh", e.target.value)} placeholder="ឧ. ចន្ធី" className="border-gold-200 focus-visible:ring-primary" />
+                        <Input id="bride_name_kh" value={invitation.bride_name_kh || ""} onChange={(e) => updateField("bride_name_kh", e.target.value)} placeholder="ឧ. ដារ៉ា" className="border-gold-200 focus-visible:ring-primary" />
                       </div>
                       <div className="space-y-2">
                         <Label className="text-secondary">រូបថត</Label>
-                        <FileUpload
-                          bucket="uploads"
-                          path={`invitations/${params.id}/bride`}
-                          onUpload={(url) => updateField("bride_photo", url)}
-                          className="aspect-square max-w-[200px]"
-                        />
+                        <FileUpload bucket="uploads" path={`invitations/${params.id}/bride`} onUpload={(url) => updateField("bride_photo", url)} className="aspect-square max-w-[180px]" />
                       </div>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="quote" className="text-secondary">ពាក្យពេចន៍រៀបការ</Label>
-                    <Input id="quote" value={invitation.quote || ""} onChange={(e) => updateField("quote", e.target.value)} placeholder="ឧ. រួមគ្នាអស់មួយជីវិត..." className="border-gold-200 focus-visible:ring-primary" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="story" className="text-secondary">រឿងស្នេហារបស់យើង</Label>
-                    <Textarea id="story" value={invitation.story || ""} onChange={(e) => updateField("story", e.target.value)} placeholder="ប្រាប់រឿងស្នេហារបស់អ្នក..." rows={4} className="border-gold-200 focus-visible:ring-primary" />
+                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
+                    <h3 className="font-medium text-lg text-secondary flex items-center gap-2">
+                      <Heart className="h-4 w-4 text-primary" /> ពាក្យពេចន៍ និងរឿងស្នេហា
+                    </h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="quote" className="text-secondary">ពាក្យពេចន៍រៀបការ</Label>
+                      <Input id="quote" value={invitation.quote || ""} onChange={(e) => updateField("quote", e.target.value)} placeholder="ឧ. រួមគ្នាអស់មួយជីវិត..." className="border-gold-200 focus-visible:ring-primary" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="story" className="text-secondary">រឿងស្នេហារបស់យើង</Label>
+                      <Textarea id="story" value={invitation.story || ""} onChange={(e) => updateField("story", e.target.value)} placeholder="ប្រាប់រឿងស្នេហារបស់អ្នក..." rows={4} className="border-gold-200 focus-visible:ring-primary" />
+                    </div>
                   </div>
                 </div>
               )}
@@ -288,31 +377,41 @@ export default function BuilderPage() {
               {/* Step 2: Venue & Time */}
               {currentStep === 2 && (
                 <div className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="wedding_date" className="text-secondary">ថ្ងៃរៀបការ</Label>
-                    <Input id="wedding_date" type="datetime-local" value={invitation.wedding_date ? new Date(invitation.wedding_date).toISOString().slice(0, 16) : ""} onChange={(e) => updateField("wedding_date", new Date(e.target.value).toISOString())} className="border-gold-200 focus-visible:ring-primary" />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
+                    <h3 className="font-medium text-lg text-secondary flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-primary" /> ពេលវេលា
+                    </h3>
                     <div className="space-y-2">
-                      <Label htmlFor="ceremony_time" className="text-secondary">ម៉ោងពិធីជប់លៀង</Label>
-                      <Input id="ceremony_time" value={invitation.ceremony_time || ""} onChange={(e) => updateField("ceremony_time", e.target.value)} placeholder="ឧ. 7:00 ព្រឹក - 9:00 ព្រឹក" className="border-gold-200 focus-visible:ring-primary" />
+                      <Label htmlFor="wedding_date" className="text-secondary">ថ្ងៃរៀបការ *</Label>
+                      <Input id="wedding_date" type="datetime-local" value={invitation.wedding_date ? new Date(invitation.wedding_date).toISOString().slice(0, 16) : ""} onChange={(e) => updateField("wedding_date", new Date(e.target.value).toISOString())} className="border-gold-200 focus-visible:ring-primary" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="ceremony_time" className="text-secondary">ម៉ោងពិធីជប់លៀង</Label>
+                        <Input id="ceremony_time" value={invitation.ceremony_time || ""} onChange={(e) => updateField("ceremony_time", e.target.value)} placeholder="ឧ. 7:00 ព្រឹក - 9:00 ព្រឹក" className="border-gold-200 focus-visible:ring-primary" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="reception_time" className="text-secondary">ម៉ោងពិធីស្វាគមន៍</Label>
+                        <Input id="reception_time" value={invitation.reception_time || ""} onChange={(e) => updateField("reception_time", e.target.value)} placeholder="ឧ. 11:00 ព្រឹក - 2:00 ថ្ងៃត្រង់" className="border-gold-200 focus-visible:ring-primary" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
+                    <h3 className="font-medium text-lg text-secondary flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-primary" /> ទីតាំង
+                    </h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="venue_name" className="text-secondary">ឈ្មោះទីតាំង *</Label>
+                      <Input id="venue_name" value={invitation.venue_name || ""} onChange={(e) => updateField("venue_name", e.target.value)} placeholder="ឧ. Diamond Ballroom" className="border-gold-200 focus-visible:ring-primary" />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="reception_time" className="text-secondary">ម៉ោងពិធីស្វាគមន៍</Label>
-                      <Input id="reception_time" value={invitation.reception_time || ""} onChange={(e) => updateField("reception_time", e.target.value)} placeholder="ឧ. 11:00 ព្រឹក - 2:00 ថ្ងៃត្រង់" className="border-gold-200 focus-visible:ring-primary" />
+                      <Label htmlFor="venue_address" className="text-secondary">អាសយដ្ឋានទីតាំង</Label>
+                      <Textarea id="venue_address" value={invitation.venue_address || ""} onChange={(e) => updateField("venue_address", e.target.value)} placeholder="អាសយដ្ឋានពេញ..." rows={2} className="border-gold-200 focus-visible:ring-primary" />
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="venue_name" className="text-secondary">ឈ្មោះទីតាំង</Label>
-                    <Input id="venue_name" value={invitation.venue_name || ""} onChange={(e) => updateField("venue_name", e.target.value)} placeholder="ឧ. Diamond Ballroom" className="border-gold-200 focus-visible:ring-primary" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="venue_address" className="text-secondary">អាសយដ្ឋានទីតាំង</Label>
-                    <Textarea id="venue_address" value={invitation.venue_address || ""} onChange={(e) => updateField("venue_address", e.target.value)} placeholder="អាសយដ្ឋានពេញ..." rows={2} className="border-gold-200 focus-visible:ring-primary" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="venue_map_url" className="text-secondary">Link Google Maps</Label>
-                    <Input id="venue_map_url" value={invitation.venue_map_url || ""} onChange={(e) => updateField("venue_map_url", e.target.value)} placeholder="https://maps.google.com/..." className="border-gold-200 focus-visible:ring-primary" />
+                    <div className="space-y-2">
+                      <Label htmlFor="venue_map_url" className="text-secondary">Link Google Maps</Label>
+                      <Input id="venue_map_url" value={invitation.venue_map_url || ""} onChange={(e) => updateField("venue_map_url", e.target.value)} placeholder="https://maps.google.com/..." className="border-gold-200 focus-visible:ring-primary" />
+                    </div>
                   </div>
                 </div>
               )}
@@ -320,30 +419,19 @@ export default function BuilderPage() {
               {/* Step 3: Gallery */}
               {currentStep === 3 && (
                 <div className="space-y-4">
-                  <p className="text-muted-foreground">បញ្ចូលរូបថត Pre-wedding របស់អ្នកដើម្បីបង្កើតវិចិត្រសាលដ៏ស្អាត។</p>
+                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50">
+                    <p className="text-muted-foreground">បញ្ចូលរូបថត Pre-wedding របស់អ្នកដើម្បីបង្កើតវិចិត្រសាលដ៏ស្អាត។</p>
+                  </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {galleryPhotos.map((photo) => (
                       <div key={photo.id} className="relative group aspect-square">
-                        <img
-                          src={photo.url}
-                          alt={photo.caption || "រូបភាព"}
-                          className="w-full h-full object-cover rounded-lg border border-gold-200"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeGalleryPhoto(photo.id)}
-                          className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
+                        <img src={photo.url} alt={photo.caption || "រូបភាព"} className="w-full h-full object-cover rounded-xl border border-gold-200" />
+                        <button type="button" onClick={() => removeGalleryPhoto(photo.id)} className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     ))}
-                    <FileUpload
-                      bucket="uploads"
-                      path={`invitations/${params.id}/gallery`}
-                      onUpload={handleGalleryUpload}
-                      className="aspect-square"
-                    />
+                    <FileUpload bucket="uploads" path={`invitations/${params.id}/gallery`} onUpload={handleGalleryUpload} className="aspect-square" />
                   </div>
                 </div>
               )}
@@ -351,20 +439,25 @@ export default function BuilderPage() {
               {/* Step 4: Payment QR */}
               {currentStep === 4 && (
                 <div className="space-y-6">
-                  <p className="text-muted-foreground">បញ្ចូល QR Code KHQR របស់អ្នកដើម្បីឱ្យភ្ញៀវផ្ញើចំណងដៃ។</p>
+                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50">
+                    <p className="text-muted-foreground">បញ្ចូល QR Code KHQR របស់អ្នកដើម្បីឱ្យភ្ញៀវផ្ញើចំណងដៃ។</p>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label className="text-secondary">រូបភាព QR Code</Label>
-                        <FileUpload
-                          bucket="uploads"
-                          path={`invitations/${params.id}/qr`}
-                          onUpload={handleQrUpload}
-                          className="max-w-[250px]"
-                        />
-                      </div>
+                    <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
+                      <h3 className="font-medium text-secondary flex items-center gap-2">
+                        <CreditCard className="h-4 w-4 text-primary" /> QR Code
+                      </h3>
+                      <FileUpload bucket="uploads" path={`invitations/${params.id}/qr`} onUpload={handleQrUpload} className="max-w-[250px]" />
+                      {qrImageUrl && (
+                        <div className="mt-2">
+                          <img src={qrImageUrl} alt="QR Code" className="w-32 h-32 rounded-lg border border-gold-200" />
+                        </div>
+                      )}
                     </div>
-                    <div className="space-y-4">
+                    <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
+                      <h3 className="font-medium text-secondary flex items-center gap-2">
+                        <CreditCard className="h-4 w-4 text-primary" /> ព័ត៌មានគណនី
+                      </h3>
                       <div className="space-y-2">
                         <Label htmlFor="bank_name" className="text-secondary">ឈ្មោះធនាគារ</Label>
                         <Input id="bank_name" placeholder="ឧ. ABA Bank" className="border-gold-200 focus-visible:ring-primary" />
@@ -385,16 +478,23 @@ export default function BuilderPage() {
               {/* Step 5: Music & Design */}
               {currentStep === 5 && (
                 <div className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="background_music" className="text-secondary">URL តន្ត្រីផ្ទៃខាងក្រោយ</Label>
-                    <Input id="background_music" value={invitation.background_music || ""} onChange={(e) => updateField("background_music", e.target.value)} placeholder="YouTube ឬ URL តន្ត្រី..." className="border-gold-200 focus-visible:ring-primary" />
+                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
+                    <h3 className="font-medium text-secondary flex items-center gap-2">
+                      <Music className="h-4 w-4 text-primary" /> តន្ត្រី
+                    </h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="background_music" className="text-secondary">URL តន្ត្រីផ្ទៃខាងក្រោយ</Label>
+                      <Input id="background_music" value={invitation.background_music || ""} onChange={(e) => updateField("background_music", e.target.value)} placeholder="YouTube ឬ URL តន្ត្រី..." className="border-gold-200 focus-visible:ring-primary" />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-secondary">ជ្រើសរើសធៀបគំរូ</Label>
+                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
+                    <h3 className="font-medium text-secondary flex items-center gap-2">
+                      <Eye className="h-4 w-4 text-primary" /> ជ្រើសរើសធៀបគំរូ
+                    </h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       {["ផ្កាឈូករ៉ូមែនទិច", "មាសប្រណិត", "ប្រពៃណីខ្មែរ", "សម័យទំនើប", "រាជវាំង", "សួនច្បារ"].map((name) => (
-                        <div key={name} className="border border-gold-200 rounded-lg p-4 text-center hover:border-primary cursor-pointer transition-colors hover:shadow-md">
-                          <div className="aspect-[3/4] bg-gradient-to-br from-gold-50 to-gold-100 rounded mb-2" />
+                        <div key={name} className="border border-gold-200 rounded-xl p-4 text-center hover:border-primary cursor-pointer transition-all hover:shadow-md hover:bg-gold-50">
+                          <div className="aspect-[3/4] bg-gradient-to-br from-gold-50 to-gold-100 rounded-lg mb-2" />
                           <p className="text-sm font-medium text-secondary">{name}</p>
                         </div>
                       ))}
@@ -406,49 +506,61 @@ export default function BuilderPage() {
               {/* Step 6: Preview & Publish */}
               {currentStep === 6 && (
                 <div className="space-y-6">
-                  <div className="bg-gradient-to-br from-gold-50 to-gold-100 rounded-lg p-8 text-center">
+                  <div className="bg-gradient-to-br from-gold-50 to-gold-100 rounded-2xl p-8 text-center border border-gold-200/50">
+                    <div className="h-14 w-14 rounded-full bg-gold-gradient flex items-center justify-center mx-auto mb-4">
+                      <Heart className="h-7 w-7 text-white fill-white" />
+                    </div>
                     <h2 className="text-2xl font-bold mb-2 text-secondary">
-                      {invitation.groom_name || "កូនកំលោះ"} & {invitation.bride_name || "កូនក្រមុំ"}
+                      {invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"} & {invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}
                     </h2>
                     <p className="text-muted-foreground">
                       {invitation.wedding_date
-                        ? new Date(invitation.wedding_date).toLocaleDateString("km-KH", {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })
+                        ? new Date(invitation.wedding_date).toLocaleDateString("km-KH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
                         : "កំណត់ពេលក្រោយ"}
                     </p>
-                    {invitation.venue_name && (
-                      <p className="text-sm text-muted-foreground mt-2">{invitation.venue_name}</p>
-                    )}
-                    {invitation.quote && (
-                      <p className="italic text-muted-foreground mt-4">&ldquo;{invitation.quote}&rdquo;</p>
-                    )}
+                    {invitation.venue_name && <p className="text-sm text-muted-foreground mt-2">{invitation.venue_name}</p>}
+                    {invitation.quote && <p className="italic text-muted-foreground mt-4">&ldquo;{invitation.quote}&rdquo;</p>}
                   </div>
-                  <div className="bg-gold-50 border border-gold-200 text-sm p-4 rounded-lg">
-                    <p className="font-medium mb-1 text-secondary">Link លិខិតអញ្ជើញ</p>
-                    <p className="font-mono text-primary">
-                      {typeof window !== "undefined" ? window.location.origin : ""}/invite/{invitation.slug || "..."}
-                    </p>
+
+                  <div className="p-4 bg-gold-50 border border-gold-200 rounded-xl">
+                    <p className="font-medium mb-2 text-secondary">Link លិខិតអញ្ជើញ</p>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 text-sm font-mono text-primary bg-white p-2 rounded-lg border border-gold-200">
+                        {typeof window !== "undefined" ? window.location.origin : ""}/invite/{invitation.slug || "..."}
+                      </code>
+                      <Button size="sm" variant="outline" onClick={copyLink} className="border-gold-200 text-primary hover:bg-gold-50">
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
+
                   {invitation.status === "published" && (
-                    <div className="bg-green-50 border border-green-200 text-green-800 text-sm p-4 rounded-lg">
-                      <p className="font-medium">លិខិតអញ្ជើញនេះកំពុងដំណើរការ!</p>
-                      <p>ចែករំលែក Link ទៅភ្ញៀវរបស់អ្នក។</p>
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                      <p className="font-medium text-green-800">លិខិតអញ្ជើញនេះកំពុងដំណើរការ!</p>
+                      <p className="text-sm text-green-600 mt-1">ចែករំលែក Link ទៅភ្ញៀវរបស់អ្នក។</p>
                     </div>
                   )}
+
+                  <div className="flex gap-3">
+                    <Link href={`/preview/${params.id}`} target="_blank" className="flex-1">
+                      <Button variant="outline" className="w-full border-gold-200 text-primary hover:bg-gold-50 gap-2">
+                        <Eye className="h-4 w-4" /> មើល Preview
+                      </Button>
+                    </Link>
+                    <Button onClick={publishInvitation} disabled={saving} className="flex-1 bg-gold-gradient text-white hover:opacity-90 gap-2">
+                      {saving ? "កំពុងផ្សាយ..." : "ផ្សាយលិខិតអញ្ជើញ"}
+                    </Button>
+                  </div>
                 </div>
               )}
 
               {/* Navigation Buttons */}
               <div className="flex justify-between pt-4 border-t border-gold-200/50">
-                <Button variant="outline" onClick={() => setCurrentStep(Math.max(1, currentStep - 1))} disabled={currentStep === 1} className="border-gold-200 text-secondary hover:bg-gold-50">
+                <Button variant="outline" onClick={handlePrev} disabled={currentStep === 1} className="border-gold-200 text-secondary hover:bg-gold-50">
                   <ArrowLeft className="h-4 w-4 mr-2" /> ក្រោយ
                 </Button>
                 {currentStep < 6 ? (
-                  <Button onClick={() => setCurrentStep(Math.min(6, currentStep + 1))} className="bg-gold-gradient text-white hover:opacity-90">
+                  <Button onClick={handleNext} className="bg-gold-gradient text-white hover:opacity-90">
                     បន្ទាប់ <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 ) : (
@@ -462,5 +574,13 @@ export default function BuilderPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function Calendar(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>
+    </svg>
   );
 }
