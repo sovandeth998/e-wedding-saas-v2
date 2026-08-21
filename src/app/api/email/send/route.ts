@@ -35,6 +35,43 @@ ${data.venueName ? `<p style="margin:5px 0;color:#333;"><strong>📍 ទីត�
 </html>`,
   }),
 
+  rsvp_notification: (data) => ({
+    subject: `មាន RSVP ថ្មី! - ${data.coupleName || "ពិធីអាពាហ៍ពិពាហ៍"}`,
+    html: `
+<!DOCTYPE html>
+<html lang="km">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#fdf8ef;font-family:'Noto Sans Khmer',Arial,sans-serif;">
+<div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;margin-top:20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+<div style="background:linear-gradient(135deg,#d4911a,#e2a832);padding:30px;text-align:center;">
+<h1 style="color:#ffffff;margin:0;font-size:24px;">🎉 មាន RSVP ថ្មី!</h1>
+</div>
+<div style="padding:30px;">
+<p style="color:#333;font-size:16px;line-height:1.8;">សួស្តី,</p>
+<p style="color:#555;font-size:15px;line-height:1.8;">ភ្ញៀវម្នាក់បានឆ្លើយតប RSVP សម្រាប់ពិធីអាពាហ៍ពិពាហ៍របស់លោកអ្នក។ សូមពិនិត្យព័ត៌មានលម្អិតខាងក្រោម។</p>
+<div style="background-color:#fdf8ef;border-radius:8px;padding:20px;margin:20px 0;">
+<p style="margin:5px 0;color:#333;"><strong>👤 ឈ្មោះភ្ញៀវ៖</strong> ${data.guestName || ""}</p>
+<p style="margin:5px 0;color:#333;"><strong>📋 ស្ថានភាព៖</strong> ${data.status === "attending" ? "✅ នឹងចូលរួម" : data.status === "not_attending" ? "❌ មិនចូលរួម" : "⏳ កំពុងពិចារណា"}</p>
+<p style="margin:5px 0;color:#333;"><strong>👥 ចំនួនភ្ញៀវ៖</strong> ${data.numberOfGuests || "1"} នាក់</p>
+${
+  data.message
+    ? `<p style="margin:5px 0;color:#333;"><strong>💬 សារ៖</strong> ${data.message}</p>`
+    : ""
+}
+</div>
+<p style="color:#555;font-size:15px;line-height:1.8;">អ្នកអាចចូលទៅកាន់ផ្ទាំងគ្រប់គ្រងដើម្បីមើលបញ្ជី RSVP ទាំងអស់។</p>
+<p style="color:#d4911a;font-size:15px;font-weight:bold;">អរគុណដែលប្រើប្រាស់សេវាកម្មរបស់យើង! 🙏💕</p>
+</div>
+<div style="background-color:#f5f5f5;padding:20px;text-align:center;">
+<p style="color:#999;font-size:12px;margin:0;">${
+      data.coupleName || "ពិធីអាពាហ៍ពិពាហ៍"
+    } | ប្រព័ន្ធគ្រប់គ្រងលិខិតអញ្ជើញ</p>
+</div>
+</div>
+</body>
+</html>`,
+  }),
+
   wedding_reminder: (data) => ({
     subject: `រំលឹកពិធីអាពាហ៍ពិពាហ៍ - ${data.coupleName || ""}`,
     html: `
