@@ -31,7 +31,7 @@ interface UserRow {
 
 interface PackageRow {
   id: string;
-  slug: string;
+  name: string;
   name_kh: string | null;
 }
 
@@ -67,13 +67,13 @@ export default function AdminUsersPage() {
       await Promise.all([
         supabase.from("users").select("*").order("created_at", { ascending: false }),
         supabase.from("subscriptions").select("user_id, package_id").eq("status", "active"),
-        supabase.from("packages").select("id, slug, name_kh"),
+        supabase.from("packages").select("id, name, name_kh"),
       ]);
 
     setPackages(pkgsData || []);
 
     const slugByPkgId = new Map<string, string>();
-    (pkgsData || []).forEach((p) => slugByPkgId.set(p.id, p.slug));
+    (pkgsData || []).forEach((p) => slugByPkgId.set(p.id, p.name));
 
     const planByUserId = new Map<string, string>();
     (subsData || []).forEach((s) => {
@@ -117,7 +117,7 @@ export default function AdminUsersPage() {
       .eq("status", "active");
 
     if (newPlan !== "free") {
-      const pkg = packages.find((p) => p.slug === newPlan);
+      const pkg = packages.find((p) => p.name === newPlan);
       if (pkg) {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 365);
