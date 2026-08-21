@@ -208,6 +208,20 @@ function InvitationContent() {
     await supabase.from("wishes").insert({ invitation_id: invitation.id, guest_id: guest?.id || null, sender_name: wishName || "អនាមិក", content: wishContent, is_approved: false });
     setWishSubmitted(true);
     setWishContent("");
+    try {
+      fetch("/api/telegram/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "wish",
+          invitation_id: invitation.id,
+          groom_name: invitation.groom_name_kh || invitation.groom_name,
+          bride_name: invitation.bride_name_kh || invitation.bride_name,
+          guest_name: wishName || "អនាមិក",
+          message: wishContent,
+        }),
+      });
+    } catch {}
   };
 
   const goldDot = (c: string) => (
@@ -549,34 +563,6 @@ function InvitationContent() {
               <Button onClick={submitRSVP} className="w-full text-white rounded-xl h-11 shadow-lg" style={{ background: `linear-gradient(to right, ${t.btnFrom}, ${t.btnTo})` }} disabled={!rsvpStatus}>ផ្ញើការឆ្លើយតប</Button>
             </div>
           )}
-        </div>
-
-        <div className="rounded-2xl p-6" style={cardStyle}>
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <MessageCircle className="h-5 w-5" style={{ color: t.accent }} />
-            <h2 className="text-lg font-bold tracking-wide" style={{ color: t.textPri }}>ពាក្យជូនពរ</h2>
-          </div>
-          <div className="h-px w-16 mx-auto mb-4" style={{ background: `${t.accent}25` }} />
-          {wishSubmitted && (
-            <div className="text-sm p-3 rounded-xl mb-4 text-center" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#86efac" }}>បានផ្ញើពាក្យជូនពរ!</div>
-          )}
-          <div className="space-y-3 mb-6 max-h-60 overflow-y-auto">
-            {wishes.length === 0 ? (
-              <p className="text-sm text-center py-4" style={{ color: t.textMut }}>មិនទាន់មានពាក្យជូនពរ។</p>
-            ) : (
-              wishes.map((wish) => (
-                <div key={wish.id} className="rounded-xl p-3" style={{ border: `1px solid ${t.accent}15`, background: t.accentBg }}>
-                  <p className="font-medium text-sm" style={{ color: t.textPri }}>{cleanName(wish.sender_name)}</p>
-                  <p className="text-sm mt-1" style={{ color: t.textMut }}>{wish.content}</p>
-                </div>
-              ))
-            )}
-          </div>
-          <div className="space-y-3 pt-4" style={{ borderTop: `1px solid ${t.accent}15` }}>
-            <Input value={wishName} onChange={(e) => setWishName(e.target.value)} placeholder="ឈ្មោះរបស់អ្នក" className="rounded-xl" style={{ borderColor: `${t.accent}25`, background: t.accentBg, color: t.textPri }} />
-            <Textarea value={wishContent} onChange={(e) => setWishContent(e.target.value)} placeholder="សរសេរពាក្យជូនពរ..." rows={2} className="rounded-xl" style={{ borderColor: `${t.accent}25`, background: t.accentBg, color: t.textPri }} />
-            <Button onClick={submitWish} variant="outline" className="w-full rounded-xl" style={{ borderColor: `${t.accent}25`, color: t.textSec }} disabled={!wishContent.trim()}>ផ្ញើពាក្យជូនពរ</Button>
-          </div>
         </div>
 
         <div className="text-center pt-4">
