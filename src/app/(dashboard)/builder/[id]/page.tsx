@@ -72,6 +72,19 @@ export default function BuilderPage() {
     { id: "12", name: "ទំនើប",              category: "modern", isPremium: false, bg: "linear-gradient(135deg, #1a1a1e, #2e2e32, #3e3e42)", textPri: "#e5e7eb", accent: "#9ca3af", btnFrom: "#6b7280", btnTo: "#4b5563" },
   ];
 
+  const timelinePresets = [
+    { title: "ពិធីសូត្រធម៌", description: "សូត្រធម៌ពីព្រះសង្ឃ" },
+    { title: "ពិធីក្រុងពរ", description: "ក្រុងពរពីអ្នកចាស់ទុំ" },
+    { title: "ពិធីភ្ជាប់ពាក្យ", description: "ពិធីភ្ជាប់ពាក្យរវាងគ្រួសារ" },
+    { title: "ពិធីស្រាយផ្កាឈូក", description: "ស្រាយផ្កាឈូកពីកូនក្រមុំ" },
+    { title: "ពិធីបញ្ចូលសំពត់", description: "ពិធីបញ្ចូលសំពត់ស្វាមី" },
+    { title: "ពិធីច្រត់ក្បាលក្រាប", description: "ពិធីច្រត់ក្បាលក្រាប" },
+    { title: "ពិធីផ្សំដៃ", description: "ពិធីផ្សំដៃគូស្នេហ៍" },
+    { title: "ពិធីជួបជុំភ្ញៀវ", description: "ជួបជុំភ្ញៀវការ" },
+    { title: "ពិធីកាត់ស្ករស", description: "ពិធីកាត់ស្ករស" },
+    { title: "ពិធីជប់លៀង", description: "ពិធីជប់លៀងរាត្រី" },
+  ];
+
   useEffect(() => {
     if (!params.id) return;
 
@@ -554,35 +567,60 @@ export default function BuilderPage() {
                     <h3 className="font-medium text-secondary flex items-center gap-2">
                       <Clock className="h-4 w-4 text-primary" /> កាលវិភាគពិធី
                     </h3>
-                    <p className="text-sm text-muted-foreground">បន្ថែមកាលវិភាគពិធីរបស់អ្នក។ ទុកទទេប្រសិនបើមិនចង់ប្រើ។</p>
+                    <p className="text-sm text-muted-foreground">ជ្រើសរើសពិធី ឬសរសេរថ្មី។ អាចលុបបាន។</p>
                     {((invitation.timeline || []) as any[]).map((ev: any, i: number) => (
-                      <div key={i} className="flex gap-2 items-start">
-                        <Input value={ev.time || ""} onChange={(e) => {
-                          const tl = [...(invitation.timeline || []) as any[]];
-                          tl[i] = { ...tl[i], time: e.target.value };
-                          updateField("timeline" as any, tl as any);
-                        }} placeholder="ម៉ោង" className="w-24 border-gold-200 focus-visible:ring-primary text-sm" />
-                        <Input value={ev.title || ""} onChange={(e) => {
-                          const tl = [...(invitation.timeline || []) as any[]];
-                          tl[i] = { ...tl[i], title: e.target.value };
-                          updateField("timeline" as any, tl as any);
-                        }} placeholder="ពិធី..." className="flex-1 border-gold-200 focus-visible:ring-primary text-sm" />
+                      <div key={i} className="p-3 bg-white rounded-xl border border-gold-100 space-y-2">
+                        <div className="flex gap-2 items-center">
+                          <Input value={ev.time || ""} onChange={(e) => {
+                            const tl = [...(invitation.timeline || []) as any[]];
+                            tl[i] = { ...tl[i], time: e.target.value };
+                            updateField("timeline" as any, tl as any);
+                          }} placeholder="ម៉ោង (ឧ. 07:00)" className="w-28 border-gold-200 focus-visible:ring-primary text-sm" />
+                          <select
+                            value={ev.title || ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const tl = [...(invitation.timeline || []) as any[]];
+                              if (val === "__custom__") {
+                                tl[i] = { ...tl[i], title: "" };
+                              } else {
+                                const preset = timelinePresets.find((p) => p.title === val);
+                                tl[i] = { ...tl[i], title: val, description: preset?.description || tl[i].description || "" };
+                              }
+                              updateField("timeline" as any, tl as any);
+                            }}
+                            className="flex-1 border border-gold-200 rounded-lg px-3 py-2 text-sm bg-white text-secondary focus:ring-2 focus:ring-primary outline-none"
+                          >
+                            <option value="">ជ្រើសរើសពិធី...</option>
+                            {timelinePresets.map((p) => (
+                              <option key={p.title} value={p.title}>{p.title}</option>
+                            ))}
+                            <option value="__custom__">✍️ សរសេរផ្ទាល់...</option>
+                          </select>
+                          <Button variant="ghost" size="icon" onClick={() => {
+                            const tl = [...(invitation.timeline || []) as any[]];
+                            tl.splice(i, 1);
+                            updateField("timeline" as any, tl as any);
+                          }} className="text-red-500 shrink-0 h-9 w-9"><Trash2 className="h-4 w-4" /></Button>
+                        </div>
+                        {(ev.title === "" || !timelinePresets.find((p) => p.title === ev.title)) && (
+                          <Input value={ev.title || ""} onChange={(e) => {
+                            const tl = [...(invitation.timeline || []) as any[]];
+                            tl[i] = { ...tl[i], title: e.target.value };
+                            updateField("timeline" as any, tl as any);
+                          }} placeholder="ឈ្មោះពិធី..." className="border-gold-200 focus-visible:ring-primary text-sm" />
+                        )}
                         <Input value={ev.description || ""} onChange={(e) => {
                           const tl = [...(invitation.timeline || []) as any[]];
                           tl[i] = { ...tl[i], description: e.target.value };
                           updateField("timeline" as any, tl as any);
-                        }} placeholder="ពិស្តារ..." className="flex-1 border-gold-200 focus-visible:ring-primary text-sm" />
-                        <Button variant="ghost" size="icon" onClick={() => {
-                          const tl = [...(invitation.timeline || []) as any[]];
-                          tl.splice(i, 1);
-                          updateField("timeline" as any, tl as any);
-                        }} className="text-red-500 shrink-0"><Trash2 className="h-4 w-4" /></Button>
+                        }} placeholder="ពិស្តារ (ជម្រើស)..." className="border-gold-200 focus-visible:ring-primary text-sm" />
                       </div>
                     ))}
                     <Button variant="outline" size="sm" onClick={() => {
                       const tl = [...(invitation.timeline || []) as any[], { time: "", title: "", description: "" }];
                       updateField("timeline" as any, tl as any);
-                    }} className="border-gold-200 text-secondary hover:bg-gold-50">+ បន្ថែមពិធី</Button>
+                    }} className="border-gold-200 text-secondary hover:bg-gold-50 gap-1">+ បន្ថែមពិធី</Button>
                   </div>
                   <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
                     <h3 className="font-medium text-secondary flex items-center gap-2">
