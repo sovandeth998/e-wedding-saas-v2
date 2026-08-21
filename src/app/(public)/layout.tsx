@@ -1,5 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import { Heart } from "lucide-react";
+import { Heart, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function PublicLayout({
@@ -7,12 +10,14 @@ export default function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navbar */}
       <header className="sticky top-0 z-50 w-full border-b border-gold-200/50 bg-white/90 backdrop-blur-md">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 max-w-6xl">
-          <Link href="/" className="flex items-center gap-2 text-xl font-bold">
+          <Link href="/" className="flex items-center gap-2 text-xl font-bold" onClick={() => setMobileOpen(false)}>
             <div className="h-8 w-8 rounded-full bg-gold-gradient flex items-center justify-center">
               <Heart className="h-4 w-4 text-white fill-white" />
             </div>
@@ -33,14 +38,45 @@ export default function PublicLayout({
             </Link>
           </nav>
           <div className="flex items-center gap-3">
-            <Link href="/login">
+            <Link href="/login" className="hidden md:block">
               <Button variant="ghost" size="sm">ចូល</Button>
             </Link>
-            <Link href="/register">
+            <Link href="/register" className="hidden md:block">
               <Button size="sm" className="bg-gold-gradient text-white hover:opacity-90">ចុះឈ្មោះ</Button>
             </Link>
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileOpen && (
+          <div className="md:hidden border-t border-gold-200/50 bg-white">
+            <div className="container mx-auto px-4 py-4 space-y-3">
+              <Link href="/templates" onClick={() => setMobileOpen(false)} className="block text-sm font-medium text-muted-foreground hover:text-primary py-2">
+                ធៀបគំរូ
+              </Link>
+              <Link href="/pricing" onClick={() => setMobileOpen(false)} className="block text-sm font-medium text-muted-foreground hover:text-primary py-2">
+                តម្លៃ
+              </Link>
+              <Link href="/how-it-works" onClick={() => setMobileOpen(false)} className="block text-sm font-medium text-muted-foreground hover:text-primary py-2">
+                របៀបប្រើ
+              </Link>
+              <Link href="/contact" onClick={() => setMobileOpen(false)} className="block text-sm font-medium text-muted-foreground hover:text-primary py-2">
+                ទំនាក់ទំនង
+              </Link>
+              <div className="flex gap-3 pt-2">
+                <Link href="/login" onClick={() => setMobileOpen(false)} className="flex-1">
+                  <Button variant="outline" size="sm" className="w-full border-gold-200 text-secondary hover:bg-gold-50">ចូល</Button>
+                </Link>
+                <Link href="/register" onClick={() => setMobileOpen(false)} className="flex-1">
+                  <Button size="sm" className="w-full bg-gold-gradient text-white hover:opacity-90">ចុះឈ្មោះ</Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Main Content */}
