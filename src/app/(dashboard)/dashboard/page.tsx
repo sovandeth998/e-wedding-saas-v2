@@ -240,7 +240,7 @@ export default function DashboardPage() {
               <Plus className="h-4 w-4 mr-2" /> បង្កើតលិខិតអញ្ជើញថ្មី
             </Button>
           </Link>
-          <Link href="/guests">
+          <Link href={firstInvitationId ? `/guests/${firstInvitationId}` : "/guests"}>
             <Button variant="outline" className="border-gold-200 text-primary hover:bg-gold-50 rounded-xl h-11">
               <Users className="h-4 w-4 mr-2" /> គ្រប់គ្រងភ្ញៀវ
             </Button>
