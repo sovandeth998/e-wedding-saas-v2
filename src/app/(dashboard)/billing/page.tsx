@@ -23,6 +23,7 @@ type PaymentMethod = "khqr" | "receipt" | "payway";
 interface PaywayData {
   orderId: string;
   qrImage?: string;
+  qrDataUrl?: string;
   abapayDeeplink?: string;
   method?: "qr" | "card";
   actionUrl?: string;
@@ -141,7 +142,7 @@ export default function BillingPage() {
       if (!res.ok) throw new Error(json.error || "failed");
       setPaywayData({
         orderId: json.orderId,
-        qrImage: json.qrImage,
+        qrImage: json.qrDataUrl || json.qrImage,
         abapayDeeplink: json.abapayDeeplink,
         method: payMethod,
         actionUrl: json.actionUrl,
@@ -349,7 +350,7 @@ export default function BillingPage() {
       </div>
 
       <Dialog open={upgradeOpen} onOpenChange={setUpgradeOpen}>
-        <DialogContent className="max-w-md border-gold-200 bg-white">
+        <DialogContent className="max-w-lg border-gold-200 bg-white">
           {submitSuccess ? (
             <div className="py-8 text-center space-y-4">
               <div className="h-16 w-16 rounded-full bg-gold-gradient flex items-center justify-center mx-auto">
@@ -487,7 +488,7 @@ export default function BillingPage() {
                       </div>
                       <div className="flex justify-center">
                         {paywayData.qrImage ? (
-                          <img src={paywayData.qrImage} alt="ABA PayWay KHQR" className="w-[320px] h-[320px] max-w-full object-contain rounded-2xl border-2 border-gold-200 bg-white p-2 shadow-md" />
+                          <img src={paywayData.qrImage} alt="ABA PayWay KHQR" className="w-[380px] h-[380px] max-w-full object-contain rounded-2xl border-2 border-gold-200 bg-white p-2 shadow-md" />
                         ) : null}
                       </div>
                       <div className="text-center space-y-1">

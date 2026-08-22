@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/server";
 import {
   buildCheckoutFields,
@@ -92,10 +93,18 @@ export async function POST(request: Request) {
       lifetimeMinutes: 15,
     });
 
+    const qrDataUrl = await QRCode.toDataURL(qr.qrString, {
+      width: 640,
+      margin: 2,
+      errorCorrectionLevel: "M",
+      color: { dark: "#1a1a1a", light: "#ffffff" },
+    });
+
     return NextResponse.json({
       orderId: order.id,
       tranId,
       qrImage: qr.qrImage,
+      qrDataUrl,
       qrString: qr.qrString,
       abapayDeeplink: qr.abapayDeeplink,
       amount: Number(pkg.price),
