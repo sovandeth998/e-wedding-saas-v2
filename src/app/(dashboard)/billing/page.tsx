@@ -20,8 +20,7 @@ import {
 
 type PaymentMethod = "khqr" | "receipt" | "payway";
 
-interface PaywayData {
-  orderId: string;
+interface PaywayData {  orderId: string;
   qrImage?: string;
   qrDataUrl?: string;
   abapayDeeplink?: string;
@@ -38,6 +37,7 @@ export default function BillingPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [selectedPrice, setSelectedPrice] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [khqrStep, setKhqrStep] = useState<"qr" | "upload">("qr");
   const [bankSettings, setBankSettings] = useState<Record<string, string>>({});
   const [countdown, setCountdown] = useState(300);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -205,6 +205,9 @@ export default function BillingPage() {
 
   const handleSelectKHQR = async () => {
     setPaymentMethod("khqr");
+    setKhqrStep("qr");
+    setReceiptFile(null);
+    setReceiptPreview(null);
     setCountdown(300);
     const { data: settings } = await supabase
       .from("platform_settings")
@@ -250,7 +253,7 @@ export default function BillingPage() {
 
     try {
       let receiptUrl: string | null = null;
-      if (paymentMethod === "receipt" && receiptFile) {
+      if (receiptFile && (paymentMethod === "receipt" || paymentMethod === "khqr")) {
         const fileName = `receipts/${user.id}/${Date.now()}-${receiptFile.name}`;
         const { data: uploadData } = await supabase.storage
           .from("uploads")
@@ -369,9 +372,11 @@ export default function BillingPage() {
               <div className="h-16 w-16 rounded-full bg-gold-gradient flex items-center justify-center mx-auto">
                 <Check className="h-8 w-8 text-white" />
               </div>
-              <DialogTitle className="text-secondary">ការបញ្ជាទិញជោគជ័យ!</DialogTitle>
+              <DialogTitle className="text-secondary">បានដាក់ស្នើរជោគជ័យ!</DialogTitle>
               <p className="text-sm text-muted-foreground">
-                ការបញ្ជាទិញរបស់អ្នកកំពុងរង់ចាំការផ្ទៀងផ្ទាត់។ យើងនឹងទាក់ទងអ្នកឆាប់ៗនេះ។
+                ការទូទាត់របស់អ្នកកំពុង<strong className="text-orange-600">រង់ចាំការត្រួតពិនិត្យ</strong>ពីក្រុមការងារ។
+                <br />
+                គម្រោងរបស់អ្នកនឹងធ្វើបច្ចុប្បន្នភាពភ្លាមៗ បន្ទាប់ពីការផ្ទៀងផ្ទាត់ជោគជ័យ (ជាទូទៅប្រហែល ៥-១៥ នាទី)។
               </p>
               <Button
                 className="bg-gold-gradient text-white"
@@ -527,14 +532,14 @@ export default function BillingPage() {
                 </div>
               )}
 
-              {paymentMethod === "khqr" && (
+              {paymentMethod === "khqr" && khqrStep === "qr" && (
                 <div className="space-y-4 py-2">
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground mb-2">
-                      ផ្ញើប្រាក់ទៅគណនីខាងក្រោម
+                      ជំហានទី ១ — ស្កេនបង់ប្រាក់ទៅគណនីខាងក្រោម
                     </p>
                     <div className="flex items-center justify-center gap-2 mb-3">
-                      <Timer className="h-4 w-4 text-orange-500" />
+                      <Timer className={`h-4 w-4 ${countdown < 60 ? "text-red-500" : "text-orange-500"}`} />
                       <span className={`font-mono font-bold text-lg ${countdown < 60 ? "text-red-500" : "text-secondary"}`}>
                         {formatCountdown(countdown)}
                       </span>
@@ -563,22 +568,67 @@ export default function BillingPage() {
                         </div>
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-3">ផ្ញើរួច → បញ្ជាក់ការបង់ប្រាក់ខាងក្រោម</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1" onClick={() => setPaymentMethod(null)}>
+                      ត្រលប់ក្រោយ
+                    </Button>
+                    <Button
+                      className="flex-[2] bg-gold-gradient text-white"
+                      onClick={() => setKhqrStep("upload")}
+                      disabled={countdown === 0}
+                    >
+                      ខ្ញុំបានបង់រួចរាល់ ➜ ផ្ទុកបង្កាន់ដៃ
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {paymentMethod === "khqr" && khqrStep === "upload" && (
+                <div className="space-y-4 py-2">
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
+                    <p className="text-sm font-semibold text-green-700">✅ ជំហានទី ១ បានបញ្ចប់ — បង់ប្រាក់រួចរាល់</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-secondary">ជំហានទី ២ — ផ្ទុករូបភាពបង្កាន់ដៃ</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      សូមធ្វើ Screenshot ការបង់ប្រាក់ដែលជោគជ័យ រួចផ្ទុកឡើងខាងក្រោម
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block">
+                      <span className="sr-only">ផ្ទុករូបភាពបង្កាន់ដៃ</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleReceiptChange}
+                        className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gold-gradient file:text-white hover:file:opacity-90 cursor-pointer"
+                      />
+                    </label>
+                    {receiptPreview && (
+                      <div className="mt-2 flex justify-center">
+                        <img
+                          src={receiptPreview}
+                          alt="បង្កាន់ដៃ"
+                          className="max-h-48 rounded-lg border border-gold-200"
+                        />
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
                       className="flex-1"
-                      onClick={() => setPaymentMethod(null)}
+                      onClick={() => { setKhqrStep("qr"); setReceiptFile(null); setReceiptPreview(null); }}
                     >
-                      ត្រលប់ក្រោយ
+                      ត្រឡប់ទៅ QR
                     </Button>
                     <Button
                       className="flex-1 bg-gold-gradient text-white"
                       onClick={handleSubmitPayment}
-                      disabled={submitting || countdown === 0}
+                      disabled={submitting || !receiptFile}
                     >
-                      {submitting ? "កំពុងដាក់ស្នើ..." : "បញ្ជាក់ការបង់ប្រាក់"}
+                      {submitting ? "កំពុងដាក់ស្នើ..." : "ដាក់ស្នើត្រួតពិនិត្យ"}
                     </Button>
                   </div>
                 </div>
