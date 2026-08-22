@@ -207,13 +207,25 @@ export default function BillingPage() {
     const { data: settings } = await supabase
       .from("platform_settings")
       .select("key, value")
-      .in("key", ["owner_bank_name", "owner_account_name", "owner_account_number", "owner_khqr_image"]);
+      .in("key", [
+        "owner_bank_name",
+        "owner_account_name",
+        "owner_account_number",
+        "owner_khqr_image",
+        "owner_khqr_image_standard",
+        "owner_khqr_image_vip",
+      ]);
     if (settings) {
       const map: Record<string, string> = {};
       settings.forEach((s) => { map[s.key] = s.value; });
       setBankSettings(map);
     }
   };
+
+  const planQrImage =
+    selectedPlan === "standard"
+      ? bankSettings.owner_khqr_image_standard || bankSettings.owner_khqr_image
+      : bankSettings.owner_khqr_image_vip || bankSettings.owner_khqr_image;
 
   const handleSelectReceipt = () => {
     setPaymentMethod("receipt");
@@ -526,9 +538,9 @@ export default function BillingPage() {
                         {formatCountdown(countdown)}
                       </span>
                     </div>
-                    {bankSettings.owner_khqr_image ? (
+                    {planQrImage ? (
                       <div className="flex justify-center mb-3">
-                        <img src={bankSettings.owner_khqr_image} alt="KHQR" className="w-[300px] h-[300px] max-w-full object-contain rounded-2xl border-2 border-gold-200 shadow-md" />
+                        <img src={planQrImage} alt="KHQR" className="w-[300px] h-[300px] max-w-full object-contain rounded-2xl border-2 border-gold-200 shadow-md" />
                       </div>
                     ) : null}
                     <div className="p-6 bg-gold-50 rounded-xl border border-gold-200 text-left space-y-3 mx-auto max-w-sm">

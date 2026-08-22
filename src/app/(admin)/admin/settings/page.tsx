@@ -32,6 +32,12 @@ export default function AdminSettingsPage() {
   const [qrImage, setQrImage] = useState("");
   const [qrPreview, setQrPreview] = useState("");
   const [qrFile, setQrFile] = useState<File | null>(null);
+  const [qrStdImage, setQrStdImage] = useState("");
+  const [qrStdPreview, setQrStdPreview] = useState("");
+  const [qrStdFile, setQrStdFile] = useState<File | null>(null);
+  const [qrVipImage, setQrVipImage] = useState("");
+  const [qrVipPreview, setQrVipPreview] = useState("");
+  const [qrVipFile, setQrVipFile] = useState<File | null>(null);
 
   const [siteName, setSiteName] = useState("E-Wedding");
   const [siteDescription, setSiteDescription] = useState("");
@@ -63,6 +69,8 @@ export default function AdminSettingsPage() {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const qrRef = useRef<HTMLInputElement>(null);
+  const qrStdRef = useRef<HTMLInputElement>(null);
+  const qrVipRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -81,6 +89,8 @@ export default function AdminSettingsPage() {
             case "owner_account_name": setAccountName(val); break;
             case "owner_account_number": setAccountNumber(val); break;
             case "owner_khqr_image": setQrImage(val); setQrPreview(val); break;
+            case "owner_khqr_image_standard": setQrStdImage(val); setQrStdPreview(val); break;
+            case "owner_khqr_image_vip": setQrVipImage(val); setQrVipPreview(val); break;
             case "site_name": setSiteName(val || "E-Wedding"); break;
             case "site_description": setSiteDescription(val); break;
             case "contact_email": setContactEmail(val); break;
@@ -122,6 +132,26 @@ export default function AdminSettingsPage() {
     }
   };
 
+  const handleQrStdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setQrStdFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setQrStdPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleQrVipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setQrVipFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setQrVipPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -151,6 +181,18 @@ export default function AdminSettingsPage() {
       if (uploaded) { qrUrl = uploaded; setQrImage(qrUrl); }
     }
 
+    let qrStdUrl = qrStdImage;
+    if (qrStdFile) {
+      const uploaded = await uploadImage(qrStdFile, `platform/qr-std-${Date.now()}.png`);
+      if (uploaded) { qrStdUrl = uploaded; setQrStdImage(qrStdUrl); }
+    }
+
+    let qrVipUrl = qrVipImage;
+    if (qrVipFile) {
+      const uploaded = await uploadImage(qrVipFile, `platform/qr-vip-${Date.now()}.png`);
+      if (uploaded) { qrVipUrl = uploaded; setQrVipImage(qrVipUrl); }
+    }
+
     let logoUrl = logoImage;
     if (logoFile) {
       const uploaded = await uploadImage(logoFile, `platform/logo-${Date.now()}.png`);
@@ -162,6 +204,8 @@ export default function AdminSettingsPage() {
       { key: "owner_account_name", value: accountName },
       { key: "owner_account_number", value: accountNumber },
       { key: "owner_khqr_image", value: qrUrl },
+      { key: "owner_khqr_image_standard", value: qrStdUrl },
+      { key: "owner_khqr_image_vip", value: qrVipUrl },
       { key: "site_name", value: siteName },
       { key: "site_description", value: siteDescription },
       { key: "contact_email", value: contactEmail },
@@ -277,6 +321,53 @@ export default function AdminSettingsPage() {
               <p className="text-xs text-muted-foreground mt-1">PNG, JPG រហូតដល់ 5MB</p>
             </button>
           )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-0 shadow-md">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-secondary">
+            <Image className="h-5 w-5 text-primary" />
+            KHQR តាមកញ្ចប់ ($18 / $40)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            ដាក់ QR ដោយឡែកសម្រាប់កញ្ចប់នីមួយៗ — បើទុកចំហេត វានឹងប្រើរូបខាងលើជំនួស
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              { label: "QR Standard ($18)", ref: qrStdRef, preview: qrStdPreview, onChange: handleQrStdChange, clear: () => { setQrStdPreview(""); setQrStdFile(null); setQrStdImage(""); } },
+              { label: "QR VIP ($40)", ref: qrVipRef, preview: qrVipPreview, onChange: handleQrVipChange, clear: () => { setQrVipPreview(""); setQrVipFile(null); setQrVipImage(""); } },
+            ].map((slot) => (
+              <div key={slot.label} className="border border-gold-200 rounded-xl p-4 space-y-3 bg-gold-50/40">
+                <p className="text-sm font-semibold text-secondary text-center">{slot.label}</p>
+                <input type="file" accept="image/*" onChange={slot.onChange} ref={slot.ref} className="hidden" />
+                {slot.preview ? (
+                  <div className="space-y-2">
+                    <div className="flex justify-center">
+                      <div className="p-3 bg-white rounded-lg border border-gold-200 shadow-sm">
+                        <img src={slot.preview} alt={slot.label} className="w-[180px] h-[180px] object-contain" />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="flex-1 border-gold-200 text-secondary hover:bg-gold-50" onClick={() => slot.ref.current?.click()}>
+                        <Upload className="h-3.5 w-3.5 mr-1" /> ផ្លាស់ប្តូរ
+                      </Button>
+                      <Button size="sm" variant="outline" className="border-red-200 text-red-500 hover:bg-red-50" onClick={slot.clear}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => slot.ref.current?.click()} className="w-full border-2 border-dashed border-gold-200 rounded-lg p-8 text-center hover:bg-gold-50/50 cursor-pointer transition-colors bg-white">
+                    <Upload className="h-7 w-7 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">ចុចដើម្បីបញ្ចូល QR</p>
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
