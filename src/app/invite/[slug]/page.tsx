@@ -220,6 +220,14 @@ function InvitationContent() {
     if (!finalGuestId) return;
     await supabase.from("rsvps").insert({ guest_id: finalGuestId, invitation_id: invitation.id, status: rsvpStatus, number_of_guests: rsvpGuests, message: rsvpMessage });
     setRsvpSubmitted(true);
+    if (rsvpMessage.trim()) {
+      const senderName = displayName || guestName || "អនាមិក";
+      const { error: wErr } = await supabase.from("wishes").insert({ invitation_id: invitation.id, guest_id: finalGuestId, sender_name: senderName, content: rsvpMessage, is_approved: true });
+      if (!wErr) {
+        const { data: freshWishes } = await supabase.from("wishes").select("*").eq("invitation_id", invitation.id).eq("is_approved", true).order("created_at", { ascending: false });
+        setWishes(freshWishes || []);
+      }
+    }
     try {
       fetch("/api/telegram/notify", {
         method: "POST",
@@ -231,29 +239,6 @@ function InvitationContent() {
             status: rsvpStatus,
             numberOfGuests: rsvpGuests.toString(),
             message: rsvpMessage,
-          },
-        }),
-      });
-    } catch {}
-  };
-
-  const submitWish = async () => {
-    if (!invitation || !wishContent.trim()) return;
-    const { error: wishErr } = await supabase.from("wishes").insert({ invitation_id: invitation.id, guest_id: guest?.id || null, sender_name: wishName || "អនាមិក", content: wishContent, is_approved: true });
-    if (wishErr) { toast.error("មិនអាចផ្ញើសេចក្ដីជ្រះថ្លាបានទេ សូមព្យាយាមម្តងទៀត"); return; }
-    setWishSubmitted(true);
-    setWishContent("");
-    const { data: freshWishes } = await supabase.from("wishes").select("*").eq("invitation_id", invitation.id).eq("is_approved", true).order("created_at", { ascending: false });
-    setWishes(freshWishes || []);
-    try {
-      fetch("/api/telegram/notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "wish",
-          data: {
-            senderName: wishName || "អនាមិក",
-            content: wishContent,
           },
         }),
       });
