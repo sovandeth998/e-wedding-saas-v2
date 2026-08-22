@@ -310,9 +310,14 @@ export default function AdminSettingsPage() {
                   <img src={qrPreview} alt="KHQR" className="w-[260px] h-[260px] object-contain" />
                 </div>
               </div>
-              <Button variant="outline" className="w-full border-gold-200 text-secondary hover:bg-gold-50" onClick={() => qrRef.current?.click()}>
-                <Upload className="h-4 w-4 mr-2" /> ផ្លាស់ប្តូររូបភាព
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 border-gold-200 text-secondary hover:bg-gold-50" onClick={() => qrRef.current?.click()}>
+                  <Upload className="h-4 w-4 mr-2" /> ផ្លាស់ប្តូររូបភាព
+                </Button>
+                <Button variant="outline" className="border-red-200 text-red-500 hover:bg-red-50" onClick={() => { setQrPreview(""); setQrFile(null); setQrImage(""); }}>
+                  <Trash2 className="h-4 w-4 mr-1" /> លុប
+                </Button>
+              </div>
             </div>
           ) : (
             <button onClick={() => qrRef.current?.click()} className="w-full border-2 border-dashed border-gold-200 rounded-lg p-12 text-center hover:bg-gold-50/50 cursor-pointer transition-colors">
@@ -387,9 +392,14 @@ export default function AdminSettingsPage() {
                   <img src={logoPreview} alt="Logo" className="h-[100px] object-contain" />
                 </div>
               </div>
-              <Button variant="outline" className="w-full border-gold-200 text-secondary hover:bg-gold-50" onClick={() => logoRef.current?.click()}>
-                <Upload className="h-4 w-4 mr-2" /> ផ្លាស់ប្តូរ Logo
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 border-gold-200 text-secondary hover:bg-gold-50" onClick={() => logoRef.current?.click()}>
+                  <Upload className="h-4 w-4 mr-2" /> ផ្លាស់ប្តូរ Logo
+                </Button>
+                <Button variant="outline" className="border-red-200 text-red-500 hover:bg-red-50" onClick={() => { setLogoPreview(""); setLogoFile(null); setLogoImage(""); }}>
+                  <Trash2 className="h-4 w-4 mr-1" /> លុប
+                </Button>
+              </div>
             </div>
           ) : (
             <button onClick={() => logoRef.current?.click()} className="w-full border-2 border-dashed border-gold-200 rounded-lg p-8 text-center hover:bg-gold-50/50 cursor-pointer transition-colors">
