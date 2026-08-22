@@ -74,6 +74,8 @@ export default function BillingPage() {
         .select("*, package:packages(name)")
         .eq("user_id", user.id)
         .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(1)
         .single();
 
       if (data?.package) {

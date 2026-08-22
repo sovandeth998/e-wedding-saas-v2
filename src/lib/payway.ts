@@ -27,6 +27,12 @@ export async function fulfillOrder(orderId: string): Promise<boolean> {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + order.package.duration_days);
 
+  await service
+    .from("subscriptions")
+    .update({ status: "expired" })
+    .eq("user_id", order.user_id)
+    .eq("status", "active");
+
   const { error } = await service.from("subscriptions").insert({
     user_id: order.user_id,
     package_id: order.package_id,

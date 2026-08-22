@@ -92,6 +92,12 @@ export default function AdminOrdersPage() {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + (pkg?.duration_days || 30));
 
+    await supabase
+      .from("subscriptions")
+      .update({ status: "expired" })
+      .eq("user_id", order.user_id)
+      .eq("status", "active");
+
     await supabase.from("subscriptions").insert({
       user_id: order.user_id,
       package_id: order.package_id,
