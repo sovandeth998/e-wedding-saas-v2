@@ -7,11 +7,13 @@ import { createClient } from "@/lib/supabase/client";
 import { normalizeKhmerPhone, phoneToEmail } from "@/lib/phone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Phone, Lock, User, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Phone, Mail, Lock, User, ArrowRight, Eye, EyeOff } from "lucide-react";
 
 export default function RegisterPage() {
+  const [mode, setMode] = useState<"phone" | "email">("phone");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -31,10 +33,20 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
-    const normalized = normalizeKhmerPhone(phone);
-    if (!normalized) {
-      setError("លេខទូរស័ព្ទមិនត្រឹមត្រូវ។ ឧទាហរណ៍៖ 011 234 567");
-      return;
+    let signUpEmail = "";
+    if (mode === "phone") {
+      const normalized = normalizeKhmerPhone(phone);
+      if (!normalized) {
+        setError("លេខទូរស័ព្ទមិនត្រឹមត្រូវ។ ឧទាហរណ៍៖ 011 234 567");
+        return;
+      }
+      signUpEmail = phoneToEmail(normalized);
+    } else {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        setError("អ៊ីមែលមិនត្រឹមត្រូវ");
+        return;
+      }
+      signUpEmail = email.trim().toLowerCase();
     }
     if (password !== confirmPassword) {
       setError("ពាក្យសម្ងាត់មិនដូចគ្នាទេ");
@@ -47,16 +59,15 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-    const syntheticEmail = phoneToEmail(normalized);
     const { error: signUpError } = await supabase.auth.signUp({
-      email: syntheticEmail,
+      email: signUpEmail,
       password,
-      options: { data: { full_name: fullName, phone: normalized } },
+      options: { data: { full_name: fullName, phone: mode === "phone" ? phone : "" } },
     });
 
     if (signUpError) {
       const msg = signUpError.message.includes("already registered")
-        ? "លេខទូរស័ព្ទនេះមានគណនីរួចហើយ"
+        ? (mode === "phone" ? "លេខទូរស័ព្ទនេះមានគណនីរួចហើយ" : "អ៊ីមែលនេះមានគណនីរួចហើយ")
         : "បង្កើតគណនីមិនបានជោគជ័យ សូមព្យាយាមម្តងទៀត";
       setError(msg);
       setLoading(false);
@@ -64,7 +75,7 @@ export default function RegisterPage() {
     }
 
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: syntheticEmail,
+      email: signUpEmail,
       password,
     });
     if (signInError) {
@@ -96,6 +107,19 @@ export default function RegisterPage() {
             <div className="bg-red-50 text-red-600 text-sm p-3 rounded-xl text-center border border-red-100">{error}</div>
           )}
 
+          <div className="grid grid-cols-2 gap-1 p-1 bg-gold-50 rounded-xl border border-gold-100">
+            {([{ key: "phone" as const, label: "លេខទូរស័ព្ទ", icon: Phone }, { key: "email" as const, label: "អ៊ីមែល", icon: Mail }]).map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => { setMode(tab.key); setError(""); }}
+                className={`flex items-center justify-center gap-1.5 h-9 rounded-lg text-sm font-medium transition-all ${mode === tab.key ? "bg-white shadow text-primary" : "text-muted-foreground hover:text-secondary"}`}
+              >
+                <tab.icon className="h-3.5 w-3.5" /> {tab.label}
+              </button>
+            ))}
+          </div>
+
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-secondary flex items-center gap-1.5">
               <User className="h-3.5 w-3.5 text-primary" /> ឈ្មោះពេញ
@@ -103,15 +127,24 @@ export default function RegisterPage() {
             <Input placeholder="ឈ្មោះពេញរបស់អ្នក" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="rounded-xl h-11 border-gold-200" />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-secondary flex items-center gap-1.5">
-              <Phone className="h-3.5 w-3.5 text-primary" /> លេខទូរស័ព្ទ
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">+855</span>
-              <Input type="tel" inputMode="numeric" placeholder="011 234 567" value={phone} onChange={(e) => setPhone(e.target.value)} required className="rounded-xl h-11 border-gold-200 pl-14" />
+          {mode === "phone" ? (
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-secondary flex items-center gap-1.5">
+                <Phone className="h-3.5 w-3.5 text-primary" /> លេខទូរស័ព្ទ
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">+855</span>
+                <Input type="tel" inputMode="numeric" placeholder="011 234 567" value={phone} onChange={(e) => setPhone(e.target.value)} required className="rounded-xl h-11 border-gold-200 pl-14" />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-secondary flex items-center gap-1.5">
+                <Mail className="h-3.5 w-3.5 text-primary" /> អ៊ីមែល
+              </label>
+              <Input type="email" placeholder="your@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="rounded-xl h-11 border-gold-200" />
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-secondary flex items-center gap-1.5">
