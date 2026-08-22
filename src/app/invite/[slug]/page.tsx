@@ -39,6 +39,7 @@ function InvitationContent() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timeline = ((invitation as any)?.timeline || []) as TimelineEvent[];
   const supabase = createClient();
+  const [templateConfig, setTemplateConfig] = useState<Record<string, any> | null>(null);
 
   const T: Record<string, {
     bg: string; bgMain: string; cardFrom: string; cardTo: string;
@@ -61,8 +62,22 @@ function InvitationContent() {
   };
 
   const tid = (invitation as any)?.template_id || "1";
-  const t = T[tid] || T["1"];
-  const isLight = tid === "1";
+  const fallbackT = T[tid] || T["1"];
+  const t = templateConfig && templateConfig.bg ? {
+    bg: templateConfig.bg || fallbackT.bg,
+    bgMain: templateConfig.bgMain || fallbackT.bgMain,
+    cardFrom: templateConfig.cardFrom || fallbackT.cardFrom,
+    cardTo: templateConfig.cardTo || fallbackT.cardTo,
+    textPri: templateConfig.textPri || fallbackT.textPri,
+    textSec: templateConfig.textSec || fallbackT.textSec,
+    textMut: templateConfig.textMut || fallbackT.textMut,
+    accent: templateConfig.accent || fallbackT.accent,
+    accentFill: templateConfig.accentFill || fallbackT.accentFill,
+    accentBg: templateConfig.accentBg || fallbackT.accentBg,
+    btnFrom: templateConfig.btnFrom || fallbackT.btnFrom,
+    btnTo: templateConfig.btnTo || fallbackT.btnTo,
+  } : fallbackT;
+  const isLight = templateConfig?.isLight ?? (tid === "1");
 
   const cardStyle = isLight
     ? { background: "linear-gradient(145deg, #fffefa, #f8f2e4)", border: `1.5px solid ${t.accent}20`, boxShadow: `0 4px 24px ${t.accent}10` }
@@ -158,6 +173,15 @@ function InvitationContent() {
 
     if (!inv) { setLoading(false); return; }
     setInvitation(inv);
+
+    if (inv.template_id) {
+      const { data: tpl } = await supabase
+        .from("templates")
+        .select("config")
+        .eq("code", inv.template_id)
+        .single();
+      if (tpl?.config) setTemplateConfig(typeof tpl.config === "string" ? JSON.parse(tpl.config) : tpl.config);
+    }
 
     fetch("/api/analytics/track", {
       method: "POST",

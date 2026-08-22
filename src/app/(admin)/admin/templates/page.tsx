@@ -189,8 +189,8 @@ export default function AdminTemplatesPage() {
     form: typeof emptyForm;
     setForm: (f: typeof emptyForm) => void;
     isEdit: boolean;
-    thumbRef: React.RefObject<HTMLInputElement | null>;
-    previewRef: React.RefObject<HTMLInputElement | null>;
+    thumbRef: React.RefObject<HTMLInputElement>;
+    previewRef: React.RefObject<HTMLInputElement>;
     onUpload: (e: React.ChangeEvent<HTMLInputElement>, field: "thumbnail_url" | "preview_url") => void;
   }) => (
     <div className="space-y-4">

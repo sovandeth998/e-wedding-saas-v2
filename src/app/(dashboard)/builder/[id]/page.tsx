@@ -57,21 +57,22 @@ export default function BuilderPage() {
   const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>([]);
   const [qrImageUrl, setQrImageUrl] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState<string>("1");
+  const [dbTemplates, setDbTemplates] = useState<Array<{ code: string; name: string; category: string; is_premium: boolean; config: any }>>([]);
 
-  const templateList = [
-    { id: "1",  name: "ផ្កាឈូករ៉ូមែនទិច", category: "modern", isPremium: false, bg: "linear-gradient(180deg, #fdf8f0, #f5edd8, #efe4c8)", textPri: "#6b4c1e", accent: "#b8860b", btnFrom: "#d4a843", btnTo: "#b8860b" },
-    { id: "2",  name: "មាសប្រណិត",         category: "luxury", isPremium: true,  bg: "linear-gradient(135deg, #1a1a0e, #2d2a1e, #3d3520)", textPri: "#fef3c7", accent: "#f59e0b", btnFrom: "#d97706", btnTo: "#92400e" },
-    { id: "3",  name: "ប្រពៃណីខ្មែរ",       category: "classic", isPremium: false, bg: "linear-gradient(135deg, #2e1a1a, #3e1616, #601010)", textPri: "#fecaca", accent: "#ef4444", btnFrom: "#dc2626", btnTo: "#991b1b" },
-    { id: "4",  name: "សម័យទំនើប",         category: "modern", isPremium: false, bg: "linear-gradient(135deg, #0e1a2e, #16213e, #1e3a5e)", textPri: "#bfdbfe", accent: "#3b82f6", btnFrom: "#2563eb", btnTo: "#1d4ed8" },
-    { id: "5",  name: "រាជវាំង",           category: "luxury", isPremium: true,  bg: "linear-gradient(135deg, #1a0e2e, #2e1640, #401060)", textPri: "#ddd6fe", accent: "#a855f7", btnFrom: "#9333ea", btnTo: "#7e22ce" },
-    { id: "6",  name: "សួនច្បារ",           category: "modern", isPremium: false, bg: "linear-gradient(135deg, #0e2e1a, #163e21, #106030)", textPri: "#bbf7d0", accent: "#22c55e", btnFrom: "#16a34a", btnTo: "#15803d" },
-    { id: "7",  name: "ផ្កាឈូកពណ៌ស",       category: "classic", isPremium: false, bg: "linear-gradient(135deg, #1a1a1e, #2e2e32, #404045)", textPri: "#e2e8f0", accent: "#94a3b8", btnFrom: "#64748b", btnTo: "#475569" },
-    { id: "8",  name: "ភ្លើងបំភ្លឺ",        category: "luxury", isPremium: true,  bg: "linear-gradient(135deg, #2e1a0e, #402e16, #604010)", textPri: "#fde68a", accent: "#fbbf24", btnFrom: "#f59e0b", btnTo: "#d97706" },
-    { id: "9",  name: "ទឹកជ្រោះ",           category: "modern", isPremium: false, bg: "linear-gradient(135deg, #0e2e2e, #163e3e, #106060)", textPri: "#a5f3fc", accent: "#06b6d4", btnFrom: "#0891b2", btnTo: "#0e7490" },
-    { id: "10", name: "ពណ៌ផ្កាឈូក",        category: "luxury", isPremium: true,  bg: "linear-gradient(135deg, #2e0e2e, #401640, #601060)", textPri: "#f5d0fe", accent: "#d946ef", btnFrom: "#c026d3", btnTo: "#a21caf" },
-    { id: "11", name: "បុរាណ",              category: "classic", isPremium: false, bg: "linear-gradient(135deg, #2e1a0e, #3e2e16, #504010)", textPri: "#fde68a", accent: "#d97706", btnFrom: "#b45309", btnTo: "#92400e" },
-    { id: "12", name: "ទំនើប",              category: "modern", isPremium: false, bg: "linear-gradient(135deg, #1a1a1e, #2e2e32, #3e3e42)", textPri: "#e5e7eb", accent: "#9ca3af", btnFrom: "#6b7280", btnTo: "#4b5563" },
-  ];
+  const templateList = dbTemplates.map((tpl) => {
+    const c = typeof tpl.config === "string" ? JSON.parse(tpl.config) : (tpl.config || {});
+    return {
+      id: tpl.code,
+      name: tpl.name,
+      category: tpl.category,
+      isPremium: tpl.is_premium,
+      bg: c.bg || "linear-gradient(135deg, #1a1a1e, #2e2e32, #3e3e42)",
+      textPri: c.textPri || "#e5e7eb",
+      accent: c.accent || "#9ca3af",
+      btnFrom: c.btnFrom || "#6b7280",
+      btnTo: c.btnTo || "#4b5563",
+    };
+  });
 
   const timelinePresets = [
     { title: "ពិធីសូត្រធម៌", description: "សូត្រធម៌ពីព្រះសង្ឃ" },
@@ -125,6 +126,12 @@ export default function BuilderPage() {
         .single();
 
       if (qr?.qr_image_url) setQrImageUrl(qr.qr_image_url);
+
+      const { data: tpls } = await supabase
+        .from("templates")
+        .select("code, name, category, is_premium, config")
+        .order("code");
+      if (tpls) setDbTemplates(tpls);
     })();
   }, [params.id]);
 
