@@ -487,7 +487,7 @@ export default function BillingPage() {
                       </div>
                       <div className="flex justify-center">
                         {paywayData.qrImage ? (
-                          <img src={paywayData.qrImage} alt="ABA PayWay KHQR" className="w-[240px] h-[240px] object-contain rounded-xl border border-gold-200 bg-white p-2" />
+                          <img src={paywayData.qrImage} alt="ABA PayWay KHQR" className="w-[320px] h-[320px] max-w-full object-contain rounded-2xl border-2 border-gold-200 bg-white p-2 shadow-md" />
                         ) : null}
                       </div>
                       <div className="text-center space-y-1">
@@ -527,7 +527,7 @@ export default function BillingPage() {
                     </div>
                     {bankSettings.owner_khqr_image ? (
                       <div className="flex justify-center mb-3">
-                        <img src={bankSettings.owner_khqr_image} alt="KHQR" className="w-[220px] h-[220px] object-contain rounded-xl border border-gold-200" />
+                        <img src={bankSettings.owner_khqr_image} alt="KHQR" className="w-[300px] h-[300px] max-w-full object-contain rounded-2xl border-2 border-gold-200 shadow-md" />
                       </div>
                     ) : null}
                     <div className="p-6 bg-gold-50 rounded-xl border border-gold-200 text-left space-y-3 mx-auto max-w-sm">
