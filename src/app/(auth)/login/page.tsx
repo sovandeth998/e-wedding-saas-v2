@@ -4,14 +4,15 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { normalizeKhmerPhone, phoneToEmail, isPhoneInput } from "@/lib/phone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Heart, Mail, Lock, ArrowRight, Shield } from "lucide-react";
-import { Separator as UiSeparator } from "@/components/ui/separator";
+import { Phone, Lock, ArrowRight, Shield, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [templateId, setTemplateId] = useState<string | null>(null);
@@ -27,9 +28,21 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    let email = identifier.trim();
+    if (isPhoneInput(email)) {
+      const normalized = normalizeKhmerPhone(email);
+      if (!normalized) {
+        setError("លេខទូរស័ព្ទមិនត្រឹមត្រូវ។ ឧទាហរណ៍៖ 011 234 567");
+        setLoading(false);
+        return;
+      }
+      email = phoneToEmail(normalized);
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      setError("អ៊ីមែល ឬ ពាក្យសម្ងាត់មិនត្រឹមត្រូវ");
+      setError(isPhoneInput(identifier) ? "លេខទូរស័ព្ទ ឬ ពាក្យសម្ងាត់មិនត្រឹមត្រូវ" : "អ៊ីមែល ឬ ពាក្យសម្ងាត់មិនត្រឹមត្រូវ");
       setLoading(false);
       return;
     }
@@ -51,36 +64,29 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white via-gold-50/30 to-white px-4">
-      <div className="w-full max-w-sm space-y-6">
-        <Link href="/" className="flex justify-center">
-          <div className="h-14 w-14 rounded-full bg-gold-gradient flex items-center justify-center shadow-lg">
-            <Heart className="h-7 w-7 text-white fill-white" />
-          </div>
-        </Link>
-
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-secondary">E-Wedding</h1>
-          <p className="text-sm text-muted-foreground mt-1">បង្កើតលិខិតអញ្ជើញដ៏ស្អាត</p>
-        </div>
-
-        <form onSubmit={handleLogin} className="bg-white rounded-2xl shadow-xl p-6 space-y-4 border border-gold-100">
+    <div className="w-full space-y-5">
+        <form onSubmit={handleLogin} className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 space-y-4 border border-gold-100">
           {error && (
             <div className="bg-red-50 text-red-600 text-sm p-3 rounded-xl text-center border border-red-100">{error}</div>
           )}
 
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-secondary flex items-center gap-1.5">
-              <Mail className="h-3.5 w-3.5 text-primary" /> អ៊ីមែល
+              <Phone className="h-3.5 w-3.5 text-primary" /> លេខទូរស័ព្ទ / អ៊ីមែល
             </label>
-            <Input type="email" placeholder="your@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="rounded-xl h-11 border-gold-200" />
+            <Input type="text" placeholder="011 234 567 ឬ your@email.com" value={identifier} onChange={(e) => setIdentifier(e.target.value)} required className="rounded-xl h-11 border-gold-200" />
           </div>
 
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-secondary flex items-center gap-1.5">
               <Lock className="h-3.5 w-3.5 text-primary" /> ពាក្យសម្ងាត់
             </label>
-            <Input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required className="rounded-xl h-11 border-gold-200" />
+            <div className="relative">
+              <Input type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required className="rounded-xl h-11 border-gold-200 pr-10" />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-secondary">
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
 
           <div className="flex justify-end">
@@ -93,11 +99,9 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <div className="relative my-2">
-          <UiSeparator />
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs text-muted-foreground">
-            ឬ
-          </span>
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-gold-100" /></div>
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-b from-gold-50/60 to-white px-3 text-xs text-muted-foreground">ឬ</span>
         </div>
 
         <Button variant="outline" className="w-full border-gold-200 text-secondary hover:bg-gold-50 rounded-xl h-11" onClick={handleGoogleLogin}>
@@ -119,7 +123,6 @@ export default function LoginPage() {
             <Shield className="h-4 w-4 mr-2" /> ចូល Admin
           </Button>
         </Link>
-      </div>
     </div>
   );
 }
