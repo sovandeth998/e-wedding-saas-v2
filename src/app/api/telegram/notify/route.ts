@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const ADMIN_BOT_TOKEN = process.env.TELEGRAM_ADMIN_BOT_TOKEN || TELEGRAM_BOT_TOKEN;
+const ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID;
 
-async function sendTelegramMessage(chatId: string, message: string) {
-  if (!TELEGRAM_BOT_TOKEN) {
+async function sendTelegramMessage(chatId: string, message: string, botToken: string = TELEGRAM_BOT_TOKEN!) {
+  if (!botToken) {
     console.log("Telegram bot token not configured");
     return { ok: false, error: "Telegram bot token not configured" };
   }
 
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+  const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
 
   try {
     const res = await fetch(url, {
@@ -151,6 +153,25 @@ export async function POST(request: Request) {
     }
 
     const message = formatter(data);
+
+    if (type === "payment") {
+      const token = ADMIN_BOT_TOKEN;
+      if (!token) {
+        return NextResponse.json({ error: "Telegram bot token not configured" }, { status: 500 });
+      }
+      const targetChatId = chatId || ADMIN_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
+      if (!targetChatId) {
+        return NextResponse.json(
+          { error: "មិនមាន Telegram chatId សម្រាប់ផ្ញើសារ" },
+          { status: 400 }
+        );
+      }
+      const result = await sendTelegramMessage(targetChatId, message, token);
+      if (!result.ok) {
+        return NextResponse.json({ error: "បរាជ័យក្នុងការផ្ញើសារ", details: result.error }, { status: 500 });
+      }
+      return NextResponse.json({ success: true, type, sentTo: "admin_bot", chatId: targetChatId });
+    }
 
     if (type === "guest_link") {
       if (!chatId) {
