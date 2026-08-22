@@ -44,6 +44,7 @@ const statusBadgeStyles: Record<string, string> = {
 const paymentMethodLabels: Record<string, string> = {
   khqr: "KHQR",
   receipt_upload: "បង្កាន់ដៃ",
+  payway: "PayWay",
 };
 
 const filterLabels: Record<string, string> = {
@@ -210,6 +211,7 @@ export default function AdminOrdersPage() {
                     <th className="text-left p-3 text-sm font-medium text-secondary">កញ្ចប់</th>
                     <th className="text-left p-3 text-sm font-medium text-secondary">ចំនួន</th>
                     <th className="text-left p-3 text-sm font-medium text-secondary">វិធីបង់ប្រាក់</th>
+                    <th className="text-left p-3 text-sm font-medium text-secondary">បង្កាន់ដៃ</th>
                     <th className="text-left p-3 text-sm font-medium text-secondary">ស្ថានភាព</th>
                     <th className="text-left p-3 text-sm font-medium text-secondary">កាលបរិច្ឆេទ</th>
                     <th className="text-left p-3 text-sm font-medium text-secondary">សកម្មភាព</th>
@@ -224,6 +226,15 @@ export default function AdminOrdersPage() {
                       <td className="p-3 text-sm text-secondary">{order.package?.name_kh || order.package?.name || "មិនមាន"}</td>
                       <td className="p-3 font-medium text-secondary">${order.amount}</td>
                       <td className="p-3 text-sm text-secondary">{paymentMethodLabels[order.payment_method] || order.payment_method || "មិនមាន"}</td>
+                      <td className="p-3">
+                        {order.payment_proof_url ? (
+                          <a href={order.payment_proof_url} target="_blank" rel="noreferrer">
+                            <img src={order.payment_proof_url} alt="បង្កាន់ដៃ" className="h-12 w-12 object-cover rounded border border-gold-200 hover:ring-2 hover:ring-primary transition-all" />
+                          </a>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </td>
                       <td className="p-3">
                         <Badge className={`${statusBadgeStyles[order.status] || ""} border-0`}>
                           {statusLabels[order.status] || order.status}
