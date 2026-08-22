@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, CreditCard, Clock, Upload, QrCode, ArrowRight, Timer } from "lucide-react";
+import { Check, CreditCard, Clock, Upload, QrCode, ArrowRight, Timer, Smartphone } from "lucide-react";
 import { PACKAGES } from "@/lib/constants";
 import { toast } from "sonner";
 import {
@@ -17,7 +18,13 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
-type PaymentMethod = "khqr" | "receipt";
+type PaymentMethod = "khqr" | "receipt" | "payway";
+
+interface PaywayData {
+  orderId: string;
+  qrImage: string;
+  abapayDeeplink: string;
+}
 
 export default function BillingPage() {
   const { user } = useAuth();
@@ -33,6 +40,11 @@ export default function BillingPage() {
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [paywayData, setPaywayData] = useState<PaywayData | null>(null);
+  const [paywayLoading, setPaywayLoading] = useState(false);
+  const [paywayPaid, setPaywayPaid] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
@@ -82,8 +94,70 @@ export default function BillingPage() {
     setReceiptFile(null);
     setReceiptPreview(null);
     setSubmitSuccess(false);
+    setPaywayData(null);
+    setPaywayPaid(false);
     setUpgradeOpen(true);
   };
+
+  const handleSelectPayWay = async () => {
+    if (!user || !selectedPlan) return;
+    setPaymentMethod("payway");
+    setCountdown(900);
+    setPaywayLoading(true);
+    setPaywayData(null);
+    setPaywayPaid(false);
+
+    try {
+      const { data: pkg } = await supabase
+        .from("packages")
+        .select("id")
+        .eq("name", selectedPlan)
+        .single();
+      if (!pkg) throw new Error("package");
+
+      const res = await fetch("/api/payway/create-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ packageId: pkg.id }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "failed");
+      setPaywayData({
+        orderId: json.orderId,
+        qrImage: json.qrImage,
+        abapayDeeplink: json.abapayDeeplink,
+      });
+    } catch (err) {
+      toast.error("បង្កើត QR មិនបានជោគជ័យ សូមព្យាយាមម្តងទៀត");
+      console.error("payway create failed:", err);
+      setPaymentMethod(null);
+    } finally {
+      setPaywayLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (paymentMethod !== "payway" || !paywayData || paywayPaid) return;
+
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/payway/status?orderId=${paywayData.orderId}`);
+        if (!res.ok) return;
+        const json = await res.json();
+        if (json.paid) {
+          setPaywayPaid(true);
+          toast.success("ទូទាត់ជោគជ័យ! កញ្ចប់ត្រូវបានធ្វើបច្ចុប្បន្នភាព");
+          router.refresh();
+        }
+      } catch {
+        // keep polling
+      }
+    }, 3000);
+
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [paymentMethod, paywayData, paywayPaid, router]);
 
   const handleSelectKHQR = async () => {
     setPaymentMethod("khqr");
@@ -265,6 +339,19 @@ export default function BillingPage() {
               {!paymentMethod && (
                 <div className="space-y-3 py-2">
                   <button
+                    onClick={handleSelectPayWay}
+                    className="w-full p-4 rounded-lg border-2 border-gold-300 bg-white hover:bg-gold-50 transition-all flex items-center gap-4 text-left"
+                  >
+                    <div className="h-10 w-10 rounded-full bg-emerald-600 flex items-center justify-center shrink-0">
+                      <QrCode className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-secondary">ABA PayWay (KHQR)</p>
+                      <p className="text-xs text-muted-foreground">ស្កេនបង់ → ធ្វើបច្ចុប្បន្នភាពដោយស្វ័យប្រវត្តិ</p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto" />
+                  </button>
+                  <button
                     onClick={handleSelectKHQR}
                     className="w-full p-4 rounded-lg border-2 border-gold-200 bg-gold-50 hover:bg-gold-100 transition-all flex items-center gap-4 text-left"
                   >
@@ -290,6 +377,68 @@ export default function BillingPage() {
                     </div>
                     <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto" />
                   </button>
+                </div>
+              )}
+
+              {paymentMethod === "payway" && (
+                <div className="space-y-4 py-2">
+                  {paywayPaid ? (
+                    <div className="py-8 text-center space-y-4">
+                      <div className="h-16 w-16 rounded-full bg-green-500 flex items-center justify-center mx-auto">
+                        <Check className="h-8 w-8 text-white" />
+                      </div>
+                      <DialogTitle className="text-secondary">ទូទាត់ជោគជ័យ! 🎉</DialogTitle>
+                      <p className="text-sm text-muted-foreground">
+                        កញ្ចប់របស់អ្នកត្រូវបានធ្វើបច្ចុប្បន្នភាពរួចរាល់។
+                      </p>
+                      <Button
+                        className="bg-gold-gradient text-white"
+                        onClick={() => {
+                          setUpgradeOpen(false);
+                          router.refresh();
+                        }}
+                      >
+                        បិទ
+                      </Button>
+                    </div>
+                  ) : paywayLoading ? (
+                    <div className="py-12 text-center">
+                      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto mb-4" />
+                      <p className="text-sm text-muted-foreground">កំពុងបង្កើត KHQR...</p>
+                    </div>
+                  ) : paywayData ? (
+                    <>
+                      <div className="flex items-center justify-center gap-2">
+                        <Timer className={`h-4 w-4 ${countdown < 60 ? "text-red-500" : "text-orange-500"}`} />
+                        <span className={`font-mono font-bold text-lg ${countdown < 60 ? "text-red-500" : "text-secondary"}`}>
+                          {formatCountdown(countdown)}
+                        </span>
+                      </div>
+                      <div className="flex justify-center">
+                        {paywayData.qrImage ? (
+                          <img src={paywayData.qrImage} alt="ABA PayWay KHQR" className="w-[240px] h-[240px] object-contain rounded-xl border border-gold-200 bg-white p-2" />
+                        ) : null}
+                      </div>
+                      <div className="text-center space-y-1">
+                        <p className="text-sm font-semibold text-secondary flex items-center justify-center gap-2">
+                          <span className="inline-block h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                          រង់ចាំការស្កេនបង់ប្រាក់... (${selectedPrice})
+                        </p>
+                        <p className="text-xs text-muted-foreground">ស្កេនដោយកម្មវិធីធនាគារណាមួយ (KHQR)</p>
+                        <p className="text-[11px] text-muted-foreground">ប្រព័ន្ធនឹងធ្វើបច្ចុប្បន្នភាពដោយស្វ័យប្រវត្តិ ពេលទូទាត់រួច</p>
+                      </div>
+                      {paywayData.abapayDeeplink && (
+                        <a href={paywayData.abapayDeeplink} className="block">
+                          <Button variant="outline" className="w-full border-emerald-600 text-emerald-700 hover:bg-emerald-50">
+                            <Smartphone className="h-4 w-4 mr-2" /> បើក ABA Mobile
+                          </Button>
+                        </a>
+                      )}
+                      <Button variant="ghost" className="w-full" onClick={() => setPaymentMethod(null)}>
+                        ត្រលប់ក្រោយ
+                      </Button>
+                    </>
+                  ) : null}
                 </div>
               )}
 
