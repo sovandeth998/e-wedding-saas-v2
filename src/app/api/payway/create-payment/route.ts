@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import {
+  buildCheckoutFields,
   generatePaywayQR,
   generateTranId,
   isPayWayConfigured,
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { packageId } = await request.json();
+    const { packageId, method } = await request.json();
     if (!packageId) {
       return NextResponse.json({ error: "packageId required" }, { status: 400 });
     }
@@ -63,6 +64,23 @@ export async function POST(request: Request) {
     let firstName = String(meta.full_name || "Customer").trim().split(/\s+/)[0] || "Customer";
     firstName = firstName.replace(/[^a-zA-Z\u1780-\u17FF]/g, "") || "Customer";
     const phone = String(meta.phone || "").replace(/[^\d]/g, "").slice(0, 20);
+
+    if (method === "card") {
+      const checkout = buildCheckoutFields({
+        tranId,
+        amount: Number(pkg.price),
+        firstName,
+        itemsName: `E-Wedding ${pkg.name_kh || pkg.name}`,
+      });
+      return NextResponse.json({
+        orderId: order.id,
+        tranId,
+        method: "card",
+        actionUrl: checkout.actionUrl,
+        fields: checkout.fields,
+        amount: Number(pkg.price),
+      });
+    }
 
     const qr = await generatePaywayQR({
       tranId,

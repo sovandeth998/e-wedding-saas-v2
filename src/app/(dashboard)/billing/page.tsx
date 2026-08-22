@@ -22,8 +22,11 @@ type PaymentMethod = "khqr" | "receipt" | "payway";
 
 interface PaywayData {
   orderId: string;
-  qrImage: string;
-  abapayDeeplink: string;
+  qrImage?: string;
+  abapayDeeplink?: string;
+  method?: "qr" | "card";
+  actionUrl?: string;
+  fields?: Record<string, string>;
 }
 
 export default function BillingPage() {
@@ -46,6 +49,20 @@ export default function BillingPage() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paywayResult = params.get("payway");
+    if (paywayResult === "success") {
+      toast.success("ទូទាត់ជោគជ័យ!");
+    } else if (paywayResult === "cancel") {
+      toast.info("ការទូទាត់ត្រូវបានបោះបង់");
+    }
+    if (paywayResult) {
+      window.history.replaceState({}, "", "/billing");
+      router.refresh();
+    }
+  }, [router]);
 
   useEffect(() => {
     if (!user) return;
@@ -99,7 +116,7 @@ export default function BillingPage() {
     setUpgradeOpen(true);
   };
 
-  const handleSelectPayWay = async () => {
+  const handleSelectPayWay = async (payMethod: "qr" | "card" = "qr") => {
     if (!user || !selectedPlan) return;
     setPaymentMethod("payway");
     setCountdown(900);
@@ -118,7 +135,7 @@ export default function BillingPage() {
       const res = await fetch("/api/payway/create-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packageId: pkg.id }),
+        body: JSON.stringify({ packageId: pkg.id, method: payMethod }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "failed");
@@ -126,14 +143,38 @@ export default function BillingPage() {
         orderId: json.orderId,
         qrImage: json.qrImage,
         abapayDeeplink: json.abapayDeeplink,
+        method: payMethod,
+        actionUrl: json.actionUrl,
+        fields: json.fields,
       });
+      if (payMethod === "card") openCheckoutWindow(json.actionUrl, json.fields);
     } catch (err) {
-      toast.error("បង្កើត QR មិនបានជោគជ័យ សូមព្យាយាមម្តងទៀត");
+      toast.error("បង្កើតការទូទាត់មិនបានជោគជ័យ សូមព្យាយាមម្តងទៀត");
       console.error("payway create failed:", err);
       setPaymentMethod(null);
     } finally {
       setPaywayLoading(false);
     }
+  };
+
+  const openCheckoutWindow = (actionUrl: string, fields: Record<string, string>) => {
+    const win = window.open("", "payway_checkout");
+    if (!win) {
+      toast.error("សូមអនុញ្ញាត popup ដើម្បីបង់ប្រាក់");
+      return;
+    }
+    const form = win.document.createElement("form");
+    form.method = "POST";
+    form.action = actionUrl;
+    Object.entries(fields).forEach(([key, value]) => {
+      const input = win.document.createElement("input");
+      input.type = "hidden";
+      input.name = key;
+      input.value = value;
+      form.appendChild(input);
+    });
+    win.document.body.appendChild(form);
+    form.submit();
   };
 
   useEffect(() => {
@@ -339,7 +380,7 @@ export default function BillingPage() {
               {!paymentMethod && (
                 <div className="space-y-3 py-2">
                   <button
-                    onClick={handleSelectPayWay}
+                    onClick={() => handleSelectPayWay("qr")}
                     className="w-full p-4 rounded-lg border-2 border-gold-300 bg-white hover:bg-gold-50 transition-all flex items-center gap-4 text-left"
                   >
                     <div className="h-10 w-10 rounded-full bg-emerald-600 flex items-center justify-center shrink-0">
@@ -347,7 +388,20 @@ export default function BillingPage() {
                     </div>
                     <div>
                       <p className="font-semibold text-secondary">ABA PayWay (KHQR)</p>
-                      <p className="text-xs text-muted-foreground">ស្កេនបង់ → ធ្វើបច្ចុប្បន្នភាពដោយស្វ័យប្រវត្តិ</p>
+                      <p className="text-xs text-muted-foreground">ស្កេនដោយ app ធនាគារណាមួយ → ធ្វើបច្ចុប្បន្នភាពស្វ័យប្រវត្តិ</p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto" />
+                  </button>
+                  <button
+                    onClick={() => handleSelectPayWay("card")}
+                    className="w-full p-4 rounded-lg border-2 border-gold-300 bg-white hover:bg-gold-50 transition-all flex items-center gap-4 text-left"
+                  >
+                    <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
+                      <CreditCard className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-secondary">កាត (Visa / Mastercard)</p>
+                      <p className="text-xs text-muted-foreground">បង់តាមរយៈ PayWay Checkout</p>
                     </div>
                     <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto" />
                   </button>
@@ -405,6 +459,23 @@ export default function BillingPage() {
                     <div className="py-12 text-center">
                       <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto mb-4" />
                       <p className="text-sm text-muted-foreground">កំពុងបង្កើត KHQR...</p>
+                    </div>
+                  ) : paywayData?.method === "card" ? (
+                    <div className="py-6 text-center space-y-3">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+                      <p className="text-sm font-semibold text-secondary">បង្អួចទូទាត់ PayWay បានបើក</p>
+                      <p className="text-xs text-muted-foreground">
+                        បញ្ចប់ការទូទាត់ក្នុងបង្អួចនោះ — ទំព័រនេះនឹងធ្វើបច្ចុប្បន្នភាពដោយស្វ័យប្រវត្តិពេលជោគជ័យ។
+                      </p>
+                      {countdown > 0 && (
+                        <p className="font-mono font-bold text-lg text-secondary">{formatCountdown(countdown)}</p>
+                      )}
+                      <Button variant="outline" className="w-full" onClick={() => paywayData.actionUrl && paywayData.fields && openCheckoutWindow(paywayData.actionUrl, paywayData.fields)}>
+                        មិនឃើញបង្អួច? បើកម្តងទៀត
+                      </Button>
+                      <Button variant="ghost" className="w-full" onClick={() => setPaymentMethod(null)}>
+                        ត្រលប់ក្រោយ
+                      </Button>
                     </div>
                   ) : paywayData ? (
                     <>

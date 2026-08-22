@@ -152,6 +152,66 @@ export type PaywayPaymentStatus =
   | "REFUNDED"
   | "UNKNOWN";
 
+export function buildCheckoutFields(params: {
+  tranId: string;
+  amount: number;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  itemsName?: string;
+}): { actionUrl: string; fields: Record<string, string> } {
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL || "https://e-wedding-saas-v2.vercel.app";
+
+  const fields: Record<string, string> = {
+    req_time: paywayReqTime(),
+    merchant_id: process.env.PAYWAY_MERCHANT_ID as string,
+    tran_id: params.tranId,
+    amount: String(Number(params.amount)),
+    items: Buffer.from(
+      JSON.stringify([{ name: params.itemsName || "Package", quantity: 1, price: params.amount }])
+    ).toString("base64"),
+    payment_option: "cards",
+    return_url: Buffer.from(`${appUrl}/api/payway/callback`).toString("base64"),
+    cancel_url: Buffer.from(`${appUrl}/billing?payway=cancel`).toString("base64"),
+    continue_success_url: Buffer.from(`${appUrl}/billing?payway=success`).toString("base64"),
+    currency: "USD",
+  };
+  if (params.firstName) fields.firstname = params.firstName.slice(0, 100);
+  if (params.lastName) fields.lastname = params.lastName.slice(0, 100);
+  if (params.phone) fields.phone = params.phone.slice(0, 20);
+
+  const hashOrder = [
+    "req_time",
+    "merchant_id",
+    "tran_id",
+    "amount",
+    "items",
+    "shipping",
+    "ctid",
+    "pwt",
+    "firstname",
+    "lastname",
+    "email",
+    "phone",
+    "type",
+    "payment_option",
+    "return_url",
+    "cancel_url",
+    "continue_success_url",
+    "return_deeplink",
+    "currency",
+    "custom_fields",
+    "return_params",
+  ];
+  const b4hash = hashOrder.map((k) => fields[k] ?? "").join("");
+
+  return {
+    actionUrl: `${PAYWAY_API_URL}/purchase`,
+    fields: { ...fields, hash: hmacSha512Base64(b4hash) },
+  };
+}
+
 export async function checkTransaction(tranId: string): Promise<PaywayPaymentStatus> {
   const reqTime = paywayReqTime();
   const hash = hmacSha512Base64(reqTime + (process.env.PAYWAY_MERCHANT_ID as string) + tranId);
