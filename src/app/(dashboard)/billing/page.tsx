@@ -211,7 +211,6 @@ export default function BillingPage() {
         "owner_bank_name",
         "owner_account_name",
         "owner_account_number",
-        "owner_khqr_image",
         "owner_khqr_image_standard",
         "owner_khqr_image_vip",
       ]);
@@ -224,8 +223,8 @@ export default function BillingPage() {
 
   const planQrImage =
     selectedPlan === "standard"
-      ? bankSettings.owner_khqr_image_standard || bankSettings.owner_khqr_image
-      : bankSettings.owner_khqr_image_vip || bankSettings.owner_khqr_image;
+      ? bankSettings.owner_khqr_image_standard
+      : bankSettings.owner_khqr_image_vip;
 
   const handleSelectReceipt = () => {
     setPaymentMethod("receipt");
