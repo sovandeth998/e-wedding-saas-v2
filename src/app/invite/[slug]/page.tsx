@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense, useRef, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 import { startBuiltinMusic, stopMusic, pauseMusic, resumeMusic, isBuiltinMusic } from "@/lib/wedding-music";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -238,7 +239,8 @@ function InvitationContent() {
 
   const submitWish = async () => {
     if (!invitation || !wishContent.trim()) return;
-    await supabase.from("wishes").insert({ invitation_id: invitation.id, guest_id: guest?.id || null, sender_name: wishName || "អនាមិក", content: wishContent, is_approved: false });
+    const { error: wishErr } = await supabase.from("wishes").insert({ invitation_id: invitation.id, guest_id: guest?.id || null, sender_name: wishName || "អនាមិក", content: wishContent, is_approved: false });
+    if (wishErr) { toast.error("មិនអាចផ្ញើសេចក្ដីជ្រះថ្លាបានទេ សូមព្យាយាមម្តងទៀត"); return; }
     setWishSubmitted(true);
     setWishContent("");
     try {
