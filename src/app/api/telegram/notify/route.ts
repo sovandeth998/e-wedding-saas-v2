@@ -63,13 +63,15 @@ function formatWishMessage(data: Record<string, string>) {
 
 function formatPaymentMessage(data: Record<string, string>) {
   return [
-    `💳 <b>ព័ត៌មានការទូទាត់</b>`,
+    `🔔 <b>មានការដាក់ស្នើទូទាត់ថ្មី!</b>`,
     ``,
     `📦 <b>កញ្ចប់:</b> ${data.packageName || "មិនស្គាល់"}`,
     `💰 <b>ចំនួន:</b> $${data.amount || "0"}`,
-    `📋 <b>ស្ថានភាព:</b> ${data.status === "paid" ? "✅ បានបង់ប្រាក់" : data.status === "pending" ? "⏳ កំពុងរង់ចាំ" : "❌ បានបរាជ័យ"}`,
+    `💳 <b>វិធីបង់:</b> ${data.paymentMethod || "KHQR"}`,
+    `📋 <b>ស្ថានភាព:</b> ${data.status === "paid" ? "✅ បានបង់ប្រាក់" : data.status === "pending" ? "⏳ រង់ចាំត្រួតពិនិត្យ" : "❌ បានបរាជ័យ"}`,
     `👤 <b>អ្នកប្រើប្រាស់:</b> ${data.userEmail || "មិនស្គាល់"}`,
     ``,
+    data.status === "pending" ? `👉 <b>ផ្ទៀងផ្ទាត់:</b> /admin/orders` : "",
     `📅 ${new Date().toLocaleDateString("km-KH")} ${new Date().toLocaleTimeString("km-KH")}`,
   ]
     .filter(Boolean)

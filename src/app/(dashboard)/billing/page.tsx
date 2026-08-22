@@ -286,6 +286,20 @@ export default function BillingPage() {
 
       if (!error) {
         setSubmitSuccess(true);
+        fetch("/api/telegram/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "payment",
+            data: {
+              packageName: selectedPlan === "standard" ? "ស្តង់ដារ ($18)" : "VIP ($40)",
+              amount: selectedPrice,
+              status: "pending",
+              paymentMethod: paymentMethod === "khqr" ? "KHQR + បង្កាន់ដៃ" : "Upload បង្កាន់ដៃ",
+              userEmail: user.email || user.phone || user.id,
+            },
+          }),
+        }).catch(() => {});
       }
     } catch {
       console.error("Failed to submit order");
