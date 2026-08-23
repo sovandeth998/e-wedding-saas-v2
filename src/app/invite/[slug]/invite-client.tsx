@@ -1,17 +1,15 @@
 "use client";
 
-import { useEffect, useState, Suspense, useRef, useCallback } from "react";
+import { useEffect, useState, Suspense, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { startBuiltinMusic, stopMusic, pauseMusic, resumeMusic, isBuiltinMusic } from "@/lib/wedding-music";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Heart, MapPin, Clock, Camera, Gift, MessageCircle, Calendar, ChevronDown, Play, Pause, Share2, Video, Shirt, X } from "lucide-react";
+import { Heart, MapPin, Clock, Camera, Gift, MessageCircle, Calendar, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Share2, Video, Shirt, X, Send, Sparkles } from "lucide-react";
 import type { Invitation, Guest, Wish, QRCode, GalleryPhoto, TimelineEvent } from "@/types/database";
-import { generateShareCode } from "@/lib/utils";
 
 function InvitationContent() {
   const params = useParams();
@@ -32,12 +30,12 @@ function InvitationContent() {
   const [wishName, setWishName] = useState("");
   useEffect(() => { if (displayName && !wishName) setWishName(displayName); }, [displayName]);
   const [wishContent, setWishContent] = useState("");
+  const [wishSending, setWishSending] = useState(false);
   const [rsvpSubmitted, setRsvpSubmitted] = useState(false);
-  const [wishSubmitted, setWishSubmitted] = useState(false);
   const [opened, setOpened] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [musicPlaying, setMusicPlaying] = useState(false);
-  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timeline = ((invitation as any)?.timeline || []) as TimelineEvent[];
   const supabase = createClient();
@@ -211,13 +209,16 @@ function InvitationContent() {
     setLoading(false);
   };
 
+  const ensureGuestId = async (): Promise<string | null | undefined> => {
+    if (guest?.id) return guest.id;
+    if (!guestName) return undefined;
+    const { data: ng } = await supabase.from("guests").insert({ invitation_id: (invitation as any).id, name: guestName, custom_link: `${params.slug}/guest/${guestName.toLowerCase().replace(/\s+/g, "-")}`, share_code: undefined as any, side: "both" }).select().single();
+    return ng?.id;
+  };
+
   const submitRSVP = async () => {
     if (!invitation || !rsvpStatus) return;
-    let finalGuestId = guest?.id;
-    if (!finalGuestId && guestName) {
-      const { data: ng } = await supabase.from("guests").insert({ invitation_id: invitation.id, name: guestName, custom_link: `${params.slug}/guest/${guestName.toLowerCase().replace(/\s+/g, "-")}`, share_code: generateShareCode(), side: "both" }).select().single();
-      finalGuestId = ng?.id;
-    }
+    let finalGuestId = await ensureGuestId();
     if (!finalGuestId) return;
     await supabase.from("rsvps").insert({ guest_id: finalGuestId, invitation_id: invitation.id, status: rsvpStatus, number_of_guests: rsvpGuests, message: rsvpMessage });
     setRsvpSubmitted(true);
@@ -246,20 +247,76 @@ function InvitationContent() {
     } catch {}
   };
 
-  const goldDot = (c: string) => (
-    <div className="flex items-center justify-center gap-3">
-      <div className="h-px w-16" style={{ background: `linear-gradient(to right, transparent, ${c}40)` }} />
-      <div className="h-2 w-2 rounded-full" style={{ background: c }} />
-      <div className="h-px w-16" style={{ background: `linear-gradient(to left, transparent, ${c}40)` }} />
+  const submitWish = async () => {
+    if (!invitation || !wishContent.trim()) return;
+    setWishSending(true);
+    let finalGuestId: string | null | undefined = guest?.id;
+    if (!finalGuestId && (wishName.trim() || displayName)) {
+      const nm = wishName.trim() || displayName!;
+      const { data: ng } = await supabase.from("guests").insert({ invitation_id: invitation.id, name: nm, custom_link: `${params.slug}/guest/${nm.toLowerCase().replace(/\s+/g, "-")}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, side: "both" }).select().single();
+      finalGuestId = ng?.id;
+    }
+    const { error } = await supabase.from("wishes").insert({
+      invitation_id: invitation.id,
+      guest_id: finalGuestId || null,
+      sender_name: wishName.trim() || displayName || "អនាមិក",
+      content: wishContent.trim(),
+      is_approved: true,
+    });
+    if (!error) {
+      const { data: fresh } = await supabase.from("wishes").select("*").eq("invitation_id", invitation.id).eq("is_approved", true).order("created_at", { ascending: false });
+      setWishes(fresh || []);
+      setWishContent("");
+      toast.success("បានផ្ញើពាក្យជូនពរ! 💐");
+    } else {
+      toast.error("បរាជ័យក្នុងការផ្ញើ");
+    }
+    setWishSending(false);
+  };
+
+  // ---------- shared decorative pieces ----------
+  const Ornament = ({ c }: { c: string }) => (
+    <div className="flex items-center justify-center gap-2">
+      <span className="h-px w-10 md:w-14" style={{ background: `linear-gradient(to right, transparent, ${c}60)` }} />
+      <span className="h-1.5 w-1.5 rotate-45 shrink-0" style={{ background: c }} />
+      <span className="h-px w-10 md:w-14" style={{ background: `linear-gradient(to left, transparent, ${c}60)` }} />
     </div>
   );
 
+  const SectionHead = ({ icon: Icon, title }: { icon: any; title: string }) => (
+    <div className="text-center mb-5">
+      <div className="h-12 w-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ border: `1px solid ${t.accent}25`, background: t.accentBg }}>
+        <Icon className="h-5 w-5" style={{ color: t.accent }} />
+      </div>
+      <h2 className="text-lg font-bold tracking-wide mb-2" style={{ color: t.textPri }}>{title}</h2>
+      <Ornament c={t.accent} />
+    </div>
+  );
+
+  const CoupleAvatars = ({ size = 56 }: { size?: number }) =>
+    invitation?.groom_photo || invitation?.bride_photo ? (
+      <div className="flex -space-x-3 justify-center mb-4">
+        {[invitation.groom_photo, invitation.bride_photo].map((p, i) =>
+          p ? (
+            <img
+              key={i}
+              src={p}
+              alt=""
+              className={`rounded-full object-cover border-2 shadow-md ${i === 1 ? "" : ""}`}
+              style={{ width: size, height: size, borderColor: t.accent }}
+            />
+          ) : null
+        )}
+      </div>
+    ) : null;
+
+  // ---------- loading / not found ----------
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: t.bg }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-2 border-t-transparent mx-auto" style={{ borderColor: t.accent }} />
-          <p className="mt-4 text-sm" style={{ color: t.textMut }}>កំពុងផ្ទុក...</p>
+          <Heart className="h-10 w-10 mx-auto animate-pulse" style={{ color: t.accent, fill: t.accentFill }} />
+          <p className="mt-4 text-sm" style={{ color: t.textMut }}>កំពុងផ្ទុកលិខិតអញ្ជើញ...</p>
         </div>
       </div>
     );
@@ -281,330 +338,421 @@ function InvitationContent() {
 
   const weddingDate = new Date(invitation.wedding_date);
 
+  // ---------- ENVELOPE ----------
   if (!opened) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: t.bg }}>
-        <div className="text-center max-w-md w-full">
-          {isLight ? (
-            <div className="relative">
-              <div className="absolute -inset-6 rounded-[2rem] opacity-30" style={{ background: `linear-gradient(135deg, ${t.accent}30, transparent, ${t.accent}20)` }} />
-              <div className="relative rounded-[2rem] p-10 shadow-[0_8px_40px_rgba(184,134,11,0.15)]" style={{ background: "linear-gradient(145deg, #fffefa, #f8f2e4)", border: `2px solid ${t.accent}30` }}>
-                <div className="absolute top-0 left-0 right-0 h-1 rounded-t-[2rem]" style={{ background: `linear-gradient(to right, transparent, ${t.accent}60, transparent)` }} />
-                <div className="h-20 w-20 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: `linear-gradient(135deg, ${t.accent}15, ${t.accent}08)`, border: `2px solid ${t.accent}30` }}>
-                  <Heart className="h-10 w-10" style={{ color: t.accent, fill: t.accentFill }} />
-                </div>
-                <p className="text-xs tracking-[0.35em] uppercase mb-3 font-medium" style={{ color: t.accent }}>Wedding Invitation</p>
-                <h1 className="text-3xl font-bold mb-1" style={{ color: t.textPri }}>{invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"}</h1>
-                <div className="flex items-center justify-center gap-4 my-4">
-                  <div className="h-px flex-1" style={{ background: `linear-gradient(to right, transparent, ${t.accent}40)` }} />
-                  <span className="text-3xl font-light" style={{ color: t.accent }}>&amp;</span>
-                  <div className="h-px flex-1" style={{ background: `linear-gradient(to left, transparent, ${t.accent}40)` }} />
-                </div>
-                <h1 className="text-3xl font-bold mb-6" style={{ color: t.textPri }}>{invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}</h1>
-                {displayName && (
-                  <div className="mb-6 py-3 px-5 rounded-2xl" style={{ border: `1px solid ${t.accent}20`, background: `${t.accent}08` }}>
-                    <p className="text-xs tracking-wider uppercase" style={{ color: t.accent }}>សូមអញ្ជើញ</p>
-                    <p className="font-semibold text-lg mt-1" style={{ color: t.textPri }}>{displayName}</p>
-                  </div>
-                )}
-                <p className="text-sm mb-8" style={{ color: t.textSec }}>{weddingDate.toLocaleDateString("km-KH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
-                <Button onClick={openEnvelope} className="w-full text-white rounded-2xl h-12 font-semibold tracking-wide shadow-lg" style={{ background: `linear-gradient(135deg, ${t.btnFrom}, ${t.btnTo})`, boxShadow: `0 6px 24px ${t.accent}40` }}>បើកលិខិតអញ្ជើញ</Button>
-                <div className="mt-6 flex items-center justify-center"><ChevronDown className="h-5 w-5 animate-bounce" style={{ color: `${t.accent}50` }} /></div>
+      <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ background: t.bg }}>
+        <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes envIn{from{opacity:0;transform:translateY(26px) scale(.96)}to{opacity:1;transform:none}}
+          @keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+          @keyframes pulseGlow{0%,100%{opacity:.35}50%{opacity:.7}}
+        `}} />
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-[-10%] left-[15%] w-72 h-72 rounded-full blur-[110px]" style={{ background: `${t.accent}18`, animation: "pulseGlow 5s ease-in-out infinite" }} />
+          <div className="absolute bottom-[-8%] right-[10%] w-80 h-80 rounded-full blur-[120px]" style={{ background: `${t.accent}14`, animation: "pulseGlow 6s ease-in-out 1s infinite" }} />
+        </div>
+
+        <div className="relative max-w-md w-full" style={{ animation: "envIn .8s ease-out both" }}>
+          <div className="absolute -inset-4 rounded-[2.4rem] blur-2xl pointer-events-none" style={{ background: `${t.accent}20`, animation: "pulseGlow 4s ease-in-out infinite" }} />
+          <div className="relative rounded-[2rem] px-8 py-10 md:px-10 shadow-2xl text-center overflow-hidden" style={cardStyle}>
+            <div className="absolute top-0 left-0 right-0 h-1" style={{ background: `linear-gradient(to right, transparent, ${t.accent}70, transparent)` }} />
+
+            <CoupleAvatars size={64} />
+
+            {!invitation.groom_photo && !invitation.bride_photo && (
+              <div className="h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: `linear-gradient(135deg, ${t.accent}15, ${t.accent}08)`, border: `2px solid ${t.accent}30`, animation: "floatY 4s ease-in-out infinite" }}>
+                <Heart className="h-8 w-8" style={{ color: t.accent, fill: t.accentFill }} />
               </div>
+            )}
+
+            <p className="text-[10px] tracking-[0.4em] uppercase mb-3 font-medium" style={{ color: t.accent }}>Wedding Invitation</p>
+
+            <h1 className="text-3xl font-bold leading-tight" style={{ color: t.textPri }}>
+              {invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"}
+            </h1>
+            <div className="flex items-center justify-center gap-3 my-3">
+              <span className="h-px w-12" style={{ background: `linear-gradient(to right, transparent, ${t.accent}50)` }} />
+              <span className="text-xl font-light" style={{ color: t.accent }}>&amp;</span>
+              <span className="h-px w-12" style={{ background: `linear-gradient(to left, transparent, ${t.accent}50)` }} />
             </div>
-          ) : (
-            <div className="relative">
-              <div className="absolute -inset-4 rounded-3xl blur-xl" style={{ background: `${t.accent}15` }} />
-              <div className="relative rounded-3xl p-8 shadow-2xl" style={cardStyle}>
-                <div className="h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ border: `1px solid ${t.accent}30`, background: t.accentBg }}>
-                  <Heart className="h-8 w-8" style={{ color: t.accent, fill: t.accentFill }} />
-                </div>
-                <p className="text-xs tracking-[0.3em] uppercase mb-4" style={{ color: t.textMut }}>Wedding Invitation</p>
-                <h1 className="text-3xl font-bold mb-1" style={{ color: t.textPri }}>{invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"}</h1>
-                <div className="flex items-center justify-center gap-3 my-3">
-                  <div className="h-px flex-1" style={{ background: `linear-gradient(to right, transparent, ${t.accent}40)` }} />
-                  <span className="text-2xl font-light" style={{ color: t.accent }}>&amp;</span>
-                  <div className="h-px flex-1" style={{ background: `linear-gradient(to left, transparent, ${t.accent}40)` }} />
-                </div>
-                <h1 className="text-3xl font-bold mb-6" style={{ color: t.textPri }}>{invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}</h1>
-                {displayName && (
-                  <div className="mb-6 py-3 px-4 rounded-xl" style={{ border: `1px solid ${t.accent}25`, background: t.accentBg }}>
-                    <p className="text-xs" style={{ color: t.textMut }}>សូមអញ្ជើញ</p>
-                    <p className="font-semibold" style={{ color: t.textPri }}>{displayName}</p>
-                  </div>
-                )}
-                <p className="text-sm mb-6" style={{ color: t.textSec }}>{weddingDate.toLocaleDateString("km-KH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
-                <Button onClick={openEnvelope} className="w-full text-white rounded-xl h-12 font-medium tracking-wide shadow-lg" style={{ background: `linear-gradient(to right, ${t.btnFrom}, ${t.btnTo})` }}>បើកលិខិតអញ្ជើញ</Button>
-                <div className="mt-6 flex items-center justify-center"><ChevronDown className="h-4 w-4 animate-bounce" style={{ color: `${t.accent}40` }} /></div>
+            <h1 className="text-3xl font-bold leading-tight mb-5" style={{ color: t.textPri }}>
+              {invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}
+            </h1>
+
+            <Ornament c={t.accent} />
+
+            <div className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm" style={{ border: `1px solid ${t.accent}25`, color: t.textSec }}>
+              <Calendar className="h-4 w-4" style={{ color: t.accent }} />
+              {weddingDate.toLocaleDateString("km-KH", { day: "numeric", month: "long", year: "numeric" })}
+            </div>
+
+            {displayName && (
+              <div className="mt-5 py-3.5 px-5 rounded-2xl" style={{ border: `1.5px solid ${t.accent}25`, background: t.accentBg }}>
+                <p className="text-[10px] tracking-[0.25em] uppercase mb-1" style={{ color: t.accent }}>គូរាល់ជូន</p>
+                <p className="font-bold text-lg" style={{ color: t.textPri }}>{displayName}</p>
               </div>
-            </div>
-          )}
+            )}
+
+            <Button onClick={openEnvelope} className="mt-7 w-full text-white rounded-2xl h-13 h-12 font-semibold tracking-wide shadow-lg hover:scale-[1.02] transition-transform"
+              style={{ background: `linear-gradient(135deg, ${t.btnFrom}, ${t.btnTo})`, boxShadow: `0 8px 28px ${t.accent}45` }}>
+              ✉️ បើកលិខិតអញ្ជើញ
+            </Button>
+
+            <div className="mt-5"><ChevronDown className="h-5 w-5 animate-bounce mx-auto" style={{ color: `${t.accent}55` }} /></div>
+          </div>
         </div>
       </div>
     );
   }
 
+  // ---------- MAIN PAGE ----------
   return (
     <div className="min-h-screen" style={{ background: t.bgMain }}>
-      <style dangerouslySetInnerHTML={{ __html: `@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}.fade-up{animation:fadeUp .7s ease-out both}` }} />
-      <section className="relative py-20 px-4 text-center overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full blur-[120px]" style={{ background: `${t.accent}08` }} />
-          <div className="absolute top-20 left-10 w-32 h-32 rounded-full blur-[60px]" style={{ background: `${t.accent}08` }} />
-          <div className="absolute bottom-10 right-10 w-32 h-32 rounded-full blur-[60px]" style={{ background: `${t.accent}08` }} />
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+        .fade-up{animation:fadeUp .7s ease-out both}
+      `}} />
+
+      {/* HERO */}
+      <section className="relative pt-16 pb-10 px-4 text-center overflow-hidden fade-up">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] rounded-full blur-[130px]" style={{ background: `${t.accent}0d` }} />
+          <div className="absolute top-24 left-8 w-28 h-28 rounded-full blur-[60px]" style={{ background: `${t.accent}0d` }} />
+          <div className="absolute bottom-4 right-8 w-28 h-28 rounded-full blur-[60px]" style={{ background: `${t.accent}0d` }} />
         </div>
         <div className="max-w-lg mx-auto relative">
-          <div className="mb-8">
-            {goldDot(t.accent)}
-            <p className="text-xs tracking-[0.4em] uppercase mb-3 font-medium mt-6" style={{ color: t.accent }}>Invitation</p>
-            <p className="text-sm mb-6" style={{ color: t.textSec }}>សូមអញ្ជើញចូលរួមក្នុងថ្ងៃរៀបការរបស់យើង</p>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-wide" style={{ color: t.textPri }}>{invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"}</h1>
-          <div className="flex items-center justify-center gap-4 my-5">
-            <div className="h-px w-20" style={{ background: `linear-gradient(to right, transparent, ${t.accent}50)` }} />
-            <Heart className="h-6 w-6" style={{ color: t.accent, fill: t.accentFill }} />
-            <div className="h-px w-20" style={{ background: `linear-gradient(to left, transparent, ${t.accent}50)` }} />
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-8 tracking-wide" style={{ color: t.textPri }}>{invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}</h1>
+          <CoupleAvatars size={72} />
+          <p className="text-[10px] tracking-[0.45em] uppercase mb-2 font-medium mt-4" style={{ color: t.accent }}>Invitation</p>
+          <p className="text-sm mb-7" style={{ color: t.textSec }}>សូមអញ្ជើញចូលរួមក្នុងថ្ងៃរៀបការរបស់យើង</p>
+
+          {(invitation.groom_photo || invitation.bride_photo) ? (
+            <div className="flex items-end justify-center gap-4 mb-6">
+              {[{ p: invitation.groom_photo, n: invitation.groom_name_kh || invitation.groom_name }, { p: invitation.bride_photo, n: invitation.bride_name_kh || invitation.bride_name }].map((x, i) => (
+                <div key={i} className="text-center">
+                  {x.p ? (
+                    <img src={x.p} alt="" className="rounded-[1.6rem] object-cover shadow-xl" style={{ width: 128, height: 158, border: `2px solid ${t.accent}45` }} />
+                  ) : (
+                    <div className="rounded-[1.6rem] flex items-center justify-center" style={{ width: 128, height: 158, border: `2px dashed ${t.accent}35`, color: `${t.accent}70` }}>
+                      <Heart className="h-8 w-8" style={{ fill: t.accentFill, color: t.accent }} />
+                    </div>
+                  )}
+                  <p className="text-sm font-semibold mt-2.5" style={{ color: t.textPri }}>{x.n || "—"}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              <h1 className="text-4xl md:text-5xl font-bold tracking-wide" style={{ color: t.textPri }}>{invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"}</h1>
+              <div className="flex items-center justify-center gap-4 my-5">
+                <span className="h-px w-20" style={{ background: `linear-gradient(to right, transparent, ${t.accent}50)` }} />
+                <Heart className="h-6 w-6" style={{ color: t.accent, fill: t.accentFill }} />
+                <span className="h-px w-20" style={{ background: `linear-gradient(to left, transparent, ${t.accent}50)` }} />
+              </div>
+              <h1 className="text-4xl md:text-5xl font-bold tracking-wide" style={{ color: t.textPri }}>{invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}</h1>
+            </>
+          )}
+
           {displayName && (
-            <div className="inline-block rounded-full px-8 py-3 mb-6" style={{ border: `1.5px solid ${t.accent}25`, background: isLight ? `linear-gradient(135deg, #ffffffee, ${t.accent}08)` : t.accentBg }}>
-              <p className="text-xs tracking-wider uppercase" style={{ color: t.accent }}>សូមអញ្ជើញ</p>
-              <p className="font-semibold text-lg" style={{ color: t.textPri }}>{displayName}</p>
+            <div className="inline-block mt-7 rounded-full px-7 py-2.5 fade-up" style={{ animationDelay: ".2s", border: `1.5px solid ${t.accent}30`, background: t.accentBg }}>
+              <p className="font-semibold" style={{ color: t.textPri }}>
+                <Sparkles className="h-3.5 w-3.5 inline mr-1.5 -mt-0.5" style={{ color: t.accent }} />
+                សូមអញ្ជើញ <b>{displayName}</b>
+              </p>
             </div>
           )}
-          {invitation.quote && <p className="italic text-base max-w-sm mx-auto" style={{ color: t.textSec }}>&ldquo;{invitation.quote}&rdquo;</p>}
-          <div className="mt-8">{goldDot(t.accent)}</div>
-          <div className="flex items-center justify-center gap-4 mt-6">
-            <a href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener noreferrer">
-              <div className="h-10 w-10 rounded-full flex items-center justify-center" style={{ background: `${t.accent}20`, border: `1px solid ${t.accent}30` }}>
-                <Share2 className="h-4 w-4" style={{ color: t.accent }} />
-              </div>
-            </a>
-            <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer">
-              <div className="h-10 w-10 rounded-full flex items-center justify-center" style={{ background: `${t.accent}20`, border: `1px solid ${t.accent}30` }}>
-                <span className="text-sm font-bold" style={{ color: t.accent }}>f</span>
-              </div>
-            </a>
-            <a href={`https://wa.me/?text=${encodeURIComponent(shareText + "\n" + shareUrl)}`} target="_blank" rel="noopener noreferrer">
-              <div className="h-10 w-10 rounded-full flex items-center justify-center" style={{ background: `${t.accent}20`, border: `1px solid ${t.accent}30` }}>
-                <span className="text-sm font-bold" style={{ color: t.accent }}>W</span>
-              </div>
-            </a>
-          </div>
-        </div>
-      </section>
+          {invitation.quote && <p className="italic text-base max-w-sm mx-auto mt-5" style={{ color: t.textSec }}>&ldquo;{invitation.quote}&rdquo;</p>}
 
-      <section className="py-6 px-4">
-        <div className="max-w-md mx-auto">
-          <div className="grid grid-cols-4 gap-3 text-center">
-            {[{ value: timeLeft.days, label: "ថ្ងៃ" }, { value: timeLeft.hours, label: "ម៉ោង" }, { value: timeLeft.minutes, label: "នាទី" }, { value: timeLeft.seconds, label: "វិនាទី" }].map((item, i) => (
-              <div key={i} className="rounded-xl p-3" style={{ ...cardStyle, border: `1px solid ${t.accent}20` }}>
-                <p className="text-2xl font-bold" style={{ color: t.textPri }}>{item.value}</p>
-                <p className="text-xs" style={{ color: t.textMut }}>{item.label}</p>
-              </div>
+          <div className="mt-7"><Ornament c={t.accent} /></div>
+
+          <div className="flex items-center justify-center gap-3 mt-6">
+            {[
+              { href: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, el: <Share2 className="h-4 w-4" /> },
+              { href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, el: <span className="text-sm font-bold">f</span> },
+              { href: `https://wa.me/?text=${encodeURIComponent(shareText + "\n" + shareUrl)}`, el: <span className="text-sm font-bold">W</span> },
+            ].map((s, i) => (
+              <a key={i} href={s.href} target="_blank" rel="noopener noreferrer"
+                className="h-10 w-10 rounded-full flex items-center justify-center hover:scale-110 transition-transform"
+                style={{ background: `${t.accent}18`, border: `1px solid ${t.accent}30`, color: t.accent }}>
+                {s.el}
+              </a>
             ))}
           </div>
         </div>
       </section>
 
-      <div className="max-w-lg mx-auto px-4 space-y-6 pb-20">
-        <div className="rounded-2xl p-6 text-center" style={cardStyle}>
-          <div className="h-12 w-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ border: `1px solid ${t.accent}25`, background: t.accentBg }}>
-            <Calendar className="h-5 w-5" style={{ color: t.accent }} />
-          </div>
-          <h2 className="text-lg font-bold mb-4 tracking-wide" style={{ color: t.textPri }}>ព័ត៌មានពិធីការ</h2>
-          <div className="space-y-3">
+      {/* COUNTDOWN */}
+      <section className="py-4 px-4 fade-up" style={{ animationDelay: ".15s" }}>
+        <div className="max-w-md mx-auto grid grid-cols-4 gap-2.5 text-center">
+          {[{ v: timeLeft.days, l: "ថ្ងៃ" }, { v: timeLeft.hours, l: "ម៉ោង" }, { v: timeLeft.minutes, l: "នាទី" }, { v: timeLeft.seconds, l: "វិនាទី" }].map((item, i) => (
+            <div key={i} className="rounded-2xl py-3 relative overflow-hidden" style={{ ...cardStyle }}>
+              <div className="absolute top-0 inset-x-0 h-0.5" style={{ background: `linear-gradient(to right, transparent, ${t.accent}55, transparent)` }} />
+              <p className="text-2xl font-extrabold tabular-nums" style={{ color: t.accent }}>{String(item.v).padStart(2, "0")}</p>
+              <p className="text-[10px] mt-0.5" style={{ color: t.textMut }}>{item.l}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="max-w-lg mx-auto px-4 space-y-6 pb-24 pt-4">
+
+        {/* Event info */}
+        <section className="rounded-3xl p-6 fade-up" style={{ ...cardStyle, animationDelay: ".2s" }}>
+          <SectionHead icon={Calendar} title="ព័ត៌មានពិធីការ" />
+          <div className="space-y-3 text-center">
             <div className="flex items-center justify-center gap-2" style={{ color: t.textSec }}>
-              <Calendar className="h-4 w-4" style={{ color: `${t.accent}90` }} />
+              <Calendar className="h-4 w-4 shrink-0" style={{ color: t.accent }} />
               <span className="text-sm">{weddingDate.toLocaleDateString("km-KH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
             </div>
             {invitation.ceremony_time && (
               <div className="flex items-center justify-center gap-2" style={{ color: t.textSec }}>
-                <Clock className="h-4 w-4" style={{ color: `${t.accent}90` }} />
-                <span className="text-sm">ពិធីជប់លៀង: {invitation.ceremony_time}</span>
+                <Clock className="h-4 w-4 shrink-0" style={{ color: t.accent }} />
+                <span className="text-sm">ពិធីជប់លៀង៖ {invitation.ceremony_time}</span>
               </div>
             )}
             {invitation.reception_time && (
               <div className="flex items-center justify-center gap-2" style={{ color: t.textSec }}>
-                <Clock className="h-4 w-4" style={{ color: `${t.accent}90` }} />
-                <span className="text-sm">ស្វាគមន៍: {invitation.reception_time}</span>
+                <Clock className="h-4 w-4 shrink-0" style={{ color: t.accent }} />
+                <span className="text-sm">ស្វាគមន៍៖ {invitation.reception_time}</span>
               </div>
             )}
-            <div className="h-px w-16 mx-auto my-3" style={{ background: `${t.accent}25` }} />
             {invitation.venue_name && (
-              <div className="flex items-center justify-center gap-2" style={{ color: t.textPri }}>
-                <MapPin className="h-4 w-4" style={{ color: t.accent }} />
-                <span className="font-medium">{invitation.venue_name}</span>
-              </div>
+              <>
+                <div className="pt-2"><Ornament c={t.accent} /></div>
+                <div className="flex items-center justify-center gap-2" style={{ color: t.textPri }}>
+                  <MapPin className="h-4 w-4 shrink-0" style={{ color: t.accent }} />
+                  <span className="font-semibold">{invitation.venue_name}</span>
+                </div>
+              </>
             )}
             {invitation.venue_address && <p className="text-sm max-w-sm mx-auto" style={{ color: t.textMut }}>{invitation.venue_address}</p>}
             {invitation.venue_map_url && (
               <a href={invitation.venue_map_url} target="_blank" rel="noopener noreferrer" className="inline-block mt-2">
-                <Button variant="outline" size="sm" className="gap-2 rounded-xl" style={{ borderColor: `${t.accent}35`, color: t.textSec }}><MapPin className="h-4 w-4" /> បើកក្នុង Google Maps</Button>
+                <Button variant="outline" size="sm" className="gap-2 rounded-full hover:text-white transition-colors"
+                  style={{ borderColor: `${t.accent}40`, color: t.accent, background: t.accentBg }}>
+                  <MapPin className="h-4 w-4" /> បើកក្នុង Google Maps
+                </Button>
               </a>
             )}
           </div>
-        </div>
+        </section>
 
+        {/* Timeline */}
         {timeline.length > 0 && (
-          <div className="rounded-2xl p-6 fade-up" style={cardStyle}>
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <Calendar className="h-5 w-5" style={{ color: t.accent }} />
-              <h2 className="text-lg font-bold tracking-wide" style={{ color: t.textPri }}>កាលវិភាគពិធី</h2>
-            </div>
-            <div className="h-px w-16 mx-auto mb-6" style={{ background: `${t.accent}25` }} />
+          <section className="rounded-3xl p-6 fade-up" style={{ ...cardStyle, animationDelay: ".25s" }}>
+            <SectionHead icon={Clock} title="កាលវិភាគពិធី" />
             <div className="relative pl-8">
-              <div className="absolute left-3 top-0 bottom-0 w-0.5" style={{ background: `${t.accent}30` }} />
+              <div className="absolute left-[11px] top-1 bottom-1 w-0.5 rounded" style={{ background: `linear-gradient(to bottom, ${t.accent}50, ${t.accent}15)` }} />
               {timeline.map((ev, i) => (
                 <div key={i} className="relative mb-5 last:mb-0">
-                  <div className="absolute -left-5 top-1 h-3 w-3 rounded-full border-2" style={{ borderColor: t.accent, background: t.accentBg }} />
-                  <p className="text-xs font-bold" style={{ color: t.accent }}>{ev.time}</p>
-                  <p className="font-medium text-sm" style={{ color: t.textPri }}>{ev.title}</p>
+                  <div className="absolute -left-[25px] top-0.5 h-3 w-3 rounded-full border-2 shadow-sm" style={{ borderColor: t.accent, background: isLight ? "#fff" : t.cardFrom }} />
+                  <p className="text-xs font-extrabold tracking-wide" style={{ color: t.accent }}>{ev.time}</p>
+                  <p className="font-semibold text-sm" style={{ color: t.textPri }}>{ev.title}</p>
                   {ev.description && <p className="text-xs mt-0.5" style={{ color: t.textMut }}>{ev.description}</p>}
                 </div>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
+        {/* Dress code */}
         {invitation.dress_code && (
-          <div className="rounded-2xl p-6 fade-up" style={cardStyle}>
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <Shirt className="h-5 w-5" style={{ color: t.accent }} />
-              <h2 className="text-lg font-bold tracking-wide" style={{ color: t.textPri }}>ការស្លៀកពាក់</h2>
-            </div>
-            <div className="h-px w-16 mx-auto mb-3" style={{ background: `${t.accent}25` }} />
+          <section className="rounded-3xl p-6 fade-up" style={{ ...cardStyle, animationDelay: ".3s" }}>
+            <SectionHead icon={Shirt} title="ការស្លៀកពាក់" />
             <p className="text-sm text-center" style={{ color: t.textSec }}>{invitation.dress_code}</p>
             {invitation.dress_code_color && (
               <div className="flex items-center justify-center gap-2 mt-3">
-                <div className="h-5 w-5 rounded-full border" style={{ background: invitation.dress_code_color, borderColor: `${t.accent}30` }} />
-                <span className="text-xs" style={{ color: t.textMut }}>{invitation.dress_code_color}</span>
+                <span className="h-5 w-5 rounded-full border shadow-inner" style={{ background: invitation.dress_code_color, borderColor: `${t.accent}35` }} />
+                <span className="text-xs" style={{ color: t.textMut }}>ពណ៌ណែនាំ</span>
               </div>
             )}
-          </div>
+          </section>
         )}
 
+        {/* Story */}
         {invitation.story && (
-          <div className="rounded-2xl p-6" style={cardStyle}>
-            <h2 className="text-lg font-bold mb-4 text-center tracking-wide" style={{ color: t.textPri }}>រឿងស្នេហារបស់យើង</h2>
-            <div className="h-px w-16 mx-auto mb-4" style={{ background: `${t.accent}25` }} />
+          <section className="rounded-3xl p-6 fade-up" style={{ ...cardStyle, animationDelay: ".35s" }}>
+            <SectionHead icon={MessageCircle} title="រឿងស្នេហារបស់យើង" />
             <p className="whitespace-pre-line leading-relaxed text-sm text-center" style={{ color: t.textSec }}>{invitation.story}</p>
-          </div>
+          </section>
         )}
 
+        {/* Video */}
         {invitation.video_url && (
-          <div className="rounded-2xl p-6 fade-up" style={cardStyle}>
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <Video className="h-5 w-5" style={{ color: t.accent }} />
-              <h2 className="text-lg font-bold tracking-wide" style={{ color: t.textPri }}>វីដេអូរៀបការ</h2>
-            </div>
-            <div className="h-px w-16 mx-auto mb-4" style={{ background: `${t.accent}25` }} />
+          <section className="rounded-3xl p-6 fade-up" style={{ ...cardStyle, animationDelay: ".4s" }}>
+            <SectionHead icon={Video} title="វីដេអូរៀបការ" />
             <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
               <iframe
                 src={invitation.video_url}
-                className="absolute inset-0 w-full h-full rounded-xl"
+                className="absolute inset-0 w-full h-full rounded-2xl"
                 style={{ border: `1px solid ${t.accent}20` }}
                 allowFullScreen
                 allow="autoplay; encrypted-media"
               />
             </div>
-          </div>
+          </section>
         )}
 
+        {/* Gallery */}
         {photos.length > 0 && (
-          <div className="rounded-2xl p-6" style={cardStyle}>
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <Camera className="h-5 w-5" style={{ color: t.accent }} />
-              <h2 className="text-lg font-bold tracking-wide" style={{ color: t.textPri }}>វិចិត្រសាលរូបភាព</h2>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {photos.map((photo) => (
-                <div key={photo.id} className="aspect-square rounded-xl overflow-hidden cursor-pointer" style={{ border: `1px solid ${t.accent}15` }} onClick={() => setLightboxPhoto(photo.url)}>
-                  <img src={photo.url} alt={photo.caption || "រូបភាពរៀបការ"} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-                </div>
-              ))}
-            </div>
-          </div>
+          <section className="rounded-3xl p-6 fade-up" style={{ ...cardStyle, animationDelay: ".45s" }}>
+            <SectionHead icon={Camera} title="វិចិត្រសាលរូបភាព" />
+            {photos.length === 1 ? (
+              <div className="aspect-[4/3] rounded-2xl overflow-hidden cursor-zoom-in" style={{ border: `1px solid ${t.accent}20` }} onClick={() => setLightboxIdx(0)}>
+                <img src={photos[0].url} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2.5">
+                {photos.map((photo, idx) => (
+                  <div key={photo.id} className={`${idx === 0 ? "col-span-2 aspect-video" : "aspect-square"} rounded-xl overflow-hidden cursor-zoom-in`} style={{ border: `1px solid ${t.accent}15` }} onClick={() => setLightboxIdx(idx)}>
+                    <img src={photo.url} alt={photo.caption || ""} loading="lazy" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         )}
 
+        {/* Gift QR */}
         {qrCodes.length > 0 && (
-          <div className="rounded-2xl p-6 text-center" style={cardStyle}>
-            <div className="h-12 w-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ border: `1px solid ${t.accent}25`, background: t.accentBg }}>
-              <Gift className="h-5 w-5" style={{ color: t.accent }} />
-            </div>
-            <h2 className="text-lg font-bold mb-4 tracking-wide" style={{ color: t.textPri }}>ចំណងដៃ</h2>
-            <div className="h-px w-16 mx-auto mb-4" style={{ background: `${t.accent}25` }} />
-            <div className="grid grid-cols-1 gap-4">
+          <section className="rounded-3xl p-6 text-center fade-up" style={{ ...cardStyle, animationDelay: ".5s" }}>
+            <SectionHead icon={Gift} title="ចំណងដៃ" />
+            <p className="text-xs mb-4 -mt-2" style={{ color: t.textMut }}>សូមស្កេន QR ខាងក្រោមដើម្បីផ្ញើចំណងដៃ</p>
+            <div className="space-y-4">
               {qrCodes.map((qr) => (
-                <div key={qr.id} className="rounded-xl p-4" style={{ border: `1px solid ${t.accent}20`, background: t.accentBg }}>
-                  {qr.qr_image_url && <img src={qr.qr_image_url} alt="QR Code" className="w-40 h-40 mx-auto mb-3 rounded-lg bg-white p-2" />}
-                  {qr.bank_name && <p className="font-medium text-sm" style={{ color: t.textPri }}>{qr.bank_name}</p>}
-                  {qr.account_name && <p className="text-xs" style={{ color: t.textSec }}>{qr.account_name}</p>}
-                  {qr.account_number && <p className="text-xs font-mono" style={{ color: t.textMut }}>{qr.account_number}</p>}
+                <div key={qr.id} className="rounded-2xl p-5 inline-block w-full" style={{ border: `1px solid ${t.accent}20`, background: t.accentBg }}>
+                  {qr.qr_image_url && (
+                    <div className="bg-white p-3 rounded-2xl inline-block shadow-md">
+                      <img src={qr.qr_image_url} alt="QR Code" className="w-44 h-44 object-contain" />
+                    </div>
+                  )}
+                  <div className="mt-3 space-y-0.5">
+                    {qr.bank_name && <p className="font-bold text-sm" style={{ color: t.textPri }}>{qr.bank_name}</p>}
+                    {qr.account_name && <p className="text-xs" style={{ color: t.textSec }}>{qr.account_name}</p>}
+                    {qr.account_number && <p className="text-xs font-mono" style={{ color: t.textMut }}>{qr.account_number}</p>}
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
-        <div className="rounded-2xl p-6" style={cardStyle}>
-          <h2 className="text-lg font-bold mb-4 text-center tracking-wide" style={{ color: t.textPri }}>បញ្ជាក់ការចូលរួម</h2>
-          <div className="h-px w-16 mx-auto mb-4" style={{ background: `${t.accent}25` }} />
+        {/* Wishes wall */}
+        <section className="rounded-3xl p-6 fade-up" style={{ ...cardStyle, animationDelay: ".55s" }}>
+          <SectionHead icon={MessageCircle} title="ពាក្យជូនពរ" />
+          {wishes.length > 0 && (
+            <div className="space-y-2.5 mb-5 max-h-72 overflow-y-auto pr-1 -mx-1 px-1" style={{ scrollbarWidth: "thin" }}>
+              {wishes.map((w) => (
+                <div key={w.id} className="rounded-2xl px-4 py-3" style={{ border: `1px solid ${t.accent}18`, background: t.accentBg }}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ background: `linear-gradient(135deg, ${t.btnFrom}, ${t.btnTo})` }}>
+                      {(w.sender_name || "?").charAt(0)}
+                    </span>
+                    <p className="text-xs font-semibold truncate" style={{ color: t.accent }}>{w.sender_name || "អនាមិក"}</p>
+                  </div>
+                  <p className="text-sm leading-relaxed break-words" style={{ color: t.textSec }}>{w.content}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="rounded-2xl p-4 space-y-3" style={{ border: `1px solid ${t.accent}22` }}>
+            {!displayName && (
+              <Input value={wishName} onChange={(e) => setWishName(e.target.value)} placeholder="ឈ្មោះរបស់អ្នក..." className="rounded-xl text-sm" style={{ borderColor: `${t.accent}25`, background: isLight ? "#fff" : t.accentBg, color: t.textPri }} />
+            )}
+            <Textarea value={wishContent} onChange={(e) => setWishContent(e.target.value)} placeholder="សរសេរពាក្យជូនពរដល់គូស្នេហ៍..." rows={2} className="rounded-xl text-sm resize-none" style={{ borderColor: `${t.accent}25`, background: isLight ? "#fff" : t.accentBg, color: t.textPri }} />
+            <Button onClick={submitWish} disabled={!wishContent.trim() || wishSending} size="sm"
+              className="w-full text-white rounded-xl h-10 gap-2"
+              style={{ background: `linear-gradient(to right, ${t.btnFrom}, ${t.btnTo})` }}>
+              <Send className="h-4 w-4" /> {wishSending ? "កំពុងផ្ញើ..." : "ផ្ញើពាក្យជូនពរ"}
+            </Button>
+          </div>
+        </section>
+
+        {/* RSVP */}
+        <section className="rounded-3xl p-6 fade-up" style={{ ...cardStyle, animationDelay: ".6s" }}>
+          <SectionHead icon={Calendar} title="បញ្ជាក់ការចូលរួម" />
           {rsvpSubmitted ? (
             <div className="text-center py-6">
-              <div className="h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ border: `1px solid ${t.accent}35`, background: t.accentBg }}>
+              <div className="h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ border: `1.5px solid ${t.accent}40`, background: t.accentBg }}>
                 <Heart className="h-8 w-8" style={{ color: t.accent, fill: t.accentFill }} />
               </div>
-              <p className="font-semibold text-lg" style={{ color: t.textPri }}>អរគុណ!</p>
-              <p className="text-sm mt-1" style={{ color: t.textSec }}>យើងរង់ចាំជួបអ្នក។</p>
+              <p className="font-bold text-lg" style={{ color: t.textPri }}>អរគុណសម្រាប់ការឆ្លើយតប!</p>
+              <p className="text-sm mt-1" style={{ color: t.textSec }}>យើងរង់ចាំជួបអ្នកនៅថ្ងៃពិធី 🎉</p>
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-sm" style={{ color: t.textSec }}>តើអ្នកនឹងមកចូលរួមទេ?</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {([{ value: "attending" as const, label: "✓ នឹងមក" }, { value: "not_attending" as const, label: "✗ មិនមក" }]).map((opt) => (
-                    <Button key={opt.value} variant="outline" className="rounded-xl h-11"
-                      style={rsvpStatus === opt.value ? { background: `linear-gradient(to right, ${t.btnFrom}, ${t.btnTo})`, borderColor: t.accent, color: "white" } : { borderColor: `${t.accent}30`, color: t.textSec }}
-                      onClick={() => setRsvpStatus(opt.value)}>
-                      {opt.label}
-                    </Button>
-                  ))}
-                </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                {([{ value: "attending" as const, label: "✓ នឹងមកចូលរួម" }, { value: "not_attending" as const, label: "✗ មិនអាចមក" }]).map((opt) => (
+                  <Button key={opt.value} variant="outline" className="rounded-2xl h-12 font-medium transition-all"
+                    style={rsvpStatus === opt.value
+                      ? { background: `linear-gradient(to right, ${t.btnFrom}, ${t.btnTo})`, borderColor: t.accent, color: "white", boxShadow: `0 4px 16px ${t.accent}40` }
+                      : { borderColor: `${t.accent}30`, color: t.textSec, background: "transparent" }}
+                    onClick={() => setRsvpStatus(opt.value)}>
+                    {opt.label}
+                  </Button>
+                ))}
               </div>
               {rsvpStatus === "attending" && (
-                <div className="space-y-2">
-                  <Label className="text-sm" style={{ color: t.textSec }}>អ្នកមកជាមួយប៉ុន្មាននាក់?</Label>
-                  <Input type="number" min={1} max={10} value={rsvpGuests} onChange={(e) => setRsvpGuests(parseInt(e.target.value) || 1)} className="rounded-xl" style={{ borderColor: `${t.accent}25`, background: t.accentBg, color: t.textPri }} />
+                <div className="fade-up space-y-2">
+                  <p className="text-sm text-center" style={{ color: t.textSec }}>អ្នកមកជាមួយប៉ុន្មាននាក់?</p>
+                  <div className="flex items-center justify-center gap-4">
+                    <button type="button" onClick={() => setRsvpGuests((g) => Math.max(1, g - 1))}
+                      className="h-10 w-10 rounded-full text-lg font-bold transition-transform active:scale-90"
+                      style={{ border: `1px solid ${t.accent}35`, color: t.accent, background: t.accentBg }}>−</button>
+                    <span className="text-2xl font-extrabold w-10 text-center" style={{ color: t.textPri }}>{rsvpGuests}</span>
+                    <button type="button" onClick={() => setRsvpGuests((g) => Math.min(10, g + 1))}
+                      className="h-10 w-10 rounded-full text-lg font-bold transition-transform active:scale-90"
+                      style={{ border: `1px solid ${t.accent}35`, color: t.accent, background: t.accentBg }}>+</button>
+                  </div>
                 </div>
               )}
-              <div className="space-y-2">
-                <Label className="text-sm" style={{ color: t.textSec }}>សារជូនពរ (ជម្រើស)</Label>
-                <Textarea value={rsvpMessage} onChange={(e) => setRsvpMessage(e.target.value)} placeholder="សរសេរពាក្យជូនពរដល់គូស្នេហ៍..." rows={3} className="rounded-xl" style={{ borderColor: `${t.accent}25`, background: t.accentBg, color: t.textPri }} />
-              </div>
-              <Button onClick={submitRSVP} className="w-full text-white rounded-xl h-11 shadow-lg" style={{ background: `linear-gradient(to right, ${t.btnFrom}, ${t.btnTo})` }} disabled={!rsvpStatus}>ផ្ញើការឆ្លើយតប</Button>
+              <Textarea value={rsvpMessage} onChange={(e) => setRsvpMessage(e.target.value)} placeholder="សារជូនពរ (ជម្រើស) — នឹងបង្ហាញក្នុងជញ្ជាំងជូនពរ..." rows={3} className="rounded-2xl resize-none" style={{ borderColor: `${t.accent}25`, background: isLight ? "#fff" : t.accentBg, color: t.textPri }} />
+              <Button onClick={submitRSVP} disabled={!rsvpStatus} className="w-full text-white rounded-2xl h-12 shadow-lg font-semibold"
+                style={{ background: `linear-gradient(to right, ${t.btnFrom}, ${t.btnTo})`, boxShadow: `0 6px 20px ${t.accent}40` }}>
+                ផ្ញើការឆ្លើយតប
+              </Button>
             </div>
           )}
-        </div>
+        </section>
 
-        <div className="text-center pt-4">
-          <div className="h-px w-24 mx-auto mb-6" style={{ background: `linear-gradient(to right, transparent, ${t.accent}30, transparent)` }} />
-          <p className="text-xs tracking-widest uppercase" style={{ color: t.textMut }}>E-Wedding</p>
-        </div>
+        <footer className="text-center pt-6">
+          <Ornament c={t.accent} />
+          <p className="text-[10px] tracking-[0.35em] uppercase mt-5" style={{ color: t.textMut }}>E-Wedding • សូមជូនពរពីចម្ងាយឬទៅទស្សនា</p>
+        </footer>
       </div>
 
+      {/* Music button */}
       {invitation.background_music && (
-        <button onClick={toggleMusic} className="fixed bottom-6 right-6 z-50 h-12 w-12 rounded-full flex items-center justify-center shadow-lg" style={{ background: `linear-gradient(135deg, ${t.btnFrom}, ${t.btnTo})` }}>
+        <button onClick={toggleMusic}
+          className="fixed bottom-6 right-6 z-50 h-12 w-12 rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition-transform"
+          style={{ background: `linear-gradient(135deg, ${t.btnFrom}, ${t.btnTo})` }}>
           {musicPlaying ? <Pause className="h-5 w-5 text-white" /> : <Play className="h-5 w-5 text-white ml-0.5" />}
         </button>
       )}
 
-      {lightboxPhoto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90" onClick={() => setLightboxPhoto(null)}>
-          <button onClick={() => setLightboxPhoto(null)} className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
+      {/* Lightbox with nav */}
+      {lightboxIdx !== null && photos[lightboxIdx] && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/92 bg-black/90" onClick={() => setLightboxIdx(null)}>
+          <button onClick={() => setLightboxIdx(null)} className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/15 backdrop-blur flex items-center justify-center hover:bg-white/25">
             <X className="h-5 w-5 text-white" />
           </button>
-          <img src={lightboxPhoto} alt="រូបភាព" className="max-w-[90vw] max-h-[90vh] rounded-lg object-contain" onClick={(e) => e.stopPropagation()} />
+          {photos.length > 1 && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); setLightboxIdx((lightboxIdx + photos.length - 1) % photos.length); }}
+                className="absolute left-3 h-11 w-11 rounded-full bg-white/15 backdrop-blur flex items-center justify-center hover:bg-white/25">
+                <ChevronLeft className="h-6 w-6 text-white" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setLightboxIdx((lightboxIdx + 1) % photos.length); }}
+                className="absolute right-3 h-11 w-11 rounded-full bg-white/15 backdrop-blur flex items-center justify-center hover:bg-white/25">
+                <ChevronRight className="h-6 w-6 text-white" />
+              </button>
+              <span className="absolute bottom-5 left-1/2 -translate-x-1/2 text-xs text-white/70 bg-black/40 px-3 py-1 rounded-full">
+                {lightboxIdx + 1} / {photos.length}
+              </span>
+            </>
+          )}
+          <img src={photos[lightboxIdx].url} alt="រូបភាព" className="max-w-[92vw] max-h-[88vh] rounded-xl object-contain shadow-2xl" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </div>
