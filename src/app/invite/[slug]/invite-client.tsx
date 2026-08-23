@@ -11,6 +11,76 @@ import { Textarea } from "@/components/ui/textarea";
 import { Heart, MapPin, Clock, Camera, Gift, MessageCircle, Calendar, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Share2, Video, Shirt, X, Send, Sparkles } from "lucide-react";
 import type { Invitation, Guest, Wish, QRCode, GalleryPhoto, TimelineEvent } from "@/types/database";
 
+const ANIM_CSS = `
+  @keyframes envIn{from{opacity:0;transform:translateY(26px) scale(.96)}to{opacity:1;transform:none}}
+  @keyframes envOut{to{opacity:0;transform:translateY(-34px) scale(1.05)}}
+  @keyframes pageIn{from{opacity:0}to{opacity:1}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+  @keyframes floatUp{0%{transform:translateY(0) rotate(0deg);opacity:0}10%{opacity:.32}88%{opacity:.14}100%{transform:translateY(-108vh) rotate(26deg);opacity:0}}
+  .float-heart{position:absolute;bottom:-36px;animation-name:floatUp;animation-timing-function:linear;animation-iteration-count:infinite;pointer-events:none}
+  @keyframes pulseGlow{0%,100%{opacity:.35}50%{opacity:.7}}
+  @keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  @keyframes cdPop{from{transform:translateY(8px) scale(.82);opacity:.25}to{transform:none;opacity:1}}
+  @keyframes shine{0%{left:-80%}55%{left:135%}100%{left:135%}}
+  .btn-shine{position:relative;overflow:hidden}
+  .btn-shine::before{content:"";position:absolute;top:0;left:-80%;width:48%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.5),transparent);transform:skewX(-20deg);animation:shine 3.4s ease-in-out infinite}
+  @keyframes lbIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+  .lb-img{animation:lbIn .32s cubic-bezier(.22,1,.36,1) both}
+  @keyframes tlPulse{0%,100%{box-shadow:0 0 0 0 rgba(0,0,0,0)}50%{box-shadow:0 0 0 5px transparent}}
+  .reveal{opacity:0;transform:translateY(30px);transition:opacity .85s cubic-bezier(.22,1,.36,1),transform .85s cubic-bezier(.22,1,.36,1)}
+  .reveal-in{opacity:1;transform:none}
+  .fade-up{animation:fadeUp .8s cubic-bezier(.22,1,.36,1) both}
+`;
+
+function Reveal({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [vis, setVis] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          setVis(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <div ref={ref} className={`${className} reveal ${vis ? "reveal-in" : ""}`} style={{ transitionDelay: `${delay}ms` }}>
+      {children}
+    </div>
+  );
+}
+
+function FloatHearts({ color, count = 9 }: { color: string; count?: number }) {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {Array.from({ length: count }).map((_, i) => {
+        const left = (i * 11.3 + ((i * 37) % 13)) % 97;
+        const dur = 10 + ((i * 41) % 80) / 10;
+        const del = ((i * 53) % 90) / 10;
+        const size = 10 + ((i * 29) % 16);
+        return (
+          <svg
+            key={i}
+            viewBox="0 0 24 24"
+            fill={color}
+            className="float-heart"
+            style={{ left: `${left}%`, width: size, height: size, opacity: 0, animationDuration: `${dur}s`, animationDelay: `${del}s` }}
+          >
+            <path d="M12 21s-7.5-4.9-10-9.3C.6 8.6 2.3 5 5.7 5c2 0 3.3 1.1 4.3 2.6h4C15 6.1 16.3 5 18.3 5c3.4 0 5.1 3.6 3.7 6.7C19.5 16.1 12 21 12 21z" />
+          </svg>
+        );
+      })}
+    </div>
+  );
+}
+
 function InvitationContent() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -33,6 +103,7 @@ function InvitationContent() {
   const [wishSending, setWishSending] = useState(false);
   const [rsvpSubmitted, setRsvpSubmitted] = useState(false);
   const [opened, setOpened] = useState(false);
+  const [opening, setOpening] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [musicPlaying, setMusicPlaying] = useState(false);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
@@ -137,7 +208,11 @@ function InvitationContent() {
   };
 
   const openEnvelope = () => {
-    setOpened(true);
+    setOpening(true);
+    setTimeout(() => {
+      window.scrollTo({ top: 0 });
+      setOpened(true);
+    }, 620);
     const music = invitation?.background_music;
     if (!music) return;
 
@@ -341,18 +416,20 @@ function InvitationContent() {
   // ---------- ENVELOPE ----------
   if (!opened) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ background: t.bg }}>
-        <style dangerouslySetInnerHTML={{ __html: `
-          @keyframes envIn{from{opacity:0;transform:translateY(26px) scale(.96)}to{opacity:1;transform:none}}
-          @keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-          @keyframes pulseGlow{0%,100%{opacity:.35}50%{opacity:.7}}
-        `}} />
+      <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ background: t.bg, animation: "pageIn .4s ease both" }}>
+        <style dangerouslySetInnerHTML={{ __html: ANIM_CSS }} />
         <div className="absolute inset-0 pointer-events-none">
+          <FloatHearts color={t.accent} count={10} />
           <div className="absolute top-[-10%] left-[15%] w-72 h-72 rounded-full blur-[110px]" style={{ background: `${t.accent}18`, animation: "pulseGlow 5s ease-in-out infinite" }} />
           <div className="absolute bottom-[-8%] right-[10%] w-80 h-80 rounded-full blur-[120px]" style={{ background: `${t.accent}14`, animation: "pulseGlow 6s ease-in-out 1s infinite" }} />
         </div>
 
-        <div className="relative max-w-md w-full" style={{ animation: "envIn .8s ease-out both" }}>
+        <div
+          className="relative max-w-md w-full"
+          style={{
+            animation: opening ? "envOut .62s cubic-bezier(.55,0,.55,.2) forwards" : "envIn .8s cubic-bezier(.22,1,.36,1) both",
+          }}
+        >
           <div className="absolute -inset-4 rounded-[2.4rem] blur-2xl pointer-events-none" style={{ background: `${t.accent}20`, animation: "pulseGlow 4s ease-in-out infinite" }} />
           <div className="relative rounded-[2rem] px-8 py-10 md:px-10 shadow-2xl text-center overflow-hidden" style={cardStyle}>
             <div className="absolute top-0 left-0 right-0 h-1" style={{ background: `linear-gradient(to right, transparent, ${t.accent}70, transparent)` }} />
@@ -393,9 +470,9 @@ function InvitationContent() {
               </div>
             )}
 
-            <Button onClick={openEnvelope} className="mt-7 w-full text-white rounded-2xl h-13 h-12 font-semibold tracking-wide shadow-lg hover:scale-[1.02] transition-transform"
+            <Button onClick={openEnvelope} disabled={opening} className="mt-7 w-full text-white rounded-2xl h-12 font-semibold tracking-wide shadow-lg hover:scale-[1.02] transition-transform btn-shine"
               style={{ background: `linear-gradient(135deg, ${t.btnFrom}, ${t.btnTo})`, boxShadow: `0 8px 28px ${t.accent}45` }}>
-              ✉️ បើកលិខិតអញ្ជើញ
+              {opening ? "✨" : "✉️"} បើកលិខិតអញ្ជើញ
             </Button>
 
             <div className="mt-5"><ChevronDown className="h-5 w-5 animate-bounce mx-auto" style={{ color: `${t.accent}55` }} /></div>
@@ -407,15 +484,13 @@ function InvitationContent() {
 
   // ---------- MAIN PAGE ----------
   return (
-    <div className="min-h-screen" style={{ background: t.bgMain }}>
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-        .fade-up{animation:fadeUp .7s ease-out both}
-      `}} />
+    <div className="min-h-screen" style={{ background: t.bgMain, animation: "pageIn .5s ease both" }}>
+      <style dangerouslySetInnerHTML={{ __html: ANIM_CSS }} />
 
       {/* HERO */}
       <section className="relative pt-16 pb-10 px-4 text-center overflow-hidden fade-up">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <FloatHearts color={t.accent} count={8} />
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] rounded-full blur-[130px]" style={{ background: `${t.accent}0d` }} />
           <div className="absolute top-24 left-8 w-28 h-28 rounded-full blur-[60px]" style={{ background: `${t.accent}0d` }} />
           <div className="absolute bottom-4 right-8 w-28 h-28 rounded-full blur-[60px]" style={{ background: `${t.accent}0d` }} />
@@ -486,7 +561,9 @@ function InvitationContent() {
           {[{ v: timeLeft.days, l: "ថ្ងៃ" }, { v: timeLeft.hours, l: "ម៉ោង" }, { v: timeLeft.minutes, l: "នាទី" }, { v: timeLeft.seconds, l: "វិនាទី" }].map((item, i) => (
             <div key={i} className="rounded-2xl py-3 relative overflow-hidden" style={{ ...cardStyle }}>
               <div className="absolute top-0 inset-x-0 h-0.5" style={{ background: `linear-gradient(to right, transparent, ${t.accent}55, transparent)` }} />
-              <p className="text-2xl font-extrabold tabular-nums" style={{ color: t.accent }}>{String(item.v).padStart(2, "0")}</p>
+              <p className="text-2xl font-extrabold tabular-nums" style={{ color: t.accent }}>
+                <span key={item.v} style={{ display: "inline-block", animation: "cdPop .45s ease" }}>{String(item.v).padStart(2, "0")}</span>
+              </p>
               <p className="text-[10px] mt-0.5" style={{ color: t.textMut }}>{item.l}</p>
             </div>
           ))}
@@ -496,7 +573,8 @@ function InvitationContent() {
       <div className="max-w-lg mx-auto px-4 space-y-6 pb-24 pt-4">
 
         {/* Event info */}
-        <section className="rounded-3xl p-6 fade-up" style={{ ...cardStyle, animationDelay: ".2s" }}>
+        <Reveal>
+          <section className="rounded-3xl p-6" style={cardStyle}>
           <SectionHead icon={Calendar} title="ព័ត៌មានពិធីការ" />
           <div className="space-y-3 text-center">
             <div className="flex items-center justify-center gap-2" style={{ color: t.textSec }}>
@@ -535,16 +613,18 @@ function InvitationContent() {
             )}
           </div>
         </section>
+        </Reveal>
 
         {/* Timeline */}
         {timeline.length > 0 && (
-          <section className="rounded-3xl p-6 fade-up" style={{ ...cardStyle, animationDelay: ".25s" }}>
+          <Reveal delay={60}>
+          <section className="rounded-3xl p-6" style={cardStyle}>
             <SectionHead icon={Clock} title="កាលវិភាគពិធី" />
             <div className="relative pl-8">
               <div className="absolute left-[11px] top-1 bottom-1 w-0.5 rounded" style={{ background: `linear-gradient(to bottom, ${t.accent}50, ${t.accent}15)` }} />
               {timeline.map((ev, i) => (
                 <div key={i} className="relative mb-5 last:mb-0">
-                  <div className="absolute -left-[25px] top-0.5 h-3 w-3 rounded-full border-2 shadow-sm" style={{ borderColor: t.accent, background: isLight ? "#fff" : t.cardFrom }} />
+                  <div className="absolute -left-[25px] top-0.5 h-3 w-3 rounded-full border-2 shadow-sm" style={{ borderColor: t.accent, background: isLight ? "#fff" : t.cardFrom, animation: `tlPulse 2.4s ease-in-out ${i * 0.35}s infinite` }} />
                   <p className="text-xs font-extrabold tracking-wide" style={{ color: t.accent }}>{ev.time}</p>
                   <p className="font-semibold text-sm" style={{ color: t.textPri }}>{ev.title}</p>
                   {ev.description && <p className="text-xs mt-0.5" style={{ color: t.textMut }}>{ev.description}</p>}
@@ -552,33 +632,39 @@ function InvitationContent() {
               ))}
             </div>
           </section>
+          </Reveal>
         )}
 
         {/* Dress code */}
         {invitation.dress_code && (
-          <section className="rounded-3xl p-6 fade-up" style={{ ...cardStyle, animationDelay: ".3s" }}>
+          <Reveal delay={80}>
+          <section className="rounded-3xl p-6" style={cardStyle}>
             <SectionHead icon={Shirt} title="ការស្លៀកពាក់" />
             <p className="text-sm text-center" style={{ color: t.textSec }}>{invitation.dress_code}</p>
             {invitation.dress_code_color && (
               <div className="flex items-center justify-center gap-2 mt-3">
-                <span className="h-5 w-5 rounded-full border shadow-inner" style={{ background: invitation.dress_code_color, borderColor: `${t.accent}35` }} />
+                <span className="h-5 w-5 rounded-full border shadow-inner animate-pulse" style={{ background: invitation.dress_code_color, borderColor: `${t.accent}35` }} />
                 <span className="text-xs" style={{ color: t.textMut }}>ពណ៌ណែនាំ</span>
               </div>
             )}
           </section>
+          </Reveal>
         )}
 
         {/* Story */}
         {invitation.story && (
-          <section className="rounded-3xl p-6 fade-up" style={{ ...cardStyle, animationDelay: ".35s" }}>
+          <Reveal delay={100}>
+          <section className="rounded-3xl p-6" style={cardStyle}>
             <SectionHead icon={MessageCircle} title="រឿងស្នេហារបស់យើង" />
             <p className="whitespace-pre-line leading-relaxed text-sm text-center" style={{ color: t.textSec }}>{invitation.story}</p>
           </section>
+          </Reveal>
         )}
 
         {/* Video */}
         {invitation.video_url && (
-          <section className="rounded-3xl p-6 fade-up" style={{ ...cardStyle, animationDelay: ".4s" }}>
+          <Reveal delay={100}>
+          <section className="rounded-3xl p-6" style={cardStyle}>
             <SectionHead icon={Video} title="វីដេអូរៀបការ" />
             <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
               <iframe
@@ -590,11 +676,13 @@ function InvitationContent() {
               />
             </div>
           </section>
+          </Reveal>
         )}
 
         {/* Gallery */}
         {photos.length > 0 && (
-          <section className="rounded-3xl p-6 fade-up" style={{ ...cardStyle, animationDelay: ".45s" }}>
+          <Reveal delay={100}>
+          <section className="rounded-3xl p-6" style={cardStyle}>
             <SectionHead icon={Camera} title="វិចិត្រសាលរូបភាព" />
             {photos.length === 1 ? (
               <div className="aspect-[4/3] rounded-2xl overflow-hidden cursor-zoom-in" style={{ border: `1px solid ${t.accent}20` }} onClick={() => setLightboxIdx(0)}>
@@ -610,11 +698,13 @@ function InvitationContent() {
               </div>
             )}
           </section>
+          </Reveal>
         )}
 
         {/* Gift QR */}
         {qrCodes.length > 0 && (
-          <section className="rounded-3xl p-6 text-center fade-up" style={{ ...cardStyle, animationDelay: ".5s" }}>
+          <Reveal delay={100}>
+          <section className="rounded-3xl p-6 text-center" style={cardStyle}>
             <SectionHead icon={Gift} title="ចំណងដៃ" />
             <p className="text-xs mb-4 -mt-2" style={{ color: t.textMut }}>សូមស្កេន QR ខាងក្រោមដើម្បីផ្ញើចំណងដៃ</p>
             <div className="space-y-4">
@@ -634,10 +724,12 @@ function InvitationContent() {
               ))}
             </div>
           </section>
+          </Reveal>
         )}
 
         {/* Wishes wall */}
-        <section className="rounded-3xl p-6 fade-up" style={{ ...cardStyle, animationDelay: ".55s" }}>
+        <Reveal delay={80}>
+        <section className="rounded-3xl p-6" style={cardStyle}>
           <SectionHead icon={MessageCircle} title="ពាក្យជូនពរ" />
           {wishes.length > 0 && (
             <div className="space-y-2.5 mb-5 max-h-72 overflow-y-auto pr-1 -mx-1 px-1" style={{ scrollbarWidth: "thin" }}>
@@ -660,15 +752,17 @@ function InvitationContent() {
             )}
             <Textarea value={wishContent} onChange={(e) => setWishContent(e.target.value)} placeholder="សរសេរពាក្យជូនពរដល់គូស្នេហ៍..." rows={2} className="rounded-xl text-sm resize-none" style={{ borderColor: `${t.accent}25`, background: isLight ? "#fff" : t.accentBg, color: t.textPri }} />
             <Button onClick={submitWish} disabled={!wishContent.trim() || wishSending} size="sm"
-              className="w-full text-white rounded-xl h-10 gap-2"
+              className="w-full text-white rounded-xl h-10 gap-2 btn-shine"
               style={{ background: `linear-gradient(to right, ${t.btnFrom}, ${t.btnTo})` }}>
               <Send className="h-4 w-4" /> {wishSending ? "កំពុងផ្ញើ..." : "ផ្ញើពាក្យជូនពរ"}
             </Button>
           </div>
         </section>
+        </Reveal>
 
         {/* RSVP */}
-        <section className="rounded-3xl p-6 fade-up" style={{ ...cardStyle, animationDelay: ".6s" }}>
+        <Reveal delay={80}>
+        <section className="rounded-3xl p-6" style={cardStyle}>
           <SectionHead icon={Calendar} title="បញ្ជាក់ការចូលរួម" />
           {rsvpSubmitted ? (
             <div className="text-center py-6">
@@ -706,13 +800,14 @@ function InvitationContent() {
                 </div>
               )}
               <Textarea value={rsvpMessage} onChange={(e) => setRsvpMessage(e.target.value)} placeholder="សារជូនពរ (ជម្រើស) — នឹងបង្ហាញក្នុងជញ្ជាំងជូនពរ..." rows={3} className="rounded-2xl resize-none" style={{ borderColor: `${t.accent}25`, background: isLight ? "#fff" : t.accentBg, color: t.textPri }} />
-              <Button onClick={submitRSVP} disabled={!rsvpStatus} className="w-full text-white rounded-2xl h-12 shadow-lg font-semibold"
+              <Button onClick={submitRSVP} disabled={!rsvpStatus} className="w-full text-white rounded-2xl h-12 shadow-lg font-semibold btn-shine"
                 style={{ background: `linear-gradient(to right, ${t.btnFrom}, ${t.btnTo})`, boxShadow: `0 6px 20px ${t.accent}40` }}>
                 ផ្ញើការឆ្លើយតប
               </Button>
             </div>
           )}
         </section>
+        </Reveal>
 
         <footer className="text-center pt-6">
           <Ornament c={t.accent} />
@@ -725,13 +820,14 @@ function InvitationContent() {
         <button onClick={toggleMusic}
           className="fixed bottom-6 right-6 z-50 h-12 w-12 rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition-transform"
           style={{ background: `linear-gradient(135deg, ${t.btnFrom}, ${t.btnTo})` }}>
-          {musicPlaying ? <Pause className="h-5 w-5 text-white" /> : <Play className="h-5 w-5 text-white ml-0.5" />}
+          {musicPlaying && <span className="absolute inset-0 rounded-full animate-ping pointer-events-none" style={{ background: `${t.accent}55`, opacity: 0.5 }} />}
+          {musicPlaying ? <Pause className="h-5 w-5 text-white relative" /> : <Play className="h-5 w-5 text-white ml-0.5 relative" />}
         </button>
       )}
 
       {/* Lightbox with nav */}
       {lightboxIdx !== null && photos[lightboxIdx] && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/92 bg-black/90" onClick={() => setLightboxIdx(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90" onClick={() => setLightboxIdx(null)} style={{ animation: "pageIn .25s ease both" }}>
           <button onClick={() => setLightboxIdx(null)} className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/15 backdrop-blur flex items-center justify-center hover:bg-white/25">
             <X className="h-5 w-5 text-white" />
           </button>
@@ -752,7 +848,7 @@ function InvitationContent() {
               </span>
             </>
           )}
-          <img src={photos[lightboxIdx].url} alt="រូបភាព" className="max-w-[92vw] max-h-[88vh] rounded-xl object-contain shadow-2xl" onClick={(e) => e.stopPropagation()} />
+          <img key={lightboxIdx} src={photos[lightboxIdx].url} alt="រូបភាព" className="max-w-[92vw] max-h-[88vh] rounded-xl object-contain shadow-2xl lb-img" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </div>
