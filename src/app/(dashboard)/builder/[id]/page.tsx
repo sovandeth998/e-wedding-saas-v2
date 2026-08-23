@@ -1,17 +1,16 @@
 "use client";
 
 import React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 import { isBuiltinMusic } from "@/lib/wedding-music";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, ArrowRight, Save, Eye, Music, MapPin, Users, Heart, Image, CreditCard, Trash2, Check, Copy, ExternalLink, Video, Shirt, Clock } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save, Eye, Music, MapPin, Heart, Image as ImageIcon, CreditCard, Trash2, Check, Copy, Video, Shirt, Clock, CalendarDays, CloudUpload, CircleCheck, Loader2, Globe, QrCode, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { FileUpload } from "@/components/FileUpload";
 import { toast } from "sonner";
@@ -20,20 +19,19 @@ import type { Invitation, GalleryPhoto } from "@/types/database";
 const steps = [
   { id: 1, icon: Heart, title: "ព័ត៌មានកូនកំលោះ-កូនក្រមុំ", short: "ព័ត៌មាន" },
   { id: 2, icon: MapPin, title: "ទីតាំង និងពេលវេលា", short: "ទីតាំង" },
-  { id: 3, icon: Image, title: "រូបថត", short: "រូបភាព" },
+  { id: 3, icon: ImageIcon, title: "រូបថត", short: "រូបភាព" },
   { id: 4, icon: CreditCard, title: "QR Code ចំណងដៃ", short: "QR Code" },
-  { id: 5, icon: Music, title: "តន្ត្រី និងការរចនា", short: "រចនា" },
+  { id: 5, icon: Sparkles, title: "តន្ត្រី និងការរចនា", short: "រចនា" },
   { id: 6, icon: Eye, title: "មើល និងផ្សាយ", short: "ផ្សាយ" },
 ];
 
 export default function BuilderPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
   const supabase = createClient();
   const [currentStep, setCurrentStep] = useState(1);
   const [saving, setSaving] = useState(false);
-  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [invitation, setInvitation] = useState<Partial<Invitation>>({
     groom_name: "",
     groom_name_kh: "",
@@ -59,6 +57,11 @@ export default function BuilderPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<string>("1");
   const [dbTemplates, setDbTemplates] = useState<Array<{ code: string; name: string; category: string; is_premium: boolean; config: any }>>([]);
 
+  const loadedRef = useRef(false);
+  const lastSnapshotRef = useRef("");
+  const currentStepRef = useRef(1);
+  currentStepRef.current = currentStep;
+
   const templateList = dbTemplates.map((tpl) => {
     const c = typeof tpl.config === "string" ? JSON.parse(tpl.config) : (tpl.config || {});
     return {
@@ -73,6 +76,10 @@ export default function BuilderPage() {
       btnTo: c.btnTo || "#4b5563",
     };
   });
+
+  const activeTpl =
+    templateList.find((t) => t.id === selectedTemplate) ||
+    templateList[0] || { id: "1", name: "", category: "", isPremium: false, bg: "#fdf8f0", textPri: "#6b4c1e", accent: "#b8860b", btnFrom: "#b8860b", btnTo: "#8b6508" };
 
   const timelinePresets = [
     { title: "ពិធីសូត្រធម៌", description: "សូត្រធម៌ពីព្រះសង្ឃ" },
@@ -98,6 +105,7 @@ export default function BuilderPage() {
 
   useEffect(() => {
     if (!params.id) return;
+    loadedRef.current = false;
 
     (async () => {
       const { data } = await supabase
@@ -108,7 +116,8 @@ export default function BuilderPage() {
 
       if (data) {
         setInvitation(data);
-        if (data.template_id) setSelectedTemplate(data.template_id);
+        setSelectedTemplate(data.template_id || "1");
+        lastSnapshotRef.current = JSON.stringify({ i: data, t: data.template_id || "1", q: "" });
       }
 
       const { data: photos } = await supabase
@@ -125,13 +134,18 @@ export default function BuilderPage() {
         .eq("invitation_id", params.id)
         .single();
 
-      if (qr?.qr_image_url) setQrImageUrl(qr.qr_image_url);
+      if (qr?.qr_image_url) {
+        setQrImageUrl(qr.qr_image_url);
+        lastSnapshotRef.current = JSON.stringify({ i: data, t: data?.template_id || "1", q: qr.qr_image_url });
+      }
 
       const { data: tpls } = await supabase
         .from("templates")
         .select("code, name, category, is_premium, config")
         .order("code");
       if (tpls) setDbTemplates(tpls);
+
+      requestAnimationFrame(() => { loadedRef.current = true; });
     })();
   }, [params.id]);
 
@@ -151,19 +165,67 @@ export default function BuilderPage() {
     }
   };
 
-  const handleNext = () => {
-    if (checkStepComplete(currentStep)) {
-      setCompletedSteps((prev) => new Set(Array.from(prev).concat([currentStep])));
+  const completedCount = steps.filter((s) => checkStepComplete(s.id)).length;
+  const progress = Math.round((completedCount / steps.length) * 100);
+
+  const persist = async (withToast: boolean) => {
+    const { error } = await supabase
+      .from("invitations")
+      .update({ ...invitation, template_id: selectedTemplate })
+      .eq("id", params.id);
+
+    if (!error && qrImageUrl) {
+      const { data: existingQr } = await supabase
+        .from("qr_codes")
+        .select("id")
+        .eq("invitation_id", params.id)
+        .single();
+
+      if (existingQr) {
+        await supabase.from("qr_codes").update({ qr_image_url: qrImageUrl }).eq("id", existingQr.id);
+      } else {
+        await supabase.from("qr_codes").insert({
+          invitation_id: params.id,
+          type: "gift",
+          qr_image_url: qrImageUrl,
+        });
+      }
     }
-    if (currentStep < 6) {
-      setCurrentStep(currentStep + 1);
+
+    if (withToast) {
+      if (!error) toast.success("បានរក្សាទុកជោគជ័យ!");
+      else toast.error("បរាជ័យក្នុងការរក្សាទុក");
     }
+    return !error;
   };
 
-  const handlePrev = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
+  // Auto-save (debounced)
+  useEffect(() => {
+    if (!loadedRef.current) return;
+    const snap = JSON.stringify({ i: invitation, t: selectedTemplate, q: qrImageUrl });
+    if (snap === lastSnapshotRef.current) return;
+
+    setSaveStatus("saving");
+    const timer = setTimeout(async () => {
+      const ok = await persist(false);
+      if (ok) {
+        lastSnapshotRef.current = snap;
+        setSaveStatus("saved");
+        setTimeout(() => setSaveStatus((s) => (s === "saved" ? "idle" : s)), 2500);
+      } else {
+        setSaveStatus("idle");
+      }
+    }, 1200);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invitation, selectedTemplate, qrImageUrl]);
+
+  const saveInvitation = async () => {
+    setSaving(true);
+    await persist(true);
+    const snap = JSON.stringify({ i: invitation, t: selectedTemplate, q: qrImageUrl });
+    lastSnapshotRef.current = snap;
+    setSaving(false);
   };
 
   const handleGalleryUpload = async (url: string) => {
@@ -194,60 +256,21 @@ export default function BuilderPage() {
     }
   };
 
-  const handleQrUpload = (url: string) => {
-    setQrImageUrl(url);
-  };
-
   const handleSelectTemplate = async (templateId: string) => {
     setSelectedTemplate(templateId);
-    const { error } = await supabase
-      .from("invitations")
-      .update({ template_id: templateId })
-      .eq("id", params.id);
-    if (!error) {
-      const t = templateList.find((t) => t.id === templateId);
-      toast.success(`ប្ដូរគំរូទៅ "${t?.name || templateId}" រួចរាល់`);
-    } else {
-      toast.error("រក្សាទុកគំរូមិនបានជោគជ័យ");
-    }
-  };
-
-  const saveInvitation = async () => {
-    setSaving(true);
-    const { error } = await supabase
-      .from("invitations")
-      .update({ ...invitation, template_id: selectedTemplate })
-      .eq("id", params.id);
-
-    if (!error) {
-      if (qrImageUrl) {
-        const { data: existingQr } = await supabase
-          .from("qr_codes")
-          .select("id")
-          .eq("invitation_id", params.id)
-          .single();
-
-        if (existingQr) {
-          await supabase
-            .from("qr_codes")
-            .update({ qr_image_url: qrImageUrl })
-            .eq("id", existingQr.id);
-        } else {
-          await supabase.from("qr_codes").insert({
-            invitation_id: params.id,
-            type: "gift",
-            qr_image_url: qrImageUrl,
-          });
-        }
-      }
-      toast.success("បានរក្សាទុកជោគជ័យ!");
-    } else {
-      toast.error("បរាជ័យក្នុងការរក្សាទុក");
-    }
-    setSaving(false);
   };
 
   const publishInvitation = async () => {
+    if (!checkStepComplete(1)) {
+      toast.error("សូមបញ្ចូលឈ្មោះកូនកំលោះ និងកូនក្រមុំជាមុនសិន");
+      setCurrentStep(1);
+      return;
+    }
+    if (!checkStepComplete(2)) {
+      toast.error("សូមបញ្ចូលថ្ងៃរៀបការ និងឈ្មោះទីតាំងជាមុនសិន");
+      setCurrentStep(2);
+      return;
+    }
     setSaving(true);
     const { error } = await supabase
       .from("invitations")
@@ -273,287 +296,282 @@ export default function BuilderPage() {
     toast.success("បានចម្លង Link!");
   };
 
-  const progress = Math.round((completedSteps.size / 6) * 100);
+  const SectionCard = ({ icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) => (
+    <div className="p-5 bg-gold-50/40 rounded-2xl border border-gold-200/50 space-y-4">
+      <h3 className="font-semibold text-secondary flex items-center gap-2">
+        {React.createElement(icon, { className: "h-4 w-4 text-primary" })} {title}
+      </h3>
+      {children}
+    </div>
+  );
+
+  const StepperButton = ({ step }: { step: (typeof steps)[0] }) => {
+    const done = checkStepComplete(step.id);
+    const active = currentStep === step.id;
+    return (
+      <button
+        onClick={() => setCurrentStep(step.id)}
+        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all text-left ${
+          active
+            ? "bg-gold-gradient text-white font-medium shadow-md"
+            : done
+            ? "text-green-700 hover:bg-green-50"
+            : "text-muted-foreground hover:bg-gold-50"
+        }`}
+      >
+        <span className={`h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-xs ${
+          active ? "bg-white/20 text-white" : done ? "bg-green-500 text-white" : "bg-muted text-muted-foreground"
+        }`}>
+          {done && !active ? <Check className="h-3.5 w-3.5" /> : <step.icon className="h-3.5 w-3.5" />}
+        </span>
+        <span className="truncate">{step.short}</span>
+      </button>
+    );
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
           <Link href="/invitations">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="rounded-full hover:bg-gold-100">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-secondary">បង្កើតលិខិតអញ្ជើញ</h1>
-            <p className="text-muted-foreground">ជំហាន {currentStep} / 6</p>
+            <h1 className="text-lg md:text-xl font-bold text-secondary truncate max-w-[280px] md:max-w-none">
+              {(invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ")}
+              <span className="mx-1 text-primary">❦</span>
+              {(invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ")}
+            </h1>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {saveStatus === "saving" ? (
+                <span className="inline-flex items-center gap-1 text-orange-500"><Loader2 className="h-3 w-3 animate-spin" /> កំពុងរក្សាទុក...</span>
+              ) : saveStatus === "saved" ? (
+                <span className="inline-flex items-center gap-1 text-green-600"><CircleCheck className="h-3 w-3" /> បានរក្សាទុកស្វ័យប្រវត្តិ</span>
+              ) : (
+                <span>ជំហាន {currentStep} / {steps.length}</span>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={saveInvitation} disabled={saving} className="border-gold-200 text-secondary hover:bg-gold-50">
-            <Save className="h-4 w-4 mr-2" /> {saving ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}
+          <Link href={`/preview/${params.id}`} target="_blank">
+            <Button variant="outline" size="sm" className="border-gold-200 text-secondary hover:bg-gold-50 gap-1.5 h-9">
+              <Eye className="h-4 w-4" /> Preview
+            </Button>
+          </Link>
+          <Button variant="outline" onClick={saveInvitation} disabled={saving} className="border-gold-200 text-secondary hover:bg-gold-50 gap-1.5 h-9">
+            <Save className="h-4 w-4" /> {saving ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}
           </Button>
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <Card className="border-0 shadow-md">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-secondary">រីកចម្រើន</span>
-            <span className="text-sm text-primary font-bold">{progress}%</span>
-          </div>
-          <div className="w-full bg-gray-100 rounded-full h-2 mb-4">
-            <div
-              className="bg-gold-gradient h-2 rounded-full transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+      {/* Mobile step chips */}
+      <div className="flex gap-2 overflow-x-auto pb-1 lg:hidden -mx-1 px-1">
+        {steps.map((step) => {
+          const done = checkStepComplete(step.id);
+          const active = currentStep === step.id;
+          return (
+            <button
+              key={step.id}
+              onClick={() => setCurrentStep(step.id)}
+              className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border transition-all ${
+                active ? "bg-gold-gradient text-white border-transparent shadow" : done ? "border-green-200 text-green-700 bg-green-50" : "border-gold-200 text-muted-foreground bg-white"
+              }`}
+            >
+              {done && !active ? <Check className="h-3 w-3" /> : <step.icon className="h-3 w-3" />}
+              {step.short}
+            </button>
+          );
+        })}
+      </div>
 
-          {/* Step Indicators */}
-          <div className="flex items-center justify-between relative">
-            <div className="absolute top-4 left-0 right-0 h-0.5 bg-gray-200" />
-            <div className="absolute top-4 left-0 h-0.5 bg-gold-gradient transition-all duration-500" style={{ width: `${((currentStep - 1) / 5) * 100}%` }} />
-
-            {steps.map((step) => (
-              <button
-                key={step.id}
-                onClick={() => setCurrentStep(step.id)}
-                className="relative flex flex-col items-center z-10 group"
-              >
-                <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-                  currentStep === step.id
-                    ? "bg-gold-gradient text-white scale-110 shadow-lg"
-                    : completedSteps.has(step.id)
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-200 text-gray-500 group-hover:bg-gold-100"
-                }`}>
-                  {completedSteps.has(step.id) ? <Check className="h-4 w-4" /> : step.id}
+      <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)_300px] gap-6 items-start">
+        {/* Sidebar */}
+        <aside className="hidden lg:block sticky top-24 space-y-4">
+          <Card className="border-gold-200/60 shadow-sm">
+            <CardContent className="p-3 space-y-3">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-medium text-secondary">ដំណើរការ</span>
+                  <span className="text-xs font-bold text-primary">{progress}%</span>
                 </div>
-                <span className={`text-xs mt-1.5 hidden md:block ${
-                  currentStep === step.id ? "text-primary font-medium" : "text-muted-foreground"
-                }`}>
-                  {step.short}
-                </span>
-              </button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Step Navigation */}
-        <div className="lg:col-span-1">
-          <Card className="border-0 shadow-md">
-            <CardContent className="p-4">
-              <div className="space-y-1">
-                {steps.map((step) => (
-                  <button
-                    key={step.id}
-                    onClick={() => setCurrentStep(step.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                      currentStep === step.id
-                        ? "bg-gold-50 text-primary font-medium border border-gold-200 shadow-sm"
-                        : completedSteps.has(step.id)
-                        ? "text-green-600 hover:bg-green-50"
-                        : "text-muted-foreground hover:bg-muted"
-                    }`}
-                  >
-                    <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs ${
-                      currentStep === step.id
-                        ? "bg-gold-gradient text-white"
-                        : completedSteps.has(step.id)
-                        ? "bg-green-500 text-white"
-                        : "bg-gray-200 text-gray-500"
-                    }`}>
-                      {completedSteps.has(step.id) ? <Check className="h-3 w-3" /> : step.id}
-                    </div>
-                    <span>{step.title}</span>
-                  </button>
-                ))}
+                <div className="w-full bg-muted rounded-full h-1.5">
+                  <div className="bg-gold-gradient h-1.5 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+                </div>
+              </div>
+              <div className="space-y-1 pt-1">
+                {steps.map((step) => <StepperButton key={step.id} step={step} />)}
               </div>
             </CardContent>
           </Card>
-        </div>
 
-        {/* Step Content */}
-        <div className="lg:col-span-3">
-          <Card className="border-0 shadow-md">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-secondary">
-                {React.createElement(steps[currentStep - 1].icon, { className: "h-5 w-5 text-primary" })}
-                {steps[currentStep - 1].title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Step 1: Couple Info */}
-              {currentStep === 1 && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4 p-4 bg-gold-50/50 rounded-xl border border-gold-200/50">
-                      <h3 className="font-medium text-lg text-secondary flex items-center gap-2">
-                        <Heart className="h-4 w-4 text-primary" /> កូនកំលោះ
-                      </h3>
-                      <div className="space-y-2">
-                        <Label htmlFor="groom_name" className="text-secondary">ឈ្មោះ (អង់គ្លេស)</Label>
-                        <Input id="groom_name" value={invitation.groom_name || ""} onChange={(e) => updateField("groom_name", e.target.value)} placeholder="ឧ. Sovandeth" className="border-gold-200 focus-visible:ring-primary" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="groom_name_kh" className="text-secondary">ឈ្មោះ (ខ្មែរ)</Label>
-                        <Input id="groom_name_kh" value={invitation.groom_name_kh || ""} onChange={(e) => updateField("groom_name_kh", e.target.value)} placeholder="ឧ. សុវណ្ណដេត" className="border-gold-200 focus-visible:ring-primary" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-secondary">រូបថត</Label>
-                        <FileUpload bucket="uploads" path={`invitations/${params.id}/groom`} onUpload={(url) => updateField("groom_photo", url)} className="aspect-square max-w-[180px]" />
-                      </div>
-                    </div>
-                    <div className="space-y-4 p-4 bg-gold-50/50 rounded-xl border border-gold-200/50">
-                      <h3 className="font-medium text-lg text-secondary flex items-center gap-2">
-                        <Heart className="h-4 w-4 text-pink-500" /> កូនក្រមុំ
-                      </h3>
-                      <div className="space-y-2">
-                        <Label htmlFor="bride_name" className="text-secondary">ឈ្មោះ (អង់គ្លេស)</Label>
-                        <Input id="bride_name" value={invitation.bride_name || ""} onChange={(e) => updateField("bride_name", e.target.value)} placeholder="ឧ. Dara" className="border-gold-200 focus-visible:ring-primary" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="bride_name_kh" className="text-secondary">ឈ្មោះ (ខ្មែរ)</Label>
-                        <Input id="bride_name_kh" value={invitation.bride_name_kh || ""} onChange={(e) => updateField("bride_name_kh", e.target.value)} placeholder="ឧ. ដារ៉ា" className="border-gold-200 focus-visible:ring-primary" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-secondary">រូបថត</Label>
-                        <FileUpload bucket="uploads" path={`invitations/${params.id}/bride`} onUpload={(url) => updateField("bride_photo", url)} className="aspect-square max-w-[180px]" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
-                    <h3 className="font-medium text-lg text-secondary flex items-center gap-2">
-                      <Heart className="h-4 w-4 text-primary" /> ពាក្យពេចន៍ និងរឿងស្នេហា
-                    </h3>
-                    <div className="space-y-2">
-                      <Label htmlFor="quote" className="text-secondary">ពាក្យពេចន៍រៀបការ</Label>
-                      <Input id="quote" value={invitation.quote || ""} onChange={(e) => updateField("quote", e.target.value)} placeholder="ឧ. រួមគ្នាអស់មួយជីវិត..." className="border-gold-200 focus-visible:ring-primary" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="story" className="text-secondary">រឿងស្នេហារបស់យើង</Label>
-                      <Textarea id="story" value={invitation.story || ""} onChange={(e) => updateField("story", e.target.value)} placeholder="ប្រាប់រឿងស្នេហារបស់អ្នក..." rows={4} className="border-gold-200 focus-visible:ring-primary" />
-                    </div>
-                  </div>
+          {invitation.status === "published" && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
+              <Globe className="h-5 w-5 text-green-600 mx-auto mb-1" />
+              <p className="text-xs font-medium text-green-700">បានផ្សាយរួចរាល់</p>
+              <button onClick={copyLink} className="text-[11px] text-green-600 underline mt-0.5">ចម្លង Link លិខិតអញ្ជើញ</button>
+            </div>
+          )}
+        </aside>
+
+        {/* Main */}
+        <main className="min-w-0">
+          <Card className="border-gold-200/60 shadow-sm">
+            <CardContent className="p-5 md:p-6">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gold-100">
+                <div className="h-10 w-10 rounded-xl bg-gold-gradient flex items-center justify-center shadow-sm shrink-0">
+                  {React.createElement(steps[currentStep - 1].icon, { className: "h-5 w-5 text-white" })}
                 </div>
-              )}
-
-              {/* Step 2: Venue & Time */}
-              {currentStep === 2 && (
-                <div className="space-y-6">
-                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
-                    <h3 className="font-medium text-lg text-secondary flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-primary" /> ពេលវេលា
-                    </h3>
-                    <div className="space-y-2">
-                      <Label htmlFor="wedding_date" className="text-secondary">ថ្ងៃរៀបការ *</Label>
-                      <Input id="wedding_date" type="datetime-local" value={invitation.wedding_date ? new Date(invitation.wedding_date).toISOString().slice(0, 16) : ""} onChange={(e) => updateField("wedding_date", new Date(e.target.value).toISOString())} className="border-gold-200 focus-visible:ring-primary" />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="ceremony_time" className="text-secondary">ម៉ោងពិធីជប់លៀង</Label>
-                        <Input id="ceremony_time" value={invitation.ceremony_time || ""} onChange={(e) => updateField("ceremony_time", e.target.value)} placeholder="ឧ. 7:00 ព្រឹក - 9:00 ព្រឹក" className="border-gold-200 focus-visible:ring-primary" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="reception_time" className="text-secondary">ម៉ោងពិធីស្វាគមន៍</Label>
-                        <Input id="reception_time" value={invitation.reception_time || ""} onChange={(e) => updateField("reception_time", e.target.value)} placeholder="ឧ. 11:00 ព្រឹក - 2:00 ថ្ងៃត្រង់" className="border-gold-200 focus-visible:ring-primary" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
-                    <h3 className="font-medium text-lg text-secondary flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-primary" /> ទីតាំង
-                    </h3>
-                    <div className="space-y-2">
-                      <Label htmlFor="venue_name" className="text-secondary">ឈ្មោះទីតាំង *</Label>
-                      <Input id="venue_name" value={invitation.venue_name || ""} onChange={(e) => updateField("venue_name", e.target.value)} placeholder="ឧ. Diamond Ballroom" className="border-gold-200 focus-visible:ring-primary" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="venue_address" className="text-secondary">អាសយដ្ឋានទីតាំង</Label>
-                      <Textarea id="venue_address" value={invitation.venue_address || ""} onChange={(e) => updateField("venue_address", e.target.value)} placeholder="អាសយដ្ឋានពេញ..." rows={2} className="border-gold-200 focus-visible:ring-primary" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="venue_map_url" className="text-secondary">Link Google Maps</Label>
-                      <Input id="venue_map_url" value={invitation.venue_map_url || ""} onChange={(e) => updateField("venue_map_url", e.target.value)} placeholder="https://maps.google.com/..." className="border-gold-200 focus-visible:ring-primary" />
-                    </div>
-                  </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-widest text-primary/60 font-medium">ជំហានទី {currentStep}</p>
+                  <h2 className="font-bold text-secondary leading-tight">{steps[currentStep - 1].title}</h2>
                 </div>
-              )}
+                {!checkStepComplete(currentStep) && currentStep <= 4 && (
+                  <span className="ml-auto text-[10px] bg-orange-100 text-orange-600 px-2 py-1 rounded-full shrink-0">មិនទាន់ពេញលេញ</span>
+                )}
+              </div>
 
-              {/* Step 3: Gallery */}
-              {currentStep === 3 && (
-                <div className="space-y-4">
-                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50">
-                    <p className="text-muted-foreground">បញ្ចូលរូបថត Pre-wedding របស់អ្នកដើម្បីបង្កើតវិចិត្រសាលដ៏ស្អាត។</p>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {galleryPhotos.map((photo) => (
-                      <div key={photo.id} className="relative group aspect-square">
-                        <img src={photo.url} alt={photo.caption || "រូបភាព"} className="w-full h-full object-cover rounded-xl border border-gold-200" />
-                        <button type="button" onClick={() => removeGalleryPhoto(photo.id)} className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                    <FileUpload bucket="uploads" path={`invitations/${params.id}/gallery`} onUpload={handleGalleryUpload} className="aspect-square" />
-                  </div>
-                </div>
-              )}
-
-              {/* Step 4: Payment QR */}
-              {currentStep === 4 && (
-                <div className="space-y-6">
-                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50">
-                    <p className="text-muted-foreground">បញ្ចូល QR Code KHQR របស់អ្នកដើម្បីឱ្យភ្ញៀវផ្ញើចំណងដៃ។</p>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
-                      <h3 className="font-medium text-secondary flex items-center gap-2">
-                        <CreditCard className="h-4 w-4 text-primary" /> QR Code
-                      </h3>
-                      <FileUpload bucket="uploads" path={`invitations/${params.id}/qr`} onUpload={handleQrUpload} className="max-w-[250px]" />
-                      {qrImageUrl && (
-                        <div className="mt-2">
-                          <img src={qrImageUrl} alt="QR Code" className="w-32 h-32 rounded-lg border border-gold-200" />
+              <div className="space-y-5">
+                {/* Step 1: Couple Info */}
+                {currentStep === 1 && (
+                  <div className="space-y-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <SectionCard icon={Heart} title="កូនកំលោះ">
+                        <div className="space-y-2">
+                          <Label className="text-secondary">ឈ្មោះ (ខ្មែរ)</Label>
+                          <Input value={invitation.groom_name_kh || ""} onChange={(e) => updateField("groom_name_kh", e.target.value)} placeholder="ឧ. សុវណ្ណដេត" className="border-gold-200 focus-visible:ring-primary bg-white" />
                         </div>
-                      )}
+                        <div className="space-y-2">
+                          <Label className="text-secondary">ឈ្មោះ (អង់គ្លេស)</Label>
+                          <Input value={invitation.groom_name || ""} onChange={(e) => updateField("groom_name", e.target.value)} placeholder="ឧ. Sovandeth" className="border-gold-200 focus-visible:ring-primary bg-white" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-secondary">រូបថត</Label>
+                          <FileUpload bucket="uploads" path={`invitations/${params.id}/groom`} onUpload={(url) => updateField("groom_photo", url)} className="aspect-square max-w-[160px]" />
+                        </div>
+                      </SectionCard>
+                      <SectionCard icon={Heart} title="កូនក្រមុំ">
+                        <div className="space-y-2">
+                          <Label className="text-secondary">ឈ្មោះ (ខ្មែរ)</Label>
+                          <Input value={invitation.bride_name_kh || ""} onChange={(e) => updateField("bride_name_kh", e.target.value)} placeholder="ឧ. ដារ៉ា" className="border-gold-200 focus-visible:ring-primary bg-white" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-secondary">ឈ្មោះ (អង់គ្លេស)</Label>
+                          <Input value={invitation.bride_name || ""} onChange={(e) => updateField("bride_name", e.target.value)} placeholder="ឧ. Dara" className="border-gold-200 focus-visible:ring-primary bg-white" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-secondary">រូបថត</Label>
+                          <FileUpload bucket="uploads" path={`invitations/${params.id}/bride`} onUpload={(url) => updateField("bride_photo", url)} className="aspect-square max-w-[160px]" />
+                        </div>
+                      </SectionCard>
                     </div>
-                    <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
-                      <h3 className="font-medium text-secondary flex items-center gap-2">
-                        <CreditCard className="h-4 w-4 text-primary" /> ព័ត៌មានគណនី
-                      </h3>
+                    <SectionCard icon={Heart} title="ពាក្យពេចន៍ និងរឿងស្នេហា">
                       <div className="space-y-2">
-                        <Label htmlFor="bank_name" className="text-secondary">ឈ្មោះធនាគារ</Label>
-                        <Input id="bank_name" placeholder="ឧ. ABA Bank" className="border-gold-200 focus-visible:ring-primary" />
+                        <Label className="text-secondary">ពាក្យពេចន៍រៀបការ</Label>
+                        <Input value={invitation.quote || ""} onChange={(e) => updateField("quote", e.target.value)} placeholder="ឧ. រួមគ្នាអស់មួយជីវិត..." className="border-gold-200 focus-visible:ring-primary bg-white" />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="account_name" className="text-secondary">ឈ្មោះគណនី</Label>
-                        <Input id="account_name" placeholder="ឈ្មោះម្ចាស់គណនី" className="border-gold-200 focus-visible:ring-primary" />
+                        <Label className="text-secondary">រឿងស្នេហារបស់យើង</Label>
+                        <Textarea value={invitation.story || ""} onChange={(e) => updateField("story", e.target.value)} placeholder="ប្រាប់រឿងស្នេហារបស់អ្នក..." rows={4} className="border-gold-200 focus-visible:ring-primary bg-white" />
+                      </div>
+                    </SectionCard>
+                  </div>
+                )}
+
+                {/* Step 2: Venue & Time */}
+                {currentStep === 2 && (
+                  <div className="space-y-5">
+                    <SectionCard icon={CalendarDays} title="ពេលវេលា">
+                      <div className="space-y-2">
+                        <Label className="text-secondary">ថ្ងៃរៀបការ *</Label>
+                        <Input type="datetime-local" value={invitation.wedding_date ? new Date(invitation.wedding_date).toISOString().slice(0, 16) : ""} onChange={(e) => updateField("wedding_date", new Date(e.target.value).toISOString())} className="border-gold-200 focus-visible:ring-primary bg-white" />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-secondary">ម៉ោងពិធីជប់លៀង</Label>
+                          <Input value={invitation.ceremony_time || ""} onChange={(e) => updateField("ceremony_time", e.target.value)} placeholder="ឧ. 7:00 ព្រឹក - 9:00 ព្រឹក" className="border-gold-200 focus-visible:ring-primary bg-white" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-secondary">ម៉ោងពិធីស្វាគមន៍</Label>
+                          <Input value={invitation.reception_time || ""} onChange={(e) => updateField("reception_time", e.target.value)} placeholder="ឧ. 11:00 ព្រឹក - 2:00 ថ្ងៃត្រង់" className="border-gold-200 focus-visible:ring-primary bg-white" />
+                        </div>
+                      </div>
+                    </SectionCard>
+                    <SectionCard icon={MapPin} title="ទីតាំង">
+                      <div className="space-y-2">
+                        <Label className="text-secondary">ឈ្មោះទីតាំង *</Label>
+                        <Input value={invitation.venue_name || ""} onChange={(e) => updateField("venue_name", e.target.value)} placeholder="ឧ. Diamond Ballroom" className="border-gold-200 focus-visible:ring-primary bg-white" />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="account_number" className="text-secondary">លេខគណនី</Label>
-                        <Input id="account_number" placeholder="លេខគណនី" className="border-gold-200 focus-visible:ring-primary" />
+                        <Label className="text-secondary">អាសយដ្ឋានទីតាំង</Label>
+                        <Textarea value={invitation.venue_address || ""} onChange={(e) => updateField("venue_address", e.target.value)} placeholder="អាសយដ្ឋានពេញ..." rows={2} className="border-gold-200 focus-visible:ring-primary bg-white" />
                       </div>
+                      <div className="space-y-2">
+                        <Label className="text-secondary">Link Google Maps</Label>
+                        <Input value={invitation.venue_map_url || ""} onChange={(e) => updateField("venue_map_url", e.target.value)} placeholder="https://maps.google.com/..." className="border-gold-200 focus-visible:ring-primary bg-white" />
+                      </div>
+                    </SectionCard>
+                  </div>
+                )}
+
+                {/* Step 3: Gallery */}
+                {currentStep === 3 && (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gold-50/40 rounded-2xl border border-gold-200/50 text-sm text-muted-foreground">
+                      បញ្ចូលរូបថត Pre-wedding ដើម្បីបង្ហាញក្នុងវិចិត្រសាល។ រូបដំបូងនឹងប្រើជា preview ពេល share link!
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {galleryPhotos.map((photo, idx) => (
+                        <div key={photo.id} className="relative group aspect-square">
+                          <img src={photo.url} alt={photo.caption || "រូបភាព"} className="w-full h-full object-cover rounded-xl border border-gold-200" />
+                          {idx === 0 && (
+                            <span className="absolute bottom-2 left-2 text-[10px] bg-black/60 text-white px-2 py-0.5 rounded-full">Preview share</span>
+                          )}
+                          <button type="button" onClick={() => removeGalleryPhoto(photo.id)} className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                      <FileUpload bucket="uploads" path={`invitations/${params.id}/gallery`} onUpload={handleGalleryUpload} className="aspect-square" />
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Step 5: Music & Design */}
-              {currentStep === 5 && (
-                <div className="space-y-6">
-                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
-                    <h3 className="font-medium text-secondary flex items-center gap-2">
-                      <Music className="h-4 w-4 text-primary" /> តន្ត្រី
-                    </h3>
-                    <div className="space-y-2">
-                      <Label htmlFor="background_music" className="text-secondary">បទចម្រៀងផ្ទៃខាងក្រោយ</Label>
+                {/* Step 4: Gift QR */}
+                {currentStep === 4 && (
+                  <div className="space-y-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <SectionCard icon={QrCode} title="QR Code ចំណងដៃ">
+                        <p className="text-sm text-muted-foreground">បញ្ចូលរូប KHQR/ABA របស់អ្នក — ភ្ញៀវនឹងឃើញនៅផ្នែកចំណងដៃក្នុងលិខិតអញ្ជើញ។</p>
+                        <FileUpload bucket="uploads" path={`invitations/${params.id}/qr`} onUpload={(url) => setQrImageUrl(url)} className="max-w-[220px]" />
+                        {qrImageUrl && (
+                          <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gold-200">
+                            <img src={qrImageUrl} alt="QR Code" className="w-20 h-20 rounded-lg object-cover" />
+                            <div className="text-xs text-green-600 flex items-center gap-1">
+                              <CircleCheck className="h-4 w-4" /> បានដាក់រួចរាល់
+                            </div>
+                          </div>
+                        )}
+                      </SectionCard>
+                      <SectionCard icon={Sparkles} title="គន្លឹះ">
+                        <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
+                          <li>ប្រើ KHQR មួយសម្រាប់គ្រប់ធនាគារ</li>
+                          <li>សរសេរចំណាំណែនាំឱ្យភ្ញៀវ screenshot បន្ទាប់ពីបង់</li>
+                          <li>អាចផ្លាស់ប្តូររូបបានគ្រប់ពេល</li>
+                        </ul>
+                      </SectionCard>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 5: Music & Design */}
+                {currentStep === 5 && (
+                  <div className="space-y-5">
+                    <SectionCard icon={Music} title="តន្ត្រីផ្ទៃខាងក្រោយ">
                       <select
-                        id="background_music"
                         value={invitation.background_music || ""}
                         onChange={(e) => updateField("background_music", e.target.value)}
                         className="w-full border border-gold-200 rounded-lg px-3 py-2 text-sm bg-white text-secondary focus:ring-2 focus:ring-primary outline-none"
@@ -564,231 +582,280 @@ export default function BuilderPage() {
                         ))}
                         <option value="__custom__">🔗 បញ្ចូល URL ផ្ទាល់...</option>
                       </select>
-                    </div>
-                    {invitation.background_music && invitation.background_music !== "__custom__" && !isBuiltinMusic(invitation.background_music) && (
-                      <audio controls src={invitation.background_music} className="w-full h-10 rounded-lg" style={{ filter: "sepia(20%) saturate(70%)" }} />
-                    )}
-                    {invitation.background_music && isBuiltinMusic(invitation.background_music) && (
-                      <p className="text-xs text-muted-foreground bg-gold-50 rounded-lg p-2">🎵 តន្ត្រីនឹងចាក់ដោយស្វ័យប្រវត្តិនៅពេលភ្ញៀវបើកលិខិត</p>
-                    )}
-                    {(!invitation.background_music || invitation.background_music === "__custom__") && (
-                      <div className="space-y-2">
-                        <Input value={invitation.background_music === "__custom__" ? "" : (invitation.background_music || "")} onChange={(e) => updateField("background_music", e.target.value)} placeholder="បញ្ចូល URL តន្ត្រី (MP3)..." className="border-gold-200 focus-visible:ring-primary" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
-                    <h3 className="font-medium text-secondary flex items-center gap-2">
-                      <Video className="h-4 w-4 text-primary" /> វីដេអូ
-                    </h3>
-                    <div className="space-y-2">
-                      <Label htmlFor="video_url" className="text-secondary">URL វីដេអូរៀបការ</Label>
-                      <Input id="video_url" value={invitation.video_url || ""} onChange={(e) => updateField("video_url", e.target.value)} placeholder="YouTube embed URL ឬវីដេអូ URL..." className="border-gold-200 focus-visible:ring-primary" />
-                    </div>
-                  </div>
-                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
-                    <h3 className="font-medium text-secondary flex items-center gap-2">
-                      <Shirt className="h-4 w-4 text-primary" /> ការស្លៀកពាក់
-                    </h3>
-                    <div className="space-y-2">
-                      <Label htmlFor="dress_code" className="text-secondary">សេចក្ដីណែនាំការស្លៀកពាក់</Label>
-                      <Input id="dress_code" value={invitation.dress_code || ""} onChange={(e) => updateField("dress_code", e.target.value)} placeholder="ឧ. ពណ៌ស្វាយ, សំលៀកបំពាក់ផ្លូវការ" className="border-gold-200 focus-visible:ring-primary" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="dress_code_color" className="text-secondary">ពណ៌សំខាន់</Label>
-                      <div className="flex items-center gap-2">
-                        <Input id="dress_code_color" type="color" value={invitation.dress_code_color || "#b8860b"} onChange={(e) => updateField("dress_code_color", e.target.value)} className="w-12 h-10 p-1 cursor-pointer border-gold-200" />
-                        <Input value={invitation.dress_code_color || "#b8860b"} onChange={(e) => updateField("dress_code_color", e.target.value)} placeholder="#b8860b" className="border-gold-200 focus-visible:ring-primary" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
-                    <h3 className="font-medium text-secondary flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-primary" /> កាលវិភាគពិធី
-                    </h3>
-                    <p className="text-sm text-muted-foreground">ជ្រើសរើសពិធី ឬសរសេរថ្មី។ អាចលុបបាន។</p>
-                    {((invitation.timeline || []) as any[]).map((ev: any, i: number) => (
-                      <div key={i} className="p-3 bg-white rounded-xl border border-gold-100 space-y-2">
-                        <div className="flex gap-2 items-center">
-                          <Input value={ev.time || ""} onChange={(e) => {
-                            const tl = [...(invitation.timeline || []) as any[]];
-                            tl[i] = { ...tl[i], time: e.target.value };
-                            updateField("timeline" as any, tl as any);
-                          }} placeholder="ម៉ោង (ឧ. 07:00)" className="w-28 border-gold-200 focus-visible:ring-primary text-sm" />
-                          <select
-                            value={ev.title || ""}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              const tl = [...(invitation.timeline || []) as any[]];
-                              if (val === "__custom__") {
-                                tl[i] = { ...tl[i], title: "" };
-                              } else {
-                                const preset = timelinePresets.find((p) => p.title === val);
-                                tl[i] = { ...tl[i], title: val, description: preset?.description || tl[i].description || "" };
-                              }
-                              updateField("timeline" as any, tl as any);
-                            }}
-                            className="flex-1 border border-gold-200 rounded-lg px-3 py-2 text-sm bg-white text-secondary focus:ring-2 focus:ring-primary outline-none"
-                          >
-                            <option value="">ជ្រើសរើសពិធី...</option>
-                            {timelinePresets.map((p) => (
-                              <option key={p.title} value={p.title}>{p.title}</option>
-                            ))}
-                            <option value="__custom__">✍️ សរសេរផ្ទាល់...</option>
-                          </select>
-                          <Button variant="ghost" size="icon" onClick={() => {
-                            const tl = [...(invitation.timeline || []) as any[]];
-                            tl.splice(i, 1);
-                            updateField("timeline" as any, tl as any);
-                          }} className="text-red-500 shrink-0 h-9 w-9"><Trash2 className="h-4 w-4" /></Button>
+                      {invitation.background_music && invitation.background_music !== "__custom__" && !isBuiltinMusic(invitation.background_music) && (
+                        <audio controls src={invitation.background_music} className="w-full h-10 rounded-lg" style={{ filter: "sepia(20%) saturate(70%)" }} />
+                      )}
+                      {invitation.background_music && isBuiltinMusic(invitation.background_music) && (
+                        <p className="text-xs text-muted-foreground bg-gold-50 rounded-lg p-2">🎵 តន្ត្រីនឹងចាក់ដោយស្វ័យប្រវត្តិនៅពេលភ្ញៀវបើកលិខិត</p>
+                      )}
+                      {(!invitation.background_music || invitation.background_music === "__custom__") && (
+                        <Input value={invitation.background_music === "__custom__" ? "" : (invitation.background_music || "")} onChange={(e) => updateField("background_music", e.target.value)} placeholder="បញ្ចូល URL តន្ត្រី (MP3)..." className="border-gold-200 focus-visible:ring-primary bg-white" />
+                      )}
+                    </SectionCard>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <SectionCard icon={Video} title="វីដេអូ">
+                        <div className="space-y-2">
+                          <Label className="text-secondary">URL វីដេអូរៀបការ</Label>
+                          <Input value={invitation.video_url || ""} onChange={(e) => updateField("video_url", e.target.value)} placeholder="YouTube embed URL..." className="border-gold-200 focus-visible:ring-primary bg-white" />
                         </div>
-                        {(ev.title === "" || !timelinePresets.find((p) => p.title === ev.title)) && (
-                          <Input value={ev.title || ""} onChange={(e) => {
-                            const tl = [...(invitation.timeline || []) as any[]];
-                            tl[i] = { ...tl[i], title: e.target.value };
-                            updateField("timeline" as any, tl as any);
-                          }} placeholder="ឈ្មោះពិធី..." className="border-gold-200 focus-visible:ring-primary text-sm" />
-                        )}
-                        <Input value={ev.description || ""} onChange={(e) => {
-                          const tl = [...(invitation.timeline || []) as any[]];
-                          tl[i] = { ...tl[i], description: e.target.value };
-                          updateField("timeline" as any, tl as any);
-                        }} placeholder="ពិស្តារ (ជម្រើស)..." className="border-gold-200 focus-visible:ring-primary text-sm" />
-                      </div>
-                    ))}
-                    <Button variant="outline" size="sm" onClick={() => {
-                      const tl = [...(invitation.timeline || []) as any[], { time: "", title: "", description: "" }];
-                      updateField("timeline" as any, tl as any);
-                    }} className="border-gold-200 text-secondary hover:bg-gold-50 gap-1">+ បន្ថែមពិធី</Button>
-                  </div>
-                  <div className="p-4 bg-gold-50/50 rounded-xl border border-gold-200/50 space-y-4">
-                    <h3 className="font-medium text-secondary flex items-center gap-2">
-                      <Eye className="h-4 w-4 text-primary" /> ជ្រើសរើសធៀបគំរូ
-                    </h3>
-                    <p className="text-sm text-muted-foreground">ជ្រើសរើសធៀបគំរូដែលអ្នកពេញចិត្ត។ ធៀបគំរូនឹងត្រូវបានប្រើសម្រាប់លិខិតអញ្ជើញរបស់អ្នក។</p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                      {templateList.map((tpl) => (
-                        <button
-                          key={tpl.id}
-                          onClick={() => handleSelectTemplate(tpl.id)}
-                          className={`relative group rounded-2xl p-4 text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
-                            selectedTemplate === tpl.id
-                              ? "ring-3 ring-primary shadow-xl bg-gold-50"
-                              : "bg-white hover:bg-gold-50/50"
-                          }`}
-                        >
-                          {selectedTemplate === tpl.id && (
-                            <div className="absolute -top-2 -right-2 z-10 h-7 w-7 rounded-full bg-gold-gradient flex items-center justify-center shadow-lg">
-                              <Check className="h-4 w-4 text-white" />
-                            </div>
-                          )}
-                          {tpl.isPremium && (
-                            <div className="absolute -top-2 left-4 z-10">
-                              <span className="text-[10px] font-bold bg-gold-gradient text-white px-2 py-0.5 rounded-full shadow">Premium</span>
-                            </div>
-                          )}
-                          <div className="mx-auto w-28 aspect-[3/5] rounded-[1.25rem] border-4 border-secondary/90 shadow-lg overflow-hidden relative transition-transform duration-300 group-hover:scale-[1.03]">
-                            <div className="relative w-full h-full flex flex-col items-center justify-center overflow-hidden" style={{ background: tpl.bg }}>
-                              <Heart className="h-5 w-5 mb-2" style={{ color: tpl.accent }} fill={tpl.accent} />
-                              <p className="text-[6px] tracking-[0.2em] uppercase mb-1" style={{ color: tpl.accent }}>Wedding</p>
-                              <p className="text-[10px] font-bold" style={{ color: tpl.textPri }}>សុវណ្ណដេត</p>
-                              <p className="text-[8px] font-semibold my-0.5" style={{ color: tpl.accent }}>&amp;</p>
-                              <p className="text-[10px] font-bold mb-2" style={{ color: tpl.textPri }}>ដារ៉ា</p>
-                              <span className="text-[6px] px-2 py-0.5 rounded-full font-medium text-white" style={{ background: `linear-gradient(135deg, ${tpl.btnFrom}, ${tpl.btnTo})` }}>បើកលិខិត</span>
-                            </div>
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                              <span className="text-xs font-medium text-white bg-black/50 px-3 py-1 rounded-full flex items-center gap-1">
-                                <Eye className="h-3 w-3" /> ជ្រើសរើស
-                              </span>
-                            </div>
+                      </SectionCard>
+                      <SectionCard icon={Shirt} title="ការស្លៀកពាក់">
+                        <div className="space-y-2">
+                          <Label className="text-secondary">សេចក្ដីណែនាំ</Label>
+                          <Input value={invitation.dress_code || ""} onChange={(e) => updateField("dress_code", e.target.value)} placeholder="ឧ. ពណ៌ស្វាយ, ផ្លូវការ" className="border-gold-200 focus-visible:ring-primary bg-white" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-secondary">ពណ៌សំខាន់</Label>
+                          <div className="flex items-center gap-2">
+                            <Input type="color" value={invitation.dress_code_color || "#b8860b"} onChange={(e) => updateField("dress_code_color", e.target.value)} className="w-12 h-10 p-1 cursor-pointer border-gold-200" />
+                            <Input value={invitation.dress_code_color || "#b8860b"} onChange={(e) => updateField("dress_code_color", e.target.value)} placeholder="#b8860b" className="border-gold-200 focus-visible:ring-primary bg-white" />
                           </div>
-                          <p className="text-sm font-bold text-secondary mt-3">{tpl.name}</p>
-                          <p className="text-xs text-muted-foreground capitalize">{tpl.category}</p>
-                        </button>
+                        </div>
+                      </SectionCard>
+                    </div>
+
+                    <SectionCard icon={Clock} title="កាលវិភាគពិធី">
+                      <p className="text-sm text-muted-foreground -mt-1">ជ្រើសរើសពិធី ឬសរសេរថ្មី។ អាចលុបបាន。</p>
+                      {((invitation.timeline || []) as any[]).map((ev: any, i: number) => (
+                        <div key={i} className="p-3 bg-white rounded-xl border border-gold-100 space-y-2">
+                          <div className="flex gap-2 items-center">
+                            <Input value={ev.time || ""} onChange={(e) => {
+                              const tl = [...(invitation.timeline || []) as any[]];
+                              tl[i] = { ...tl[i], time: e.target.value };
+                              updateField("timeline" as any, tl as any);
+                            }} placeholder="ម៉ោង (ឧ. 07:00)" className="w-28 border-gold-200 focus-visible:ring-primary text-sm" />
+                            <select
+                              value={ev.title || ""}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const tl = [...(invitation.timeline || []) as any[]];
+                                if (val === "__custom__") {
+                                  tl[i] = { ...tl[i], title: "" };
+                                } else {
+                                  const preset = timelinePresets.find((p) => p.title === val);
+                                  tl[i] = { ...tl[i], title: val, description: preset?.description || tl[i].description || "" };
+                                }
+                                updateField("timeline" as any, tl as any);
+                              }}
+                              className="flex-1 border border-gold-200 rounded-lg px-3 py-2 text-sm bg-white text-secondary focus:ring-2 focus:ring-primary outline-none"
+                            >
+                              <option value="">ជ្រើសរើសពិធី...</option>
+                              {timelinePresets.map((p) => (
+                                <option key={p.title} value={p.title}>{p.title}</option>
+                              ))}
+                              <option value="__custom__">✍️ សរសេរផ្ទាល់...</option>
+                            </select>
+                            <Button variant="ghost" size="icon" onClick={() => {
+                              const tl = [...(invitation.timeline || []) as any[]];
+                              tl.splice(i, 1);
+                              updateField("timeline" as any, tl as any);
+                            }} className="text-red-500 shrink-0 h-9 w-9"><Trash2 className="h-4 w-4" /></Button>
+                          </div>
+                          {(ev.title === "" || !timelinePresets.find((p) => p.title === ev.title)) && (
+                            <Input value={ev.title || ""} onChange={(e) => {
+                              const tl = [...(invitation.timeline || []) as any[]];
+                              tl[i] = { ...tl[i], title: e.target.value };
+                              updateField("timeline" as any, tl as any);
+                            }} placeholder="ឈ្មោះពិធី..." className="border-gold-200 focus-visible:ring-primary text-sm" />
+                          )}
+                          <Input value={ev.description || ""} onChange={(e) => {
+                            const tl = [...(invitation.timeline || []) as any[]];
+                            tl[i] = { ...tl[i], description: e.target.value };
+                            updateField("timeline" as any, tl as any);
+                          }} placeholder="ពិស្តារ (ជម្រើស)..." className="border-gold-200 focus-visible:ring-primary text-sm" />
+                        </div>
                       ))}
-                    </div>
+                      <Button variant="outline" size="sm" onClick={() => {
+                        const tl = [...(invitation.timeline || []) as any[], { time: "", title: "", description: "" }];
+                        updateField("timeline" as any, tl as any);
+                      }} className="border-gold-200 text-secondary hover:bg-gold-50 gap-1">+ បន្ថែមពិធី</Button>
+                    </SectionCard>
+
+                    <SectionCard icon={Sparkles} title="ជ្រើសរើសគំរូ">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {templateList.map((tpl) => (
+                          <button
+                            key={tpl.id}
+                            onClick={() => handleSelectTemplate(tpl.id)}
+                            className={`relative group rounded-2xl p-3 text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 ${
+                              selectedTemplate === tpl.id ? "ring-2 ring-primary shadow-lg bg-gold-50" : "bg-white hover:bg-gold-50/50"
+                            }`}
+                          >
+                            {selectedTemplate === tpl.id && (
+                              <div className="absolute -top-2 -right-2 z-10 h-6 w-6 rounded-full bg-gold-gradient flex items-center justify-center shadow-md">
+                                <Check className="h-3.5 w-3.5 text-white" />
+                              </div>
+                            )}
+                            {tpl.isPremium && (
+                              <div className="absolute -top-2 left-3 z-10">
+                                <span className="text-[9px] font-bold bg-gold-gradient text-white px-2 py-0.5 rounded-full shadow">Premium</span>
+                              </div>
+                            )}
+                            <div className="mx-auto w-24 aspect-[3/5] rounded-[1rem] border-4 border-secondary/90 shadow overflow-hidden relative transition-transform duration-300 group-hover:scale-[1.03]">
+                              <div className="relative w-full h-full flex flex-col items-center justify-center overflow-hidden" style={{ background: tpl.bg }}>
+                                <Heart className="h-4 w-4 mb-1.5" style={{ color: tpl.accent }} fill={tpl.accent} />
+                                <p className="text-[6px] tracking-[0.2em] uppercase mb-1" style={{ color: tpl.accent }}>Wedding</p>
+                                <p className="text-[9px] font-bold" style={{ color: tpl.textPri }}>{invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"}</p>
+                                <p className="text-[7px] font-semibold my-0.5" style={{ color: tpl.accent }}>&amp;</p>
+                                <p className="text-[9px] font-bold mb-2" style={{ color: tpl.textPri }}>{invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}</p>
+                                <span className="text-[6px] px-2 py-0.5 rounded-full font-medium text-white" style={{ background: `linear-gradient(135deg, ${tpl.btnFrom}, ${tpl.btnTo})` }}>បើកលិខិត</span>
+                              </div>
+                            </div>
+                            <p className="text-xs font-bold text-secondary mt-2 truncate">{tpl.name}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </SectionCard>
                   </div>
-                </div>
-              )}
-
-              {/* Step 6: Preview & Publish */}
-              {currentStep === 6 && (
-                <div className="space-y-6">
-                  <div className="bg-gradient-to-br from-gold-50 to-gold-100 rounded-2xl p-8 text-center border border-gold-200/50">
-                    <div className="h-14 w-14 rounded-full bg-gold-gradient flex items-center justify-center mx-auto mb-4">
-                      <Heart className="h-7 w-7 text-white fill-white" />
-                    </div>
-                    <h2 className="text-2xl font-bold mb-2 text-secondary">
-                      {invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"} & {invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}
-                    </h2>
-                    <p className="text-muted-foreground">
-                      {invitation.wedding_date
-                        ? new Date(invitation.wedding_date).toLocaleDateString("km-KH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
-                        : "កំណត់ពេលក្រោយ"}
-                    </p>
-                    {invitation.venue_name && <p className="text-sm text-muted-foreground mt-2">{invitation.venue_name}</p>}
-                    {invitation.quote && <p className="italic text-muted-foreground mt-4">&ldquo;{invitation.quote}&rdquo;</p>}
-                  </div>
-
-                  <div className="p-4 bg-gold-50 border border-gold-200 rounded-xl">
-                    <p className="font-medium mb-2 text-secondary">Link លិខិតអញ្ជើញ</p>
-                    <div className="flex items-center gap-2">
-                      <code className="flex-1 text-sm font-mono text-primary bg-white p-2 rounded-lg border border-gold-200">
-                        {typeof window !== "undefined" ? window.location.origin : ""}/invite/{invitation.slug || "..."}
-                      </code>
-                      <Button size="sm" variant="outline" onClick={copyLink} className="border-gold-200 text-primary hover:bg-gold-50">
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {invitation.status === "published" && (
-                    <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                      <p className="font-medium text-green-800">លិខិតអញ្ជើញនេះកំពុងដំណើរការ!</p>
-                      <p className="text-sm text-green-600 mt-1">ចែករំលែក Link ទៅភ្ញៀវរបស់អ្នក។</p>
-                    </div>
-                  )}
-
-                  <div className="flex gap-3">
-                    <Link href={`/preview/${params.id}`} target="_blank" className="flex-1">
-                      <Button variant="outline" className="w-full border-gold-200 text-primary hover:bg-gold-50 gap-2">
-                        <Eye className="h-4 w-4" /> មើល Preview
-                      </Button>
-                    </Link>
-                    <Button onClick={publishInvitation} disabled={saving} className="flex-1 bg-gold-gradient text-white hover:opacity-90 gap-2">
-                      {saving ? "កំពុងផ្សាយ..." : "ផ្សាយលិខិតអញ្ជើញ"}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Navigation Buttons */}
-              <div className="flex justify-between pt-4 border-t border-gold-200/50">
-                <Button variant="outline" onClick={handlePrev} disabled={currentStep === 1} className="border-gold-200 text-secondary hover:bg-gold-50">
-                  <ArrowLeft className="h-4 w-4 mr-2" /> ក្រោយ
-                </Button>
-                {currentStep < 6 ? (
-                  <Button onClick={handleNext} className="bg-gold-gradient text-white hover:opacity-90">
-                    បន្ទាប់ <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                ) : (
-                  <Button onClick={publishInvitation} disabled={saving} className="bg-gold-gradient text-white hover:opacity-90">
-                    {saving ? "កំពុងផ្សាយ..." : "ផ្សាយលិខិតអញ្ជើញ"}
-                  </Button>
                 )}
+
+                {/* Step 6: Preview & Publish */}
+                {currentStep === 6 && (
+                  <div className="space-y-5">
+                    <div className="bg-gradient-to-br from-gold-50 to-gold-100 rounded-2xl p-8 text-center border border-gold-200/50 relative overflow-hidden">
+                      <div className="absolute inset-3 rounded-xl border pointer-events-none border-gold-300/50" />
+                      <div className="relative">
+                        <div className="h-14 w-14 rounded-full bg-gold-gradient flex items-center justify-center mx-auto mb-4 shadow-md">
+                          <Heart className="h-7 w-7 text-white fill-white" />
+                        </div>
+                        <h2 className="text-2xl font-bold mb-2 text-secondary">
+                          {invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"} ❦ {invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}
+                        </h2>
+                        <p className="text-muted-foreground">
+                          {invitation.wedding_date
+                            ? new Date(invitation.wedding_date).toLocaleDateString("km-KH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
+                            : "កំណត់ពេលក្រោយ"}
+                        </p>
+                        {invitation.venue_name && <p className="text-sm text-muted-foreground mt-2">{invitation.venue_name}</p>}
+                        {invitation.quote && <p className="italic text-muted-foreground mt-4">&ldquo;{invitation.quote}&rdquo;</p>}
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-gold-50/40 border border-gold-200 rounded-2xl">
+                      <p className="font-medium mb-2 text-secondary text-sm">Link លិខិតអញ្ជើញ</p>
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 text-xs md:text-sm font-mono text-primary bg-white p-2.5 rounded-lg border border-gold-200 truncate">
+                          {typeof window !== "undefined" ? window.location.origin : ""}/invite/{invitation.slug || "..."}
+                        </code>
+                        <Button size="sm" variant="outline" onClick={copyLink} className="border-gold-200 text-primary hover:bg-gold-50 shrink-0">
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {(() => {
+                      const ready = checkStepComplete(1) && checkStepComplete(2);
+                      return !ready ? (
+                        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 text-sm text-orange-700">
+                          ⚠️ សូមបំពេញ <b>ឈ្មោះគូស្នេហ៍</b> (ជំហាន ១) និង <b>ថ្ងៃរៀបការ + ទីតាំង</b> (ជំហាន ២) មុនផ្សាយ
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {invitation.status === "published" && (
+                      <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                        <p className="font-medium text-green-800">លិខិតអញ្ជើញនេះកំពុងដំណើរការ!</p>
+                        <p className="text-sm text-green-600 mt-1">ចែករំលែក Link ទៅភ្ញៀវរបស់អ្នក។</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Navigation */}
+                <div className="flex justify-between pt-5 mt-2 border-t border-gold-100">
+                  <Button variant="outline" onClick={() => setCurrentStep((s) => Math.max(1, s - 1))} disabled={currentStep === 1} className="border-gold-200 text-secondary hover:bg-gold-50">
+                    <ArrowLeft className="h-4 w-4 mr-2" /> ក្រោយ
+                  </Button>
+                  {currentStep < 6 ? (
+                    <Button onClick={() => setCurrentStep((s) => Math.min(6, s + 1))} className="bg-gold-gradient text-white hover:opacity-90">
+                      បន្ទាប់ <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  ) : (
+                    <Button onClick={publishInvitation} disabled={saving} className="bg-gold-gradient text-white hover:opacity-90 min-w-[180px]">
+                      {saving ? "កំពុងផ្សាយ..." : invitation.status === "published" ? "ផ្សាយឡើងវិញ" : "ផ្សាយលិខិតអញ្ជើញ"}
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
+        </main>
+
+        {/* Live Preview */}
+        <aside className="hidden xl:block sticky top-24">
+          <p className="text-[11px] uppercase tracking-widest text-center text-muted-foreground mb-3">👀 មើលដូចភ្ញៀវ</p>
+          <div className="mx-auto w-[270px] rounded-[2.2rem] border-[10px] border-secondary/90 shadow-2xl overflow-hidden bg-black">
+            <div className="aspect-[9/17] flex flex-col items-center justify-center p-6 text-center relative overflow-hidden" style={{ background: activeTpl.bg }}>
+              <div className="absolute inset-2 rounded-2xl border pointer-events-none opacity-70" style={{ borderColor: activeTpl.accent + "45" }} />
+              {(invitation.groom_photo || invitation.bride_photo) && (
+                <div className="flex -space-x-4 mb-4 relative z-[1]">
+                  {invitation.groom_photo && <img src={invitation.groom_photo} alt="" className="h-12 w-12 rounded-full object-cover border-2" style={{ borderColor: activeTpl.accent }} />}
+                  {invitation.bride_photo && <img src={invitation.bride_photo} alt="" className="h-12 w-12 rounded-full object-cover border-2" style={{ borderColor: activeTpl.accent }} />}
+                </div>
+              )}
+              <p className="text-[8px] uppercase tracking-[0.35em] mb-2 relative z-[1]" style={{ color: activeTpl.accent }}>
+                Wedding Invitation
+              </p>
+              <p className="text-base font-bold leading-snug relative z-[1]" style={{ color: activeTpl.textPri }}>
+                {invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"}
+              </p>
+              <p className="text-xs font-semibold my-1 relative z-[1]" style={{ color: activeTpl.accent }}>❦</p>
+              <p className="text-base font-bold mb-3 relative z-[1]" style={{ color: activeTpl.textPri }}>
+                {invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}
+              </p>
+              <div className="flex items-center justify-center gap-2 my-2 relative z-[1]">
+                <span className="h-px w-8" style={{ background: activeTpl.accent + "80" }} />
+                <span className="h-1.5 w-1.5 rotate-45" style={{ background: activeTpl.accent }} />
+                <span className="h-px w-8" style={{ background: activeTpl.accent + "80" }} />
+              </div>
+              <p className="text-[11px] relative z-[1]" style={{ color: activeTpl.textPri, opacity: 0.85 }}>
+                {invitation.wedding_date
+                  ? new Date(invitation.wedding_date).toLocaleDateString("km-KH", { year: "numeric", month: "long", day: "numeric" })
+                  : "— — —"}
+              </p>
+              {invitation.venue_name && (
+                <p className="text-[10px] mt-1.5 relative z-[1] truncate max-w-full" style={{ color: activeTpl.textPri, opacity: 0.7 }}>
+                  📍 {invitation.venue_name}
+                </p>
+              )}
+              {invitation.quote && (
+                <p className="text-[9px] italic mt-3 line-clamp-2 relative z-[1]" style={{ color: activeTpl.textPri, opacity: 0.65 }}>
+                  &ldquo;{invitation.quote}&rdquo;
+                </p>
+              )}
+              <span className="mt-5 text-[10px] px-4 py-1.5 rounded-full font-medium text-white relative z-[1]" style={{ background: `linear-gradient(135deg, ${activeTpl.btnFrom}, ${activeTpl.btnTo})` }}>
+                បើកលិខិតអញ្ជើញ
+              </span>
+            </div>
+          </div>
+          <p className="text-[10px] text-center text-muted-foreground mt-3">ធៀបគំរូ៖ <b className="text-secondary">{activeTpl.name || "—"}</b></p>
+        </aside>
+      </div>
+
+      {/* Sticky mobile save bar */}
+      <div className="fixed bottom-4 inset-x-4 z-40 xl:hidden">
+        <div className="mx-auto max-w-md bg-secondary/95 backdrop-blur text-white rounded-full shadow-2xl px-4 py-2.5 flex items-center justify-between gap-3">
+          <span className="text-xs flex items-center gap-1.5 min-w-0">
+            {saveStatus === "saving" ? (
+              <><Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" /> <span className="truncate">កំពុងរក្សាទុក...</span></>
+            ) : saveStatus === "saved" ? (
+              <><CircleCheck className="h-3.5 w-3.5 text-green-400 shrink-0" /> <span className="truncate">បានរក្សាទុក</span></>
+            ) : (
+              <><CloudUpload className="h-3.5 w-3.5 opacity-60 shrink-0" /> <span className="truncate">ជំហាន {currentStep}/{steps.length} • {progress}%</span></>
+            )}
+          </span>
+          {currentStep < 6 ? (
+            <Button size="sm" onClick={() => setCurrentStep((s) => Math.min(6, s + 1))} className="bg-gold-gradient text-white rounded-full h-8 px-4 shrink-0">
+              បន្ទាប់ <ArrowRight className="h-3.5 w-3.5 ml-1" />
+            </Button>
+          ) : (
+            <Button size="sm" onClick={publishInvitation} disabled={saving} className="bg-gold-gradient text-white rounded-full h-8 px-4 shrink-0">
+              ផ្សាយ
+            </Button>
+          )}
         </div>
       </div>
     </div>
-  );
-}
-
-function Calendar(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>
-    </svg>
   );
 }
