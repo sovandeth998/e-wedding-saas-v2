@@ -583,7 +583,7 @@ export default function GuestManagerPage() {
                         className="border-b border-gold-200/30 last:border-0 hover:bg-gold-50/30"
                       >
                         <td className="p-3 font-medium text-secondary">
-                          {guest.name}
+                          {guest.name.replace(/-[a-z0-9]{10,}$/i, "").trim()}
                         </td>
                         <td className="p-3">
                           <span
@@ -632,11 +632,21 @@ export default function GuestManagerPage() {
                               size="icon"
                               onClick={() => {
                                 const inviteLink = `${window.location.origin}${guestLinkPath(guest)}`;
-                                const coupleName = invitation
-                                  ? `${invitation.groom_name_kh || invitation.groom_name} & ${invitation.bride_name_kh || invitation.bride_name}`
+                                const isBday = (invitation as { type?: string } | null)?.type === "birthday";
+                                const cleanName = guest.name.replace(/-[a-z0-9]{10,}$/i, "").trim();
+                                const dateStr = invitation?.wedding_date
+                                  ? new Date(invitation.wedding_date).toLocaleDateString("km-KH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
                                   : "";
-                                const text = `💌 សូមស្វាគមន៍មកកាន់ពិធីរៀបអាពាហ៍ពិពាហ៍!\n\nសួស្តី ${guest.name} 👋\n\n👫 ${coupleName}\n📅 ${invitation?.wedding_date ? new Date(invitation.wedding_date).toLocaleDateString("km-KH") : ""}\n📍 ${invitation?.venue_name || ""}\n\n🔗 សូមចុចមើលលិខិតអញ្ជើញ៖\n${inviteLink}`;
-                                window.open(`https://t.me/share/url?url=${encodeURIComponent(text)}`, "_blank");
+                                const wd = invitation?.wedding_date ? new Date(invitation.wedding_date) : null;
+                                const hasTime = wd && (wd.getHours() !== 0 || wd.getMinutes() !== 0);
+                                const timeStr = hasTime ? wd!.toLocaleTimeString("km-KH", { hour: "2-digit", minute: "2-digit" }) : "";
+                                const couple = invitation
+                                  ? `${invitation.groom_name_kh || invitation.groom_name} ❤ ${invitation.bride_name_kh || invitation.bride_name}`
+                                  : "";
+                                const text = isBday
+                                  ? `🎂 លិខិតអញ្ជើញពិធីខួបកំណើត\n\nសួស្តី ${cleanName} 👋\n\n🎉 អ្នកកំណើត៖ ${invitation?.groom_name_kh || invitation?.groom_name || ""}\n📅 ${dateStr}${timeStr ? `\n🕐 ម៉ោង ${timeStr}` : ""}\n📍 ${invitation?.venue_name || ""}\n\n👉 សូមចុច Link ដើម្បីមើលលិខិតអញ្ជើញពេញលេញ៖\n${inviteLink}\n\n🙏 សូមអរគុណ!`
+                                  : `💌 លិខិតអញ្ជើញពិធីរៀបអាពាហ៍ពិពាហ៍\n\nសួស្តី ${cleanName} 👋\n\nយើងខ្ញុំគោរពជូនដំណឹង៖\n👫 ${couple}\n📅 ${dateStr}${timeStr ? `\n🕐 ម៉ោង ${timeStr}` : ""}\n📍 ${invitation?.venue_name || ""}\n\n👉 សូមចុច Link ដើម្បីមើលលិខិតអញ្ជើញពេញលេញ៖\n${inviteLink}\n\n🙏 សូមអរគុណ!`;
+                                window.open(`https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent(text)}`, "_blank");
                               }}
                               title="ចែករំលែក Telegram"
                             >
