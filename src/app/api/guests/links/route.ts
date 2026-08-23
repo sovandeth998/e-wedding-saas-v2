@@ -27,7 +27,7 @@ export async function GET(request: Request) {
 
     const { data: guests } = await supabase
       .from("guests")
-      .select("name, custom_link")
+      .select("name, custom_link, share_code")
       .eq("invitation_id", invitationId)
       .order("name");
 
@@ -35,7 +35,9 @@ export async function GET(request: Request) {
 
     const links = (guests || []).map((guest) => ({
       name: guest.name,
-      link: `${baseUrl}/invite/${guest.custom_link}`,
+      link: guest.share_code
+        ? `${baseUrl}/g/${guest.share_code}`
+        : `${baseUrl}/invite/${guest.custom_link}`,
     }));
 
     return NextResponse.json({ links, count: links.length });

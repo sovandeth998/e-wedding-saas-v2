@@ -109,6 +109,7 @@ export interface Guest {
   invitation_id: string;
   name: string;
   custom_link: string;
+  share_code?: string | null;
   side: "groom" | "bride" | "both" | null;
   table_number: number | null;
   created_at: string;

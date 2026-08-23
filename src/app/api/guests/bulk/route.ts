@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { generateShareCode } from "@/lib/utils";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,6 +21,7 @@ export async function POST(request: Request) {
         invitation_id: invitationId,
         name: name.trim(),
         custom_link: `${slug}/guest/${name.trim().toLowerCase().replace(/\s+/g, "-")}`,
+        share_code: generateShareCode(),
         side: "both",
       }));
 

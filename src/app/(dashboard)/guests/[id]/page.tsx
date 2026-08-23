@@ -34,6 +34,7 @@ import {
 import Link from "next/link";
 import { toast } from "sonner";
 import type { Guest, Invitation, RSVP } from "@/types/database";
+import { generateShareCode } from "@/lib/utils";
 
 interface GuestWithRsvp extends Guest {
   rsvp?: RSVP;
@@ -103,6 +104,9 @@ export default function GuestManagerPage() {
     return `${slug}/guest/${name.toLowerCase().replace(/\s+/g, "-")}`;
   };
 
+  const guestLinkPath = (g: { share_code?: string | null; custom_link: string }) =>
+    g.share_code ? `/g/${g.share_code}` : `/invite/${g.custom_link}`;
+
   const addGuest = async () => {
     if (!newGuestName.trim()) return;
 
@@ -113,6 +117,7 @@ export default function GuestManagerPage() {
       invitation_id: params.id,
       name: newGuestName,
       custom_link: guestSlug,
+      share_code: generateShareCode(),
     });
 
     if (!error) {
@@ -218,6 +223,7 @@ export default function GuestManagerPage() {
         invitation_id: params.id,
         name,
         custom_link: guestSlug,
+        share_code: generateShareCode(),
       });
 
       if (error) failCount++;
@@ -275,9 +281,9 @@ export default function GuestManagerPage() {
     fetchGuests();
   };
 
-  const copyLink = async (link: string, id: string) => {
+  const copyLink = async (guest: { share_code?: string | null; custom_link: string }, id: string) => {
     await navigator.clipboard.writeText(
-      `${window.location.origin}/invite/${link}`
+      `${window.location.origin}${guestLinkPath(guest)}`
     );
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -285,7 +291,7 @@ export default function GuestManagerPage() {
 
   const copyAllLinks = async () => {
     const links = guests
-      .map((g) => `${window.location.origin}/invite/${g.custom_link}`)
+      .map((g) => `${window.location.origin}${guestLinkPath(g)}`)
       .join("\n");
     await navigator.clipboard.writeText(links);
     setAllCopied(true);
@@ -588,7 +594,7 @@ export default function GuestManagerPage() {
                         </td>
                         <td className="p-3">
                           <code className="text-xs bg-muted px-2 py-1 rounded max-w-[200px] truncate inline-block">
-                            /invite/{guest.custom_link}
+                            {guestLinkPath(guest)}
                           </code>
                         </td>
                         <td className="p-3">
@@ -597,7 +603,7 @@ export default function GuestManagerPage() {
                               variant="ghost"
                               size="icon"
                               onClick={() =>
-                                copyLink(guest.custom_link, guest.id)
+                                copyLink(guest, guest.id)
                               }
                               title="ចម្លង Link"
                             >
@@ -614,7 +620,7 @@ export default function GuestManagerPage() {
                               title="បើក Link"
                             >
                               <a
-                                href={`/invite/${guest.custom_link}`}
+                                href={guestLinkPath(guest)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                               >
@@ -625,8 +631,7 @@ export default function GuestManagerPage() {
                               variant="ghost"
                               size="icon"
                               onClick={() => {
-                                const slug = invitationSlug || "wedding";
-                                const inviteLink = `${window.location.origin}/invite/${guest.custom_link}`;
+                                const inviteLink = `${window.location.origin}${guestLinkPath(guest)}`;
                                 const coupleName = invitation
                                   ? `${invitation.groom_name_kh || invitation.groom_name} & ${invitation.bride_name_kh || invitation.bride_name}`
                                   : "";

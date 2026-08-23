@@ -19,6 +19,15 @@ export function generateGuestSlug(coupleName: string, guestName: string): string
   return `${couple}/guest/${guest}`;
 }
 
+export function generateShareCode(length = 8): string {
+  const chars = "abcdefghjkmnpqrstuvwxyz23456789";
+  let code = "";
+  const arr = new Uint8Array(length);
+  crypto.getRandomValues(arr);
+  for (let i = 0; i < length; i++) code += chars[arr[i] % chars.length];
+  return code;
+}
+
 export function formatDate(date: string | Date): string {
   return new Intl.DateTimeFormat("km-KH", {
     year: "numeric",
