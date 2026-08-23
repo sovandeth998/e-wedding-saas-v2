@@ -9,7 +9,7 @@ import { useLimits } from "@/hooks/useLimits";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, ExternalLink, Share2, Globe, Palette, Check, Crown, Eye, Users } from "lucide-react";
+import { Plus, Edit, Trash2, ExternalLink, Share2, Globe, Palette, Check, Crown, Eye, Users, CalendarDays, MapPin, MailOpen } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import type { Invitation } from "@/types/database";
@@ -32,6 +32,9 @@ const templateList = [
 const getTemplate = (id?: string | null) =>
   templateList.find((t) => t.id === (id || "1")) || templateList[0];
 
+const fmtDate = (d: string) =>
+  new Date(d).toLocaleDateString("km-KH", { year: "numeric", month: "long", day: "numeric" });
+
 export default function InvitationsPage() {
   const { user } = useAuth();
   const limits = useLimits();
@@ -44,6 +47,7 @@ export default function InvitationsPage() {
   const [templateDialogInvitationId, setTemplateDialogInvitationId] = useState<string | null>(null);
 
   const atLimit = !limits.loading && limits.currentInvitations >= limits.maxInvitations;
+  const publishedCount = invitations.filter((i) => i.status === "published").length;
 
   const fetchData = async () => {
     if (!user) return;
@@ -135,19 +139,37 @@ export default function InvitationsPage() {
   return (
     <div className="space-y-6">
       {/* ក្បាលទំព័រ */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-secondary">លិខិតអញ្ជើញរបស់ខ្ញុំ</h1>
           <p className="text-muted-foreground">គ្រប់គ្រងលិខិតអញ្ជើញពិធីមង្គលការរបស់អ្នក</p>
         </div>
         <Button
-          className="gap-2 bg-gold-gradient text-white hover:opacity-90"
+          className="gap-2 bg-gold-gradient text-white hover:opacity-90 shadow-md"
           onClick={() => createNewInvitation()}
           disabled={atLimit}
         >
           <Plus className="h-4 w-4" /> បង្កើតថ្មី
         </Button>
       </div>
+
+      {/* ស្ថិតិរហ័ស */}
+      {!loading && invitations.length > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: "សរុប", value: invitations.length, cls: "text-secondary" },
+            { label: "បានផ្សាយ", value: publishedCount, cls: "text-green-600" },
+            { label: "ព្រៀង", value: invitations.length - publishedCount, cls: "text-orange-500" },
+          ].map((s) => (
+            <Card key={s.label} className="border-gold-200/50 shadow-sm">
+              <CardContent className="p-4 text-center">
+                <p className={`text-2xl font-bold ${s.cls}`}>{s.value}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {!limits.loading && atLimit && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center">
@@ -161,46 +183,107 @@ export default function InvitationsPage() {
       )}
 
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground">កំពុងផ្ទុក...</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className="overflow-hidden border-0 shadow-md">
+              <div className="aspect-[16/10] animate-pulse bg-muted" />
+              <CardContent className="p-4 space-y-3">
+                <div className="h-4 w-2/3 animate-pulse bg-muted rounded" />
+                <div className="h-3 w-1/2 animate-pulse bg-muted rounded" />
+                <div className="h-9 w-full animate-pulse bg-muted rounded-lg" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       ) : invitations.length === 0 ? (
         /* ស្ថានភាពទំព័រទំនេរ */
-        <Card className="border-0 shadow-md">
-          <CardContent className="py-12 text-center space-y-4">
-            <p className="text-muted-foreground">មិនមានលិខិតអញ្ជើញទេ។ សូមបង្កើតលិខិតអញ្ជើញដំបូងរបស់អ្នក!</p>
-            <Button onClick={() => createNewInvitation()} className="gap-2 bg-gold-gradient text-white hover:opacity-90">
+        <Card className="border-2 border-dashed border-gold-200 shadow-none bg-gold-50/30">
+          <CardContent className="py-16 text-center space-y-4">
+            <div className="h-20 w-20 rounded-full bg-gold-gradient flex items-center justify-center mx-auto shadow-lg">
+              <MailOpen className="h-9 w-9 text-white" />
+            </div>
+            <div>
+              <p className="font-semibold text-secondary">មិនមានលិខិតអញ្ជើញទេ</p>
+              <p className="text-sm text-muted-foreground mt-1">ចាប់ផ្តើមបង្កើតលិខិតអញ្ជើញដំបូងរបស់អ្នក ឥឡូវនេះ!</p>
+            </div>
+            <Button onClick={() => createNewInvitation()} className="gap-2 bg-gold-gradient text-white hover:opacity-90 shadow-md">
               <Plus className="h-4 w-4" /> បង្កើតលិខិតអញ្ជើញ
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {invitations.map((invitation) => {
             const t = getTemplate(invitation.template_id);
             const isPublished = invitation.status === "published";
             return (
-              <Card key={invitation.id} className="overflow-hidden border-0 shadow-md hover:shadow-lg transition-all">
+              <Card key={invitation.id} className="group overflow-hidden border-gold-200/60 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                 {/* កន្លែងមើលជាមុន */}
-                <div className="aspect-video flex items-center justify-center" style={{ background: t.bg }}>
-                  <div className="text-center px-4">
-                    <p className="text-2xl font-bold" style={{ color: t.textPri }}>
-                      {invitation.groom_name || "ឈ្មោះប្រុស"} & {invitation.bride_name || "ឈ្មោះស្រី"}
+                <div className="relative aspect-[16/10] flex items-center justify-center overflow-hidden" style={{ background: t.bg }}>
+                  <div className="absolute inset-2.5 rounded-xl border pointer-events-none" style={{ borderColor: t.accent + "35" }} />
+                  <div className="absolute inset-4 rounded-lg border pointer-events-none opacity-60" style={{ borderColor: t.accent + "20" }} />
+
+                  {/* ស្លាកស្ថានភាព */}
+                  <span className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-black/25 backdrop-blur-sm text-white">
+                    <span className={`h-1.5 w-1.5 rounded-full ${isPublished ? "bg-green-400 animate-pulse" : "bg-gray-300"}`} />
+                    {isPublished ? "បានផ្សាយ" : "ព្រៀង"}
+                  </span>
+
+                  <div className="text-center px-6 relative z-[1]">
+                    <p className="text-[10px] uppercase tracking-[0.3em] mb-2" style={{ color: t.textPri, opacity: 0.65 }}>
+                      លិខិតអញ្ជើញ
                     </p>
-                    <p className="text-sm mt-1" style={{ color: t.textPri, opacity: 0.7 }}>
-                      {new Date(invitation.wedding_date).toLocaleDateString("km-KH")}
+                    <p className="text-xl font-bold leading-snug" style={{ color: t.textPri }}>
+                      {invitation.groom_name || "ឈ្មោះប្រុស"}
+                      <span className="mx-1.5" style={{ color: t.accent }}>❦</span>
+                      {invitation.bride_name || "ឈ្មោះស្រី"}
+                    </p>
+                    <div className="flex items-center justify-center gap-2 my-2.5">
+                      <span className="h-px w-8" style={{ background: t.accent + "70" }} />
+                      <span className="h-1.5 w-1.5 rotate-45" style={{ background: t.accent }} />
+                      <span className="h-px w-8" style={{ background: t.accent + "70" }} />
+                    </div>
+                    <p className="text-xs" style={{ color: t.textPri, opacity: 0.75 }}>
+                      {fmtDate(invitation.wedding_date)}
                     </p>
                   </div>
+
+                  {/* Hover overlay */}
+                  <Link
+                    href={`/invite/${invitation.slug || invitation.id}`}
+                    target="_blank"
+                    className="absolute inset-0 z-20 flex items-center justify-center bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  >
+                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/95 text-sm font-medium text-secondary shadow-lg">
+                      <Eye className="h-4 w-4" /> មើលលិខិតអញ្ជើញ
+                    </span>
+                  </Link>
                 </div>
 
                 <CardContent className="p-4 space-y-3">
-                  {/* ព័ត៌មានស្ថានភាព និងគំរូ */}
-                  <div className="flex items-center gap-2">
-                    <Badge className={isPublished ? "bg-green-500 text-white" : "bg-muted text-muted-foreground"}>
-                      {isPublished ? "បានផ្សាយ" : "ព្រៀង"}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs gap-1" style={{ borderColor: t.accent + "40", color: t.accent }}>
+                  {/* ឈ្មោះ និងគំរូ */}
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-semibold text-secondary truncate">
+                      {invitation.groom_name || "ឈ្មោះប្រុស"} & {invitation.bride_name || "ឈ្មោះស្រី"}
+                    </p>
+                    <Badge variant="outline" className="text-[11px] gap-1 shrink-0" style={{ borderColor: t.accent + "45", color: t.accent }}>
                       {t.isPremium && <Crown className="h-3 w-3" />}
                       {t.name}
                     </Badge>
+                  </div>
+
+                  {/* ព័ត៌មានលម្អិត */}
+                  <div className="space-y-1.5 text-xs text-muted-foreground">
+                    <p className="flex items-center gap-1.5">
+                      <CalendarDays className="h-3.5 w-3.5 shrink-0 text-primary/60" />
+                      {fmtDate(invitation.wedding_date)}
+                    </p>
+                    {invitation.venue_name && (
+                      <p className="flex items-center gap-1.5 truncate">
+                        <MapPin className="h-3.5 w-3.5 shrink-0 text-primary/60" />
+                        {invitation.venue_name}
+                      </p>
+                    )}
                   </div>
 
                   {/* ប៊ូតុងសំខាន់ */}
@@ -209,66 +292,66 @@ export default function InvitationsPage() {
                       className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white"
                       onClick={() => shareLink(invitation)}
                     >
-                      <Share2 className="h-4 w-4" /> ចែករំលែក
+                      <Share2 className="h-4 w-4" /> ចែករំលែកលិខិតអញ្ជើញ
                     </Button>
                   ) : (
                     <Link href={`/builder/${invitation.id}`}>
                       <Button className="w-full gap-2 bg-gold-gradient text-white hover:opacity-90">
-                        <Edit className="h-4 w-4" /> កែប្រែ
+                        <Edit className="h-4 w-4" /> កែប្រែលិខិតអញ្ជើញ
                       </Button>
                     </Link>
                   )}
 
                   {/* ជួរប៊ូតុងបន្ទាប់បន្សំ */}
-                  <div className="grid grid-cols-5 gap-2">
-                    <Link href={`/invite/${invitation.slug || invitation.id}`} target="_blank">
-                      <Button variant="outline" size="sm" className="w-full gap-1 text-xs">
-                        {isPublished ? <ExternalLink className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                  <div className="grid grid-cols-5 gap-1.5 pt-1 border-t border-gold-100">
+                    <Link href={`/invite/${invitation.slug || invitation.id}`} target="_blank" className="mt-2">
+                      <Button variant="ghost" size="sm" className="w-full gap-1 text-[11px] text-muted-foreground hover:text-secondary">
+                        {isPublished ? <ExternalLink className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                         មើល
                       </Button>
                     </Link>
 
-                    <Link href={`/guests/${invitation.id}`}>
-                      <Button variant="outline" size="sm" className="w-full gap-1 text-xs border-blue-200 text-blue-700 hover:bg-blue-50">
-                        <Users className="h-3 w-3" /> ភ្ញៀវ
+                    <Link href={`/guests/${invitation.id}`} className="mt-2">
+                      <Button variant="ghost" size="sm" className="w-full gap-1 text-[11px] text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                        <Users className="h-3.5 w-3.5" /> ភ្ញៀវ
                       </Button>
                     </Link>
 
                     {!isPublished && (
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        className="w-full gap-1 text-xs border-green-300 text-green-700 hover:bg-green-50"
+                        className="w-full gap-1 text-[11px] text-green-600 hover:text-green-700 hover:bg-green-50 mt-2"
                         onClick={() => handlePublish(invitation.id)}
                       >
-                        <Globe className="h-3 w-3" /> ផ្សាយ
+                        <Globe className="h-3.5 w-3.5" /> ផ្សាយ
                       </Button>
                     )}
 
                     {isPublished && (
-                      <Link href={`/builder/${invitation.id}`}>
-                        <Button variant="outline" size="sm" className="w-full gap-1 text-xs">
-                          <Edit className="h-3 w-3" /> កែប្រែ
+                      <Link href={`/builder/${invitation.id}`} className="mt-2">
+                        <Button variant="ghost" size="sm" className="w-full gap-1 text-[11px] text-muted-foreground hover:text-secondary">
+                          <Edit className="h-3.5 w-3.5" /> កែប្រែ
                         </Button>
                       </Link>
                     )}
 
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      className="w-full gap-1 text-xs"
+                      className="w-full gap-1 text-[11px] text-purple-600 hover:text-purple-700 hover:bg-purple-50 mt-2"
                       onClick={() => openTemplateDialog(invitation.id)}
                     >
-                      <Palette className="h-3 w-3" /> គំរូ
+                      <Palette className="h-3.5 w-3.5" /> គំរូ
                     </Button>
 
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      className="w-full gap-1 text-xs border-red-200 text-red-600 hover:bg-red-50"
+                      className="w-full gap-1 text-[11px] text-red-500 hover:text-red-600 hover:bg-red-50 mt-2"
                       onClick={() => deleteInvitation(invitation.id)}
                     >
-                      <Trash2 className="h-3 w-3" /> លុប
+                      <Trash2 className="h-3.5 w-3.5" /> លុប
                     </Button>
                   </div>
                 </CardContent>
