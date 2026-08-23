@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { startBuiltinMusic, stopMusic, pauseMusic, resumeMusic, isBuiltinMusic } from "@/lib/wedding-music";
+import { formatKhmerDate, formatKhmerDateShort, formatKhmerTime } from "@/lib/khmer-date";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Heart, MapPin, Clock, Camera, Gift, MessageCircle, Calendar, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Share2, Video, Shirt, X, Sparkles } from "lucide-react";
@@ -433,7 +434,7 @@ function InvitationContent() {
 
             <div className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm" style={{ border: `1px solid ${t.accent}25`, color: t.textSec }}>
               <Calendar className="h-4 w-4" style={{ color: t.accent }} />
-              {weddingDate.toLocaleDateString("km-KH", { day: "numeric", month: "long", year: "numeric" })}
+              {formatKhmerDateShort(weddingDate)}
             </div>
 
             {displayName && (
@@ -563,12 +564,12 @@ function InvitationContent() {
           <div className="space-y-3 text-center">
             <div className="flex items-center justify-center gap-2" style={{ color: t.textSec }}>
               <Calendar className="h-4 w-4 shrink-0" style={{ color: t.accent }} />
-              <span className="text-sm">{weddingDate.toLocaleDateString("km-KH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
+              <span className="text-sm">{formatKhmerDate(weddingDate)}</span>
             </div>
             {(weddingDate.getHours() !== 0 || weddingDate.getMinutes() !== 0) && !invitation.ceremony_time && (
               <div className="flex items-center justify-center gap-2" style={{ color: t.textSec }}>
                 <Clock className="h-4 w-4 shrink-0" style={{ color: t.accent }} />
-                <span className="text-sm">ម៉ោង៖ {weddingDate.toLocaleTimeString("km-KH", { hour: "2-digit", minute: "2-digit" })}</span>
+                <span className="text-sm">ម៉ោង៖ {formatKhmerTime(weddingDate)}</span>
               </div>
             )}
             {invitation.ceremony_time && (

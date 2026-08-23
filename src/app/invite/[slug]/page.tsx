@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { formatKhmerDateShort } from "@/lib/khmer-date";
 import InviteClient from "./invite-client";
 
 type Props = { params: { slug: string } };
@@ -29,9 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const isBirthday = inv.type === "birthday";
   const groom = inv.groom_name_kh || inv.groom_name;
   const bride = inv.bride_name_kh || inv.bride_name;
-  const dateStr = inv.wedding_date
-    ? new Date(inv.wedding_date).toLocaleDateString("km-KH", { year: "numeric", month: "long", day: "numeric" })
-    : "";
+  const dateStr = inv.wedding_date ? formatKhmerDateShort(new Date(inv.wedding_date)) : "";
   const title = isBirthday
     ? `🎂 ${groom || "អ្នកកំណើត"} | លិខិតអញ្ជើញខួបកំណើត`
     : `💌 ${groom} ❤ ${bride}`;

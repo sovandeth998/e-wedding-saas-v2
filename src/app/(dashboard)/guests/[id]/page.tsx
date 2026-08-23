@@ -35,6 +35,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import type { Guest, Invitation, RSVP } from "@/types/database";
 import { generateShareCode } from "@/lib/utils";
+import { formatKhmerDate, formatKhmerTime } from "@/lib/khmer-date";
 
 interface GuestWithRsvp extends Guest {
   rsvp?: RSVP;
@@ -634,17 +635,15 @@ export default function GuestManagerPage() {
                                 const inviteLink = `${window.location.origin}${guestLinkPath(guest)}`;
                                 const isBday = (invitation as { type?: string } | null)?.type === "birthday";
                                 const cleanName = guest.name.replace(/-[a-z0-9]{10,}$/i, "").trim();
-                                const dateStr = invitation?.wedding_date
-                                  ? new Date(invitation.wedding_date).toLocaleDateString("km-KH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
-                                  : "";
                                 const wd = invitation?.wedding_date ? new Date(invitation.wedding_date) : null;
+                                const dateStr = wd ? formatKhmerDate(wd) : "";
                                 const hasTime = wd && (wd.getHours() !== 0 || wd.getMinutes() !== 0);
-                                const timeStr = hasTime ? wd!.toLocaleTimeString("km-KH", { hour: "2-digit", minute: "2-digit" }) : "";
+                                const timeStr = hasTime ? formatKhmerTime(wd!) : "";
                                 const couple = invitation
                                   ? `${invitation.groom_name_kh || invitation.groom_name} ❤ ${invitation.bride_name_kh || invitation.bride_name}`
                                   : "";
                                 const text = isBday
-                                  ? `🎂 លិខិតអញ្ជើញពិធីខួបកំណើត\n\nសូមគោរពអញ្ជើញ ${cleanName}\n\n🎉 អ្នកកំណើត៖ ${invitation?.groom_name_kh || invitation?.groom_name || ""}\n📅 ${dateStr}${timeStr ? `\n🕐 ម៉ោង ${timeStr}` : ""}\n📍 ${invitation?.venue_name || ""}\n\n👉 សូមចុច Link ដើម្បីមើលលិខិតអញ្ជើញពេញលេញ៖\n${inviteLink}\n\n🙏 សូមអរគុណ!`
+                                  ? `🎂 លិខិតអញ្ជើញពិធីខួបកំណើត\n\nសូមគោរពអញ្ជើញ ${cleanName}\n\n📅 ${dateStr}${timeStr ? `\n🕐 ម៉ោង ${timeStr}` : ""}\n📍 ${invitation?.venue_name || ""}\n\n👉 សូមចុច Link ដើម្បីមើលលិខិតអញ្ជើញពេញលេញ៖\n${inviteLink}\n\n🙏 សូមអរគុណ!`
                                   : `💌 លិខិតអញ្ជើញពិធីរៀបអាពាហ៍ពិពាហ៍\n\nសូមគោរពអញ្ជើញ ${cleanName}\n\nយើងខ្ញុំគោរពជូនដំណឹង៖\n👫 ${couple}\n📅 ${dateStr}${timeStr ? `\n🕐 ម៉ោង ${timeStr}` : ""}\n📍 ${invitation?.venue_name || ""}\n\n👉 សូមចុច Link ដើម្បីមើលលិខិតអញ្ជើញពេញលេញ៖\n${inviteLink}\n\n🙏 សូមអរគុណ!`;
                                 window.open(`https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent(text)}`, "_blank");
                               }}

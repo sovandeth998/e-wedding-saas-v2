@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
+import { formatKhmerDate } from "@/lib/khmer-date";
 import { Card, CardContent } from "@/components/ui/card";
 import { Heart, Calendar, Clock, MapPin, Eye } from "lucide-react";
 import { RsvpForm } from "./rsvp-form";
@@ -50,12 +51,7 @@ export default async function PreviewPage({
   const message = invitation.quote || invitation.story;
 
   const weddingDate = new Date(invitation.wedding_date);
-  const formattedDate = weddingDate.toLocaleDateString("km-KH", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const formattedDate = formatKhmerDate(weddingDate);
 
   return (
     <div className="min-h-screen bg-cream-gradient flex items-center justify-center p-4">

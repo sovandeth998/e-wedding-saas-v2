@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { isBuiltinMusic } from "@/lib/wedding-music";
+import { formatKhmerDate, formatKhmerDateShort } from "@/lib/khmer-date";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -787,7 +788,7 @@ export default function BuilderPage() {
                         </h2>
                         <p className="text-muted-foreground">
                           {invitation.wedding_date
-                            ? new Date(invitation.wedding_date).toLocaleDateString("km-KH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
+                            ? formatKhmerDate(new Date(invitation.wedding_date))
                             : "កំណត់ពេលក្រោយ"}
                         </p>
                         {invitation.venue_name && <p className="text-sm text-muted-foreground mt-2">{invitation.venue_name}</p>}
@@ -880,7 +881,7 @@ export default function BuilderPage() {
               </div>
               <p className="text-[11px] relative z-[1]" style={{ color: activeTpl.textPri, opacity: 0.85 }}>
                 {invitation.wedding_date
-                  ? new Date(invitation.wedding_date).toLocaleDateString("km-KH", { year: "numeric", month: "long", day: "numeric" })
+                  ? formatKhmerDateShort(new Date(invitation.wedding_date))
                   : "— — —"}
               </p>
               {invitation.venue_name && (
