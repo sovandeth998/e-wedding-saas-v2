@@ -309,7 +309,7 @@ export default function BuilderPage() {
 
   const publishInvitation = async () => {
     if (!checkStepComplete(1)) {
-      toast.error("សូមបញ្ចូលឈ្មោះកូនកំលោះ និងកូនក្រមុំជាមុនសិន");
+      toast.error(isBirthday ? "សូមបញ្ចូលឈ្មោះអ្នកកំណើតជាមុនសិន" : "សូមបញ្ចូលឈ្មោះកូនកំលោះ និងកូនក្រមុំជាមុនសិន");
       setCurrentStep(1);
       return;
     }
@@ -355,9 +355,15 @@ export default function BuilderPage() {
           </Link>
           <div>
             <h1 className="text-lg md:text-xl font-bold text-secondary truncate max-w-[280px] md:max-w-none">
-              {(invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ")}
-              <span className="mx-1 text-primary">❦</span>
-              {(invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ")}
+              {isBirthday ? (
+                <>🎂 {invitation.groom_name_kh || invitation.groom_name || "អ្នកកំណើត"}</>
+              ) : (
+                <>
+                  {(invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ")}
+                  <span className="mx-1 text-primary">❦</span>
+                  {(invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ")}
+                </>
+              )}
             </h1>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {saving ? (
@@ -449,7 +455,9 @@ export default function BuilderPage() {
                 </div>
                 <div>
                   <p className="text-[11px] uppercase tracking-widest text-primary/60 font-medium">ជំហានទី {currentStep}</p>
-                  <h2 className="font-bold text-secondary leading-tight">{steps[currentStep - 1].title}</h2>
+                  <h2 className="font-bold text-secondary leading-tight">
+                    {currentStep === 1 && isBirthday ? "ព័ត៌មានអ្នកកំណើត" : steps[currentStep - 1].title}
+                  </h2>
                 </div>
                 {!checkStepComplete(currentStep) && currentStep <= 4 && (
                   <span className="ml-auto text-[10px] bg-orange-100 text-orange-600 px-2 py-1 rounded-full shrink-0">មិនទាន់ពេញលេញ</span>
@@ -741,9 +749,15 @@ export default function BuilderPage() {
                               <div className="relative w-full h-full flex flex-col items-center justify-center overflow-hidden" style={{ background: tpl.bg }}>
                                 <Heart className="h-4 w-4 mb-1.5" style={{ color: tpl.accent }} fill={tpl.accent} />
                                 <p className="text-[6px] tracking-[0.2em] uppercase mb-1" style={{ color: tpl.accent }}>Wedding</p>
-                                <p className="text-[9px] font-bold" style={{ color: tpl.textPri }}>{invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"}</p>
-                                <p className="text-[7px] font-semibold my-0.5" style={{ color: tpl.accent }}>&amp;</p>
-                                <p className="text-[9px] font-bold mb-2" style={{ color: tpl.textPri }}>{invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}</p>
+                                {isBirthday ? (
+                                  <p className="text-[9px] font-bold mb-2" style={{ color: tpl.textPri }}>🎂 {invitation.groom_name_kh || invitation.groom_name || "អ្នកកំណើត"}</p>
+                                ) : (
+                                  <>
+                                    <p className="text-[9px] font-bold" style={{ color: tpl.textPri }}>{invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"}</p>
+                                    <p className="text-[7px] font-semibold my-0.5" style={{ color: tpl.accent }}>&amp;</p>
+                                    <p className="text-[9px] font-bold mb-2" style={{ color: tpl.textPri }}>{invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}</p>
+                                  </>
+                                )}
                                 <span className="text-[6px] px-2 py-0.5 rounded-full font-medium text-white" style={{ background: `linear-gradient(135deg, ${tpl.btnFrom}, ${tpl.btnTo})` }}>បើកលិខិត</span>
                               </div>
                             </div>
@@ -765,7 +779,9 @@ export default function BuilderPage() {
                           <Heart className="h-7 w-7 text-white fill-white" />
                         </div>
                         <h2 className="text-2xl font-bold mb-2 text-secondary">
-                          {invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"} ❦ {invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}
+                          {isBirthday
+                            ? <>🎂 {invitation.groom_name_kh || invitation.groom_name || "អ្នកកំណើត"}</>
+                            : <>{invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"} ❦ {invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}</>}
                         </h2>
                         <p className="text-muted-foreground">
                           {invitation.wedding_date
@@ -840,15 +856,21 @@ export default function BuilderPage() {
                 </div>
               )}
               <p className="text-[8px] uppercase tracking-[0.35em] mb-2 relative z-[1]" style={{ color: activeTpl.accent }}>
-                Wedding Invitation
+                {isBirthday ? "Birthday Invitation" : "Wedding Invitation"}
               </p>
               <p className="text-base font-bold leading-snug relative z-[1]" style={{ color: activeTpl.textPri }}>
-                {invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"}
+                {invitation.groom_name_kh || invitation.groom_name || (isBirthday ? "អ្នកកំណើត" : "កូនកំលោះ")}
               </p>
-              <p className="text-xs font-semibold my-1 relative z-[1]" style={{ color: activeTpl.accent }}>❦</p>
-              <p className="text-base font-bold mb-3 relative z-[1]" style={{ color: activeTpl.textPri }}>
-                {invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}
-              </p>
+              {isBirthday ? (
+                <p className="text-xs my-1 relative z-[1]">🎂</p>
+              ) : (
+                <>
+                  <p className="text-xs font-semibold my-1 relative z-[1]" style={{ color: activeTpl.accent }}>❦</p>
+                  <p className="text-base font-bold mb-3 relative z-[1]" style={{ color: activeTpl.textPri }}>
+                    {invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}
+                  </p>
+                </>
+              )}
               <div className="flex items-center justify-center gap-2 my-2 relative z-[1]">
                 <span className="h-px w-8" style={{ background: activeTpl.accent + "80" }} />
                 <span className="h-1.5 w-1.5 rotate-45" style={{ background: activeTpl.accent }} />
