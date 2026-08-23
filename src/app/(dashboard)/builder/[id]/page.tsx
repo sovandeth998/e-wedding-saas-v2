@@ -574,7 +574,9 @@ export default function BuilderPage() {
                 {currentStep === 3 && (
                   <div className="space-y-4">
                     <div className="p-4 bg-gold-50/40 rounded-2xl border border-gold-200/50 text-sm text-muted-foreground">
-                      បញ្ចូលរូបថត Pre-wedding ដើម្បីបង្ហាញក្នុងវិចិត្រសាល។ រូបដំបូងនឹងប្រើជា preview ពេល share link!
+                      {isBirthday
+                        ? "បញ្ចូលរូបថតអនុស្សាវរីយ៍ ឬពិធីខួបកំណើត ដើម្បីបង្ហាញក្នុងវិចិត្រសាល។ ជ្រើសច្រើនរូបក្នុងម្តងក៏បាន — រូបដំបូងនឹងប្រើជា preview ពេល share link!"
+                        : "បញ្ចូលរូបថត Pre-wedding ដើម្បីបង្ហាញក្នុងវិចិត្រសាល។ ជ្រើសច្រើនរូបក្នុងម្តងក៏បាន — រូបដំបូងនឹងប្រើជា preview ពេល share link!"}
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       {galleryPhotos.map((photo, idx) => (
@@ -588,7 +590,7 @@ export default function BuilderPage() {
                           </button>
                         </div>
                       ))}
-                      <FileUpload bucket="uploads" path={`invitations/${params.id}/gallery`} onUpload={handleGalleryUpload} className="aspect-square" />
+                      <FileUpload bucket="uploads" path={`invitations/${params.id}/gallery`} onUpload={handleGalleryUpload} multiple className="aspect-square" />
                     </div>
                   </div>
                 )}

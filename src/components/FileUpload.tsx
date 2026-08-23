@@ -9,6 +9,7 @@ interface FileUploadProps {
   onUpload: (url: string) => void;
   accept?: string;
   className?: string;
+  multiple?: boolean;
 }
 
 export function FileUpload({
@@ -17,15 +18,16 @@ export function FileUpload({
   onUpload,
   accept = "image/jpeg,image/png,image/webp,image/gif",
   className = "",
+  multiple = false,
 }: FileUploadProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const uploadFile = useCallback(
-    async (file: File) => {
-      setUploading(true);
+    async (file: File, keepDropzone: boolean) => {
       try {
         const formData = new FormData();
         formData.append("file", file);
@@ -44,33 +46,44 @@ export function FileUpload({
           return;
         }
 
-        setPreview(data.url);
+        if (!keepDropzone) setPreview(data.url);
         onUpload(data.url);
       } catch {
         alert("បញ្ហាក្នុងការភ្ជាប់ទៅម៉ាស៊ីនមេ");
-      } finally {
-        setUploading(false);
       }
     },
     [bucket, path, onUpload]
   );
 
+  const uploadFiles = useCallback(
+    async (files: File[]) => {
+      if (files.length === 0) return;
+      setUploading(true);
+      setProgress({ done: 0, total: files.length });
+      for (let i = 0; i < files.length; i++) {
+        await uploadFile(files[i], multiple);
+        setProgress({ done: i + 1, total: files.length });
+      }
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    },
+    [uploadFile, multiple]
+  );
+
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) uploadFile(file);
+      uploadFiles(Array.from(e.target.files || []));
     },
-    [uploadFile]
+    [uploadFiles]
   );
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
       setDragOver(false);
-      const file = e.dataTransfer.files?.[0];
-      if (file) uploadFile(file);
+      uploadFiles(Array.from(e.dataTransfer.files || []).filter((f) => f.type.startsWith("image/")));
     },
-    [uploadFile]
+    [uploadFiles]
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -88,7 +101,7 @@ export function FileUpload({
     if (inputRef.current) inputRef.current.value = "";
   }, [onUpload]);
 
-  if (preview) {
+  if (!multiple && preview) {
     return (
       <div className={`relative group ${className}`}>
         <img
@@ -125,17 +138,20 @@ export function FileUpload({
         accept={accept}
         onChange={handleFileChange}
         className="hidden"
+        multiple={multiple}
       />
       {uploading ? (
         <div className="flex flex-col items-center gap-2">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">កំពុងបញ្ចូល...</p>
+          <p className="text-sm text-muted-foreground">
+            {progress.total > 1 ? `កំពុងបញ្ចូល ${progress.done}/${progress.total}...` : "កំពុងបញ្ចូល..."}
+          </p>
         </div>
       ) : (
         <div className="flex flex-col items-center gap-2">
           <Upload className="h-8 w-8 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
-            ចុច ឬអូសរូបភាពមកទីនេះ
+            {multiple ? "ចុច ឬអូសរូបភាពមកទីនេះ (ជ្រើសច្រើនរូបបាន)" : "ចុច ឬអូសរូបភាពមកទីនេះ"}
           </p>
           <p className="text-xs text-muted-foreground">
             JPG, PNG, WebP ឬ GIF (អតិបរិមា 5MB)
