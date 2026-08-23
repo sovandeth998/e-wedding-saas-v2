@@ -8,7 +8,7 @@ import { startBuiltinMusic, stopMusic, pauseMusic, resumeMusic, isBuiltinMusic }
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Heart, MapPin, Clock, Camera, Gift, MessageCircle, Calendar, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Share2, Video, Shirt, X, Sparkles } from "lucide-react";
-import type { Invitation, Guest, Wish, QRCode, GalleryPhoto, TimelineEvent } from "@/types/database";
+import type { Invitation, Guest, QRCode, GalleryPhoto, TimelineEvent } from "@/types/database";
 
 const ANIM_CSS = `
   @keyframes envIn{from{opacity:0;transform:translateY(26px) scale(.96)}to{opacity:1;transform:none}}
@@ -89,7 +89,6 @@ function InvitationContent() {
   const [guest, setGuest] = useState<Guest | null>(null);
   const cleanName = (s: string) => s.replace(/-[a-z0-9]{10,}$/i, "").replace(/-/g, " ").trim();
   const displayName = guest?.name ? cleanName(guest.name) : cleanName(guestName);
-  const [wishes, setWishes] = useState<Wish[]>([]);
   const [qrCodes, setQrCodes] = useState<QRCode[]>([]);
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -263,17 +262,16 @@ function InvitationContent() {
       }),
     }).catch(() => {});
 
-    const [guestData, wishesData, qrData, photoData] = await Promise.all([
+    const [guestData, qrData, photoData] = await Promise.all([
       guestName
         ? supabase.from("guests").select("*").eq("invitation_id", inv.id).ilike("custom_link", `%${guestName.toLowerCase().replace(/\s+/g, "-")}%`).single()
         : Promise.resolve({ data: null }),
-      supabase.from("wishes").select("*").eq("invitation_id", inv.id).eq("is_approved", true).order("created_at", { ascending: false }),
       supabase.from("qr_codes").select("*").eq("invitation_id", inv.id),
       supabase.from("gallery_photos").select("*").eq("invitation_id", inv.id).order("order_index"),
     ]);
 
     setGuest(guestData.data);
-    setWishes(wishesData.data || []);
+    setQrCodes(qrData.data || []);
     setQrCodes(qrData.data || []);
     setPhotos(photoData.data || []);
     setLoading(false);
@@ -294,11 +292,7 @@ function InvitationContent() {
     setRsvpSubmitted(true);
     if (rsvpMessage.trim()) {
       const senderName = displayName || guestName || "អនាមិក";
-      const { error: wErr } = await supabase.from("wishes").insert({ invitation_id: invitation.id, guest_id: finalGuestId, sender_name: senderName, content: rsvpMessage, is_approved: true });
-      if (!wErr) {
-        const { data: freshWishes } = await supabase.from("wishes").select("*").eq("invitation_id", invitation.id).eq("is_approved", true).order("created_at", { ascending: false });
-        setWishes(freshWishes || []);
-      }
+      await supabase.from("wishes").insert({ invitation_id: invitation.id, guest_id: finalGuestId, sender_name: senderName, content: rsvpMessage, is_approved: true });
     }
     try {
       fetch("/api/telegram/notify", {
@@ -694,31 +688,6 @@ function InvitationContent() {
           </section>
           </Reveal>
         )}
-
-        {/* Wishes wall */}
-        <Reveal delay={80}>
-        <section className="rounded-3xl p-6" style={cardStyle}>
-          <SectionHead icon={MessageCircle} title="ពាក្យជូនពរ" />
-          {wishes.length > 0 && (
-            <div className="space-y-2.5 mb-5 max-h-72 overflow-y-auto pr-1 -mx-1 px-1" style={{ scrollbarWidth: "thin" }}>
-              {wishes.map((w) => (
-                <div key={w.id} className="rounded-2xl px-4 py-3" style={{ border: `1px solid ${t.accent}18`, background: t.accentBg }}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ background: `linear-gradient(135deg, ${t.btnFrom}, ${t.btnTo})` }}>
-                      {(w.sender_name || "?").charAt(0)}
-                    </span>
-                    <p className="text-xs font-semibold truncate" style={{ color: t.accent }}>{w.sender_name || "អនាមិក"}</p>
-                  </div>
-                  <p className="text-sm leading-relaxed break-words" style={{ color: t.textSec }}>{w.content}</p>
-                </div>
-              ))}
-            </div>
-          )}
-          {wishes.length === 0 && (
-            <p className="text-xs text-center py-3" style={{ color: t.textMut }}>មិនទាន់មានពាក្យជូនពរ — អ្នកអាចសរសេរក្នុងផ្នែកបញ្ជាក់ការចូលរួមខាងក្រោម</p>
-          )}
-        </section>
-        </Reveal>
 
         {/* RSVP */}
         <Reveal delay={80}>
