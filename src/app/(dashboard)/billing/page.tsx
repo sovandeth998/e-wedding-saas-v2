@@ -426,19 +426,6 @@ export default function BillingPage() {
                     <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto" />
                   </button>
                   <button
-                    onClick={() => handleSelectPayWay("card")}
-                    className="w-full p-4 rounded-lg border-2 border-gold-300 bg-white hover:bg-gold-50 transition-all flex items-center gap-4 text-left"
-                  >
-                    <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
-                      <CreditCard className="h-5 w-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-secondary">កាត (Visa / Mastercard)</p>
-                      <p className="text-xs text-muted-foreground">បង់តាមរយៈ PayWay Checkout</p>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto" />
-                  </button>
-                  <button
                     onClick={handleSelectKHQR}
                     className="w-full p-4 rounded-lg border-2 border-gold-200 bg-gold-50 hover:bg-gold-100 transition-all flex items-center gap-4 text-left"
                   >
