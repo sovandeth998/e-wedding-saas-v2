@@ -123,7 +123,9 @@ export default function DashboardPage() {
     : null;
 
   const coupleName = firstInvitation
-    ? `${firstInvitation.groom_name_kh || firstInvitation.groom_name || "កូនកំលោះ"} ❦ ${firstInvitation.bride_name_kh || firstInvitation.bride_name || "កូនក្រមុំ"}`
+    ? firstInvitation.type === "birthday"
+      ? `🎂 ${firstInvitation.groom_name_kh || firstInvitation.groom_name || "ឈ្មោះអ្នកកំណើត"}`
+      : `${firstInvitation.groom_name_kh || firstInvitation.groom_name || "កូនកំលោះ"} ❦ ${firstInvitation.bride_name_kh || firstInvitation.bride_name || "កូនក្រមុំ"}`
     : "";
 
   return (

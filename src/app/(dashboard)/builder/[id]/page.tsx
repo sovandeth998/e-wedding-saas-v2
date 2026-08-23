@@ -62,6 +62,8 @@ export default function BuilderPage() {
   const currentStepRef = useRef(1);
   currentStepRef.current = currentStep;
 
+  const isBirthday = invitation.type === "birthday";
+
   const templateList = dbTemplates.map((tpl) => {
     const c = typeof tpl.config === "string" ? JSON.parse(tpl.config) : (tpl.config || {});
     return {
@@ -155,7 +157,7 @@ export default function BuilderPage() {
 
   const checkStepComplete = (step: number) => {
     switch (step) {
-      case 1: return !!(invitation.groom_name || invitation.groom_name_kh) && !!(invitation.bride_name || invitation.bride_name_kh);
+      case 1: return !!(invitation.groom_name || invitation.groom_name_kh) && (isBirthday || !!(invitation.bride_name || invitation.bride_name_kh));
       case 2: return !!invitation.wedding_date && !!invitation.venue_name;
       case 3: return galleryPhotos.length > 0;
       case 4: return !!qrImageUrl;
@@ -435,14 +437,25 @@ export default function BuilderPage() {
               </div>
 
               <div className="space-y-5">
-                {/* Step 1: Couple Info */}
+                {/* Step 1: Couple / Celebrant Info */}
                 {currentStep === 1 && (
                   <div className="space-y-5">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <SectionCard icon={Heart} title="កូនកំលោះ">
+                    <SectionCard icon={Sparkles} title="ប្រភេទពិធី">
+                      <div className="grid grid-cols-2 gap-3">
+                        {[{ v: "wedding", label: "💒 ការរៀបការ" }, { v: "birthday", label: "🎂 ខួបកំណើត" }].map((opt) => (
+                          <button key={opt.v} type="button"
+                            onClick={() => setInvitation((prev) => ({ ...prev, type: opt.v as any }))}
+                            className={`h-11 rounded-xl text-sm font-medium border transition-all ${invitation.type === opt.v ? "bg-gold-gradient text-white border-transparent shadow-md" : "bg-white border-gold-200 text-secondary hover:border-gold-300"}`}>
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </SectionCard>
+                    <div className={isBirthday ? "" : "grid grid-cols-1 md:grid-cols-2 gap-5"}>
+                      <SectionCard icon={Heart} title={isBirthday ? "ឈ្មោះអ្នកកំណើត" : "កូនកំលោះ"}>
                         <div className="space-y-2">
                           <Label className="text-secondary">ឈ្មោះ (ខ្មែរ)</Label>
-                          <Input value={invitation.groom_name_kh || ""} onChange={(e) => updateField("groom_name_kh", e.target.value)} placeholder="ឧ. សុវណ្ណដេត" className="border-gold-200 focus-visible:ring-primary bg-white" />
+                          <Input value={invitation.groom_name_kh || ""} onChange={(e) => updateField("groom_name_kh", e.target.value)} placeholder={isBirthday ? "ឧ. សុវណ្ណដេត" : "ឧ. សុវណ្ណដេត"} className="border-gold-200 focus-visible:ring-primary bg-white" />
                         </div>
                         <div className="space-y-2">
                           <Label className="text-secondary">ឈ្មោះ (អង់គ្លេស)</Label>
@@ -453,40 +466,44 @@ export default function BuilderPage() {
                           <FileUpload bucket="uploads" path={`invitations/${params.id}/groom`} onUpload={(url) => updateField("groom_photo", url)} className="aspect-square max-w-[160px]" />
                         </div>
                       </SectionCard>
-                      <SectionCard icon={Heart} title="កូនក្រមុំ">
+                      {!isBirthday && (
+                        <SectionCard icon={Heart} title="កូនក្រមុំ">
+                          <div className="space-y-2">
+                            <Label className="text-secondary">ឈ្មោះ (ខ្មែរ)</Label>
+                            <Input value={invitation.bride_name_kh || ""} onChange={(e) => updateField("bride_name_kh", e.target.value)} placeholder="ឧ. ដារ៉ា" className="border-gold-200 focus-visible:ring-primary bg-white" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-secondary">ឈ្មោះ (អង់គ្លេស)</Label>
+                            <Input value={invitation.bride_name || ""} onChange={(e) => updateField("bride_name", e.target.value)} placeholder="ឧ. Dara" className="border-gold-200 focus-visible:ring-primary bg-white" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-secondary">រូបថត</Label>
+                            <FileUpload bucket="uploads" path={`invitations/${params.id}/bride`} onUpload={(url) => updateField("bride_photo", url)} className="aspect-square max-w-[160px]" />
+                          </div>
+                        </SectionCard>
+                      )}
+                    </div>
+                    {!isBirthday && (
+                      <SectionCard icon={Heart} title="ពាក្យពេចន៍ និងរឿងស្នេហា">
                         <div className="space-y-2">
-                          <Label className="text-secondary">ឈ្មោះ (ខ្មែរ)</Label>
-                          <Input value={invitation.bride_name_kh || ""} onChange={(e) => updateField("bride_name_kh", e.target.value)} placeholder="ឧ. ដារ៉ា" className="border-gold-200 focus-visible:ring-primary bg-white" />
+                          <Label className="text-secondary">ពាក្យពេចន៍រៀបការ</Label>
+                          <Input value={invitation.quote || ""} onChange={(e) => updateField("quote", e.target.value)} placeholder="ឧ. រួមគ្នាអស់មួយជីវិត..." className="border-gold-200 focus-visible:ring-primary bg-white" />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-secondary">ឈ្មោះ (អង់គ្លេស)</Label>
-                          <Input value={invitation.bride_name || ""} onChange={(e) => updateField("bride_name", e.target.value)} placeholder="ឧ. Dara" className="border-gold-200 focus-visible:ring-primary bg-white" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-secondary">រូបថត</Label>
-                          <FileUpload bucket="uploads" path={`invitations/${params.id}/bride`} onUpload={(url) => updateField("bride_photo", url)} className="aspect-square max-w-[160px]" />
+                          <Label className="text-secondary">រឿងស្នេហារបស់យើង</Label>
+                          <Textarea value={invitation.story || ""} onChange={(e) => updateField("story", e.target.value)} placeholder="ប្រាប់រឿងស្នេហារបស់អ្នក..." rows={4} className="border-gold-200 focus-visible:ring-primary bg-white" />
                         </div>
                       </SectionCard>
-                    </div>
-                    <SectionCard icon={Heart} title="ពាក្យពេចន៍ និងរឿងស្នេហា">
-                      <div className="space-y-2">
-                        <Label className="text-secondary">ពាក្យពេចន៍រៀបការ</Label>
-                        <Input value={invitation.quote || ""} onChange={(e) => updateField("quote", e.target.value)} placeholder="ឧ. រួមគ្នាអស់មួយជីវិត..." className="border-gold-200 focus-visible:ring-primary bg-white" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-secondary">រឿងស្នេហារបស់យើង</Label>
-                        <Textarea value={invitation.story || ""} onChange={(e) => updateField("story", e.target.value)} placeholder="ប្រាប់រឿងស្នេហារបស់អ្នក..." rows={4} className="border-gold-200 focus-visible:ring-primary bg-white" />
-                      </div>
-                    </SectionCard>
+                    )}
                   </div>
                 )}
 
                 {/* Step 2: Venue & Time */}
                 {currentStep === 2 && (
                   <div className="space-y-5">
-                    <SectionCard icon={CalendarDays} title="ពេលវេលា">
-                      <div className="space-y-2">
-                        <Label className="text-secondary">ថ្ងៃរៀបការ *</Label>
+                      <SectionCard icon={CalendarDays} title="ពេលវេលា">
+                        <div className="space-y-2">
+                          <Label className="text-secondary">{isBirthday ? "ថ្ងៃខួបកំណើត" : "ថ្ងៃរៀបការ"} *</Label>
                         <Input type="datetime-local" value={invitation.wedding_date ? new Date(invitation.wedding_date).toISOString().slice(0, 16) : ""} onChange={(e) => updateField("wedding_date", new Date(e.target.value).toISOString())} className="border-gold-200 focus-visible:ring-primary bg-white" />
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

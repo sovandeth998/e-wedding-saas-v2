@@ -55,6 +55,7 @@ export interface Invitation {
   id: string;
   user_id: string;
   slug: string;
+  type?: "wedding" | "birthday" | null;
   template_id: string | null;
   groom_name: string;
   groom_name_kh: string | null;

@@ -75,7 +75,7 @@ export default function InvitationsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, loading, invitations]);
 
-  const createNewInvitation = async (templateId?: string) => {
+  const createNewInvitation = async (templateId?: string, type: "wedding" | "birthday" = "wedding") => {
     if (!user) return;
     if (atLimit) {
       toast.error(`អ្នកបានបង្កើតចប់ហើយសម្រាប់កម្មវិធី ${limits.planName}`);
@@ -85,11 +85,12 @@ export default function InvitationsPage() {
       .from("invitations")
       .insert({
         user_id: user.id,
-        slug: `wedding-${Date.now()}`,
+        slug: `${type}-${Date.now()}`,
         groom_name: "",
         bride_name: "",
         wedding_date: new Date().toISOString(),
         status: "draft",
+        type,
         template_id: templateId || "1",
       })
       .select()
@@ -144,13 +145,23 @@ export default function InvitationsPage() {
           <h1 className="text-2xl font-bold text-secondary">លិខិតអញ្ជើញរបស់ខ្ញុំ</h1>
           <p className="text-muted-foreground">គ្រប់គ្រងលិខិតអញ្ជើញពិធីមង្គលការរបស់អ្នក</p>
         </div>
-        <Button
-          className="gap-2 bg-gold-gradient text-white hover:opacity-90 shadow-md"
-          onClick={() => createNewInvitation()}
-          disabled={atLimit}
-        >
-          <Plus className="h-4 w-4" /> បង្កើតថ្មី
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            className="gap-2 bg-gold-gradient text-white hover:opacity-90 shadow-md"
+            onClick={() => createNewInvitation()}
+            disabled={atLimit}
+          >
+            <Plus className="h-4 w-4" /> ការរៀបការ
+          </Button>
+          <Button
+            variant="outline"
+            className="gap-2 border-gold-300 text-secondary hover:bg-gold-50 shadow-sm"
+            onClick={() => createNewInvitation(undefined, "birthday")}
+            disabled={atLimit}
+          >
+            🎂 ខួបកំណើត
+          </Button>
+        </div>
       </div>
 
       {/* ស្ថិតិរហ័ស */}
@@ -206,9 +217,14 @@ export default function InvitationsPage() {
               <p className="font-semibold text-secondary">មិនមានលិខិតអញ្ជើញទេ</p>
               <p className="text-sm text-muted-foreground mt-1">ចាប់ផ្តើមបង្កើតលិខិតអញ្ជើញដំបូងរបស់អ្នក ឥឡូវនេះ!</p>
             </div>
-            <Button onClick={() => createNewInvitation()} className="gap-2 bg-gold-gradient text-white hover:opacity-90 shadow-md">
-              <Plus className="h-4 w-4" /> បង្កើតលិខិតអញ្ជើញ
-            </Button>
+            <div className="flex flex-col sm:flex-row justify-center gap-2">
+              <Button onClick={() => createNewInvitation()} className="gap-2 bg-gold-gradient text-white hover:opacity-90 shadow-md">
+                <Plus className="h-4 w-4" /> ការរៀបការ
+              </Button>
+              <Button onClick={() => createNewInvitation(undefined, "birthday")} variant="outline" className="gap-2 border-gold-300 text-secondary hover:bg-gold-50">
+                🎂 ខួបកំណើត
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -234,9 +250,15 @@ export default function InvitationsPage() {
                       លិខិតអញ្ជើញ
                     </p>
                     <p className="text-xl font-bold leading-snug" style={{ color: t.textPri }}>
-                      {invitation.groom_name || "ឈ្មោះប្រុស"}
-                      <span className="mx-1.5" style={{ color: t.accent }}>❦</span>
-                      {invitation.bride_name || "ឈ្មោះស្រី"}
+                      {invitation.type === "birthday" ? (
+                        <>🎂 {invitation.groom_name || "ឈ្មោះអ្នកកំណើត"}</>
+                      ) : (
+                        <>
+                          {invitation.groom_name || "ឈ្មោះប្រុស"}
+                          <span className="mx-1.5" style={{ color: t.accent }}>❦</span>
+                          {invitation.bride_name || "ឈ្មោះស្រី"}
+                        </>
+                      )}
                     </p>
                     <div className="flex items-center justify-center gap-2 my-2.5">
                       <span className="h-px w-8" style={{ background: t.accent + "70" }} />
@@ -264,7 +286,9 @@ export default function InvitationsPage() {
                   {/* ឈ្មោះ និងគំរូ */}
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-semibold text-secondary truncate">
-                      {invitation.groom_name || "ឈ្មោះប្រុស"} & {invitation.bride_name || "ឈ្មោះស្រី"}
+                      {invitation.type === "birthday"
+                        ? `🎂 ${invitation.groom_name || "ឈ្មោះអ្នកកំណើត"}`
+                        : `${invitation.groom_name || "ឈ្មោះប្រុស"} & ${invitation.bride_name || "ឈ្មោះស្រី"}`}
                     </p>
                     <Badge variant="outline" className="text-[11px] gap-1 shrink-0" style={{ borderColor: t.accent + "45", color: t.accent }}>
                       {t.isPremium && <Crown className="h-3 w-3" />}

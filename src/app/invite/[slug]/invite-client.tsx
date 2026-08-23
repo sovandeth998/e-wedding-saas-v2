@@ -89,6 +89,7 @@ function InvitationContent() {
   const [guest, setGuest] = useState<Guest | null>(null);
   const cleanName = (s: string) => s.replace(/-[a-z0-9]{10,}$/i, "").replace(/-/g, " ").trim();
   const displayName = guest?.name ? cleanName(guest.name) : cleanName(guestName);
+  const isBirthday = invitation?.type === "birthday";
   const [qrCodes, setQrCodes] = useState<QRCode[]>([]);
   const [showGift, setShowGift] = useState(false);
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
@@ -230,7 +231,9 @@ function InvitationContent() {
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
   const shareText = invitation
-    ? `💌 សូមអញ្ជើញចូលរួមពិធីរៀបអាពាហ៍ពិពាហ៍ ${invitation.groom_name_kh || invitation.groom_name} & ${invitation.bride_name_kh || invitation.bride_name}`
+    ? isBirthday
+      ? `🎂 សូមអញ្ជើញចូលរួមពិធីខួបកំណើត ${invitation.groom_name_kh || invitation.groom_name}!`
+      : `💌 សូមអញ្ជើញចូលរួមពិធីរៀបអាពាហ៍ពិពាហ៍ ${invitation.groom_name_kh || invitation.groom_name} & ${invitation.bride_name_kh || invitation.bride_name}`
     : "";
 
   const fetchInvitation = async () => {
@@ -272,7 +275,6 @@ function InvitationContent() {
     ]);
 
     setGuest(guestData.data);
-    setQrCodes(qrData.data || []);
     setQrCodes(qrData.data || []);
     setPhotos(photoData.data || []);
     setLoading(false);
@@ -401,23 +403,31 @@ function InvitationContent() {
 
             {!invitation.groom_photo && !invitation.bride_photo && (
               <div className="h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: `linear-gradient(135deg, ${t.accent}15, ${t.accent}08)`, border: `2px solid ${t.accent}30`, animation: "floatY 4s ease-in-out infinite" }}>
-                <Heart className="h-8 w-8" style={{ color: t.accent, fill: t.accentFill }} />
+                {isBirthday ? <span className="text-3xl">🎂</span> : <Heart className="h-8 w-8" style={{ color: t.accent, fill: t.accentFill }} />}
               </div>
             )}
 
-            <p className="text-[10px] tracking-[0.4em] uppercase mb-3 font-medium" style={{ color: t.accent }}>Wedding Invitation</p>
+            <p className="text-[10px] tracking-[0.4em] uppercase mb-3 font-medium" style={{ color: t.accent }}>{isBirthday ? "Birthday Invitation" : "Wedding Invitation"}</p>
 
-            <h1 className="text-3xl font-bold leading-tight" style={{ color: t.textPri }}>
-              {invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"}
-            </h1>
-            <div className="flex items-center justify-center gap-3 my-3">
-              <span className="h-px w-12" style={{ background: `linear-gradient(to right, transparent, ${t.accent}50)` }} />
-              <span className="text-xl font-light" style={{ color: t.accent }}>&amp;</span>
-              <span className="h-px w-12" style={{ background: `linear-gradient(to left, transparent, ${t.accent}50)` }} />
-            </div>
-            <h1 className="text-3xl font-bold leading-tight mb-5" style={{ color: t.textPri }}>
-              {invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}
-            </h1>
+            {isBirthday ? (
+              <h1 className="text-3xl font-bold leading-tight mb-5" style={{ color: t.textPri }}>
+                {invitation.groom_name_kh || invitation.groom_name || "អ្នកកំណើត"}
+              </h1>
+            ) : (
+              <>
+                <h1 className="text-3xl font-bold leading-tight" style={{ color: t.textPri }}>
+                  {invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"}
+                </h1>
+                <div className="flex items-center justify-center gap-3 my-3">
+                  <span className="h-px w-12" style={{ background: `linear-gradient(to right, transparent, ${t.accent}50)` }} />
+                  <span className="text-xl font-light" style={{ color: t.accent }}>&amp;</span>
+                  <span className="h-px w-12" style={{ background: `linear-gradient(to left, transparent, ${t.accent}50)` }} />
+                </div>
+                <h1 className="text-3xl font-bold leading-tight mb-5" style={{ color: t.textPri }}>
+                  {invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}
+                </h1>
+              </>
+            )}
 
             <Ornament c={t.accent} />
 
@@ -461,9 +471,20 @@ function InvitationContent() {
         <div className="max-w-lg mx-auto relative">
           <CoupleAvatars size={72} />
           <p className="text-[10px] tracking-[0.45em] uppercase mb-2 font-medium mt-4" style={{ color: t.accent }}>Invitation</p>
-          <p className="text-sm mb-7" style={{ color: t.textSec }}>ពិធីរៀបអាពាហ៍ពិពាហ៍របស់យើងខ្ញុំ</p>
+          <p className="text-sm mb-7" style={{ color: t.textSec }}>{isBirthday ? "ពិធីរំលឹកថ្ងៃកំណើត" : "ពិធីរៀបអាពាហ៍ពិពាហ៍"}</p>
 
-          {(invitation.groom_photo || invitation.bride_photo) ? (
+          {isBirthday ? (
+            <div className="flex flex-col items-center mb-6">
+              {invitation.groom_photo ? (
+                <img src={invitation.groom_photo} alt="" className="rounded-[1.8rem] object-cover shadow-xl" style={{ width: 170, height: 200, border: `2px solid ${t.accent}45` }} />
+              ) : (
+                <div className="rounded-[1.8rem] flex items-center justify-center" style={{ width: 170, height: 200, border: `2px dashed ${t.accent}35`, fontSize: 64 }}>🎂</div>
+              )}
+              <h1 className="text-3xl md:text-4xl font-bold tracking-wide mt-4" style={{ color: t.textPri }}>
+                {invitation.groom_name_kh || invitation.groom_name || "អ្នកកំណើត"}
+              </h1>
+            </div>
+          ) : (invitation.groom_photo || invitation.bride_photo) ? (
             <div className="flex items-end justify-center gap-4 mb-6">
               {[{ p: invitation.groom_photo, n: invitation.groom_name_kh || invitation.groom_name }, { p: invitation.bride_photo, n: invitation.bride_name_kh || invitation.bride_name }].map((x, i) => (
                 <div key={i} className="text-center">
@@ -615,7 +636,7 @@ function InvitationContent() {
         )}
 
         {/* Story */}
-        {invitation.story && (
+        {invitation.story && !isBirthday && (
           <Reveal delay={100}>
           <section className="rounded-3xl p-6" style={cardStyle}>
             <SectionHead icon={MessageCircle} title="រឿងស្នេហារបស់យើង" />
