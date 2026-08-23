@@ -25,6 +25,39 @@ const steps = [
   { id: 6, icon: Eye, title: "មើល និងផ្សាយ", short: "ផ្សាយ" },
 ];
 
+function SectionCard({ icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) {
+  return (
+    <div className="p-5 bg-gold-50/40 rounded-2xl border border-gold-200/50 space-y-4">
+      <h3 className="font-semibold text-secondary flex items-center gap-2">
+        {React.createElement(icon, { className: "h-4 w-4 text-primary" })} {title}
+      </h3>
+      {children}
+    </div>
+  );
+}
+
+function StepperButton({ step, active, done, onClick }: { step: (typeof steps)[0]; active: boolean; done: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all text-left ${
+        active
+          ? "bg-gold-gradient text-white font-medium shadow-md"
+          : done
+          ? "text-green-700 hover:bg-green-50"
+          : "text-muted-foreground hover:bg-gold-50"
+      }`}
+    >
+      <span className={`h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-xs ${
+        active ? "bg-white/20 text-white" : done ? "bg-green-500 text-white" : "bg-muted text-muted-foreground"
+      }`}>
+        {done && !active ? <Check className="h-3.5 w-3.5" /> : <step.icon className="h-3.5 w-3.5" />}
+      </span>
+      <span className="truncate">{step.short}</span>
+    </button>
+  );
+}
+
 export default function BuilderPage() {
   const params = useParams();
   const router = useRouter();
@@ -296,39 +329,6 @@ export default function BuilderPage() {
     toast.success("បានចម្លង Link!");
   };
 
-  const SectionCard = ({ icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) => (
-    <div className="p-5 bg-gold-50/40 rounded-2xl border border-gold-200/50 space-y-4">
-      <h3 className="font-semibold text-secondary flex items-center gap-2">
-        {React.createElement(icon, { className: "h-4 w-4 text-primary" })} {title}
-      </h3>
-      {children}
-    </div>
-  );
-
-  const StepperButton = ({ step }: { step: (typeof steps)[0] }) => {
-    const done = checkStepComplete(step.id);
-    const active = currentStep === step.id;
-    return (
-      <button
-        onClick={() => setCurrentStep(step.id)}
-        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all text-left ${
-          active
-            ? "bg-gold-gradient text-white font-medium shadow-md"
-            : done
-            ? "text-green-700 hover:bg-green-50"
-            : "text-muted-foreground hover:bg-gold-50"
-        }`}
-      >
-        <span className={`h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-xs ${
-          active ? "bg-white/20 text-white" : done ? "bg-green-500 text-white" : "bg-muted text-muted-foreground"
-        }`}>
-          {done && !active ? <Check className="h-3.5 w-3.5" /> : <step.icon className="h-3.5 w-3.5" />}
-        </span>
-        <span className="truncate">{step.short}</span>
-      </button>
-    );
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -403,7 +403,15 @@ export default function BuilderPage() {
                 </div>
               </div>
               <div className="space-y-1 pt-1">
-                {steps.map((step) => <StepperButton key={step.id} step={step} />)}
+                {steps.map((step) => (
+                  <StepperButton
+                    key={step.id}
+                    step={step}
+                    active={currentStep === step.id}
+                    done={checkStepComplete(step.id)}
+                    onClick={() => setCurrentStep(step.id)}
+                  />
+                ))}
               </div>
             </CardContent>
           </Card>
