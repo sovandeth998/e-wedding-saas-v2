@@ -565,6 +565,12 @@ function InvitationContent() {
               <Calendar className="h-4 w-4 shrink-0" style={{ color: t.accent }} />
               <span className="text-sm">{weddingDate.toLocaleDateString("km-KH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
             </div>
+            {(weddingDate.getHours() !== 0 || weddingDate.getMinutes() !== 0) && !invitation.ceremony_time && (
+              <div className="flex items-center justify-center gap-2" style={{ color: t.textSec }}>
+                <Clock className="h-4 w-4 shrink-0" style={{ color: t.accent }} />
+                <span className="text-sm">ម៉ោង៖ {weddingDate.toLocaleTimeString("km-KH", { hour: "2-digit", minute: "2-digit" })}</span>
+              </div>
+            )}
             {invitation.ceremony_time && (
               <div className="flex items-center justify-center gap-2" style={{ color: t.textSec }}>
                 <Clock className="h-4 w-4 shrink-0" style={{ color: t.accent }} />

@@ -58,6 +58,20 @@ function StepperButton({ step, active, done, onClick }: { step: (typeof steps)[0
   );
 }
 
+const toDateInputVal = (iso?: string | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+const toTimeInputVal = (iso?: string | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+};
+
 export default function BuilderPage() {
   const params = useParams();
   const router = useRouter();
@@ -504,22 +518,30 @@ export default function BuilderPage() {
                   </div>
                 )}
 
-                {/* Step 2: Venue & Time */}
+                {/* Step 2: Date & Venue */}
                 {currentStep === 2 && (
                   <div className="space-y-5">
-                      <SectionCard icon={CalendarDays} title="ពេលវេលា">
+                    <SectionCard icon={CalendarDays} title="ពេលវេលា">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label className="text-secondary">{isBirthday ? "ថ្ងៃខួបកំណើត" : "ថ្ងៃរៀបការ"} *</Label>
-                        <Input type="datetime-local" value={invitation.wedding_date ? new Date(invitation.wedding_date).toISOString().slice(0, 16) : ""} onChange={(e) => updateField("wedding_date", new Date(e.target.value).toISOString())} className="border-gold-200 focus-visible:ring-primary bg-white" />
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label className="text-secondary">ម៉ោងពិធីជប់លៀង</Label>
-                          <Input value={invitation.ceremony_time || ""} onChange={(e) => updateField("ceremony_time", e.target.value)} placeholder="ឧ. 7:00 ព្រឹក - 9:00 ព្រឹក" className="border-gold-200 focus-visible:ring-primary bg-white" />
+                          <Label className="text-secondary">ថ្ងៃពិធី *</Label>
+                          <Input type="date" value={toDateInputVal(invitation.wedding_date)}
+                            onChange={(e) => {
+                              if (!e.target.value) return;
+                              const t = toTimeInputVal(invitation.wedding_date) || "08:00";
+                              updateField("wedding_date", new Date(`${e.target.value}T${t}`).toISOString());
+                            }}
+                            className="border-gold-200 focus-visible:ring-primary bg-white" />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-secondary">ម៉ោងពិធីស្វាគមន៍</Label>
-                          <Input value={invitation.reception_time || ""} onChange={(e) => updateField("reception_time", e.target.value)} placeholder="ឧ. 11:00 ព្រឹក - 2:00 ថ្ងៃត្រង់" className="border-gold-200 focus-visible:ring-primary bg-white" />
+                          <Label className="text-secondary">ម៉ោង</Label>
+                          <Input type="time" value={toTimeInputVal(invitation.wedding_date) || "08:00"}
+                            onChange={(e) => {
+                              const d = toDateInputVal(invitation.wedding_date) || toDateInputVal(new Date().toISOString());
+                              if (!d) return;
+                              updateField("wedding_date", new Date(`${d}T${e.target.value || "08:00"}`).toISOString());
+                            }}
+                            className="border-gold-200 focus-visible:ring-primary bg-white" />
                         </div>
                       </div>
                     </SectionCard>
@@ -529,11 +551,11 @@ export default function BuilderPage() {
                         <Input value={invitation.venue_name || ""} onChange={(e) => updateField("venue_name", e.target.value)} placeholder="ឧ. Diamond Ballroom" className="border-gold-200 focus-visible:ring-primary bg-white" />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-secondary">អាសយដ្ឋានទីតាំង</Label>
+                        <Label className="text-secondary">អាសយដ្ឋាន</Label>
                         <Textarea value={invitation.venue_address || ""} onChange={(e) => updateField("venue_address", e.target.value)} placeholder="អាសយដ្ឋានពេញ..." rows={2} className="border-gold-200 focus-visible:ring-primary bg-white" />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-secondary">Link Google Maps</Label>
+                        <Label className="text-secondary">Link Google Maps (ស្រេចចិត្ត)</Label>
                         <Input value={invitation.venue_map_url || ""} onChange={(e) => updateField("venue_map_url", e.target.value)} placeholder="https://maps.google.com/..." className="border-gold-200 focus-visible:ring-primary bg-white" />
                       </div>
                     </SectionCard>
