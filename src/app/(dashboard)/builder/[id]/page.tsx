@@ -31,7 +31,7 @@ export default function BuilderPage() {
   const supabase = createClient();
   const [currentStep, setCurrentStep] = useState(1);
   const [saving, setSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [dirty, setDirty] = useState(false);
   const [invitation, setInvitation] = useState<Partial<Invitation>>({
     groom_name: "",
     groom_name_kh: "",
@@ -201,32 +201,30 @@ export default function BuilderPage() {
     return !error;
   };
 
-  // Auto-save (debounced)
+  // Track unsaved changes (manual save only)
   useEffect(() => {
     if (!loadedRef.current) return;
     const snap = JSON.stringify({ i: invitation, t: selectedTemplate, q: qrImageUrl });
-    if (snap === lastSnapshotRef.current) return;
-
-    setSaveStatus("saving");
-    const timer = setTimeout(async () => {
-      const ok = await persist(false);
-      if (ok) {
-        lastSnapshotRef.current = snap;
-        setSaveStatus("saved");
-        setTimeout(() => setSaveStatus((s) => (s === "saved" ? "idle" : s)), 2500);
-      } else {
-        setSaveStatus("idle");
-      }
-    }, 1200);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setDirty(snap !== lastSnapshotRef.current);
   }, [invitation, selectedTemplate, qrImageUrl]);
+
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!dirty) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [dirty]);
 
   const saveInvitation = async () => {
     setSaving(true);
     await persist(true);
     const snap = JSON.stringify({ i: invitation, t: selectedTemplate, q: qrImageUrl });
     lastSnapshotRef.current = snap;
+    setDirty(false);
     setSaving(false);
   };
 
@@ -348,10 +346,10 @@ export default function BuilderPage() {
               {(invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ")}
             </h1>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              {saveStatus === "saving" ? (
+              {saving ? (
                 <span className="inline-flex items-center gap-1 text-orange-500"><Loader2 className="h-3 w-3 animate-spin" /> កំពុងរក្សាទុក...</span>
-              ) : saveStatus === "saved" ? (
-                <span className="inline-flex items-center gap-1 text-green-600"><CircleCheck className="h-3 w-3" /> បានរក្សាទុកស្វ័យប្រវត្តិ</span>
+              ) : dirty ? (
+                <span className="inline-flex items-center gap-1 text-orange-500"><span className="h-1.5 w-1.5 rounded-full bg-orange-500" /> មិនទាន់រក្សាទុក — ចុច "រក្សាទុក"</span>
               ) : (
                 <span>ជំហាន {currentStep} / {steps.length}</span>
               )}
@@ -854,10 +852,10 @@ export default function BuilderPage() {
       <div className="fixed bottom-4 inset-x-4 z-40 xl:hidden">
         <div className="mx-auto max-w-md bg-secondary/95 backdrop-blur text-white rounded-full shadow-2xl px-4 py-2.5 flex items-center justify-between gap-3">
           <span className="text-xs flex items-center gap-1.5 min-w-0">
-            {saveStatus === "saving" ? (
+            {saving ? (
               <><Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" /> <span className="truncate">កំពុងរក្សាទុក...</span></>
-            ) : saveStatus === "saved" ? (
-              <><CircleCheck className="h-3.5 w-3.5 text-green-400 shrink-0" /> <span className="truncate">បានរក្សាទុក</span></>
+            ) : dirty ? (
+              <><span className="h-1.5 w-1.5 rounded-full bg-orange-400 shrink-0" /> <span className="truncate">មិនទាន់រក្សាទុក</span></>
             ) : (
               <><CloudUpload className="h-3.5 w-3.5 opacity-60 shrink-0" /> <span className="truncate">ជំហាន {currentStep}/{steps.length} • {progress}%</span></>
             )}
