@@ -9,7 +9,7 @@ async function getInvitation(slug: string) {
   const supabase = await createClient();
   const { data: inv } = await supabase
     .from("invitations")
-    .select("id, slug, groom_name, groom_name_kh, groom_photo, bride_name, bride_name_kh, bride_photo, wedding_date, venue_name, template:templates(thumbnail_url)")
+    .select("id, slug, type, groom_name, groom_name_kh, groom_photo, bride_name, bride_name_kh, bride_photo, wedding_date, venue_name, status")
     .eq("slug", slug)
     .maybeSingle();
   return inv;
@@ -20,16 +20,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://e-wedding-saas-v2.vercel.app";
 
   if (!inv) {
-    return { title: "លិខិតអញ្ជើញរៀបអាពាហ៍ពិពាហ៍" };
+    return {
+      title: "លិខិតអញ្ជើញរៀបអាពាហ៍ពិពាហ៍",
+      description: "សូមគោរពអញ្ជើញចូលរួមពិធីរៀបអាពាហ៍ពិពាហ៍",
+    };
   }
 
+  const isBirthday = inv.type === "birthday";
   const groom = inv.groom_name_kh || inv.groom_name;
   const bride = inv.bride_name_kh || inv.bride_name;
   const dateStr = inv.wedding_date
     ? new Date(inv.wedding_date).toLocaleDateString("km-KH", { year: "numeric", month: "long", day: "numeric" })
     : "";
-  const title = `💌 ${groom} ❤ ${bride}`;
-  const description = `${dateStr}${inv.venue_name ? ` • ${inv.venue_name}` : ""}\nសូមគោរពអញ្ជើញចូលរួមពិធីរៀបអាពាហ៍ពិពាហ៍`;
+  const title = isBirthday
+    ? `🎂 ${groom || "អ្នកកំណើត"} | លិខិតអញ្ជើញខួបកំណើត`
+    : `💌 ${groom} ❤ ${bride}`;
+  const description = isBirthday
+    ? `${dateStr}${inv.venue_name ? ` • ${inv.venue_name}` : ""}\nសូមគោរពអញ្ជើញចូលរួមពិធីខួបកំណើត`
+    : `${dateStr}${inv.venue_name ? ` • ${inv.venue_name}` : ""}\nសូមគោរពអញ្ជើញចូលរួមពិធីរៀបអាពាហ៍ពិពាហ៍`;
 
   const photo =
     (await (async () => {
@@ -47,11 +55,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     inv.bride_photo ||
     null;
 
-  const images = photo
-    ? [{ url: photo.startsWith("http") ? photo : `${baseUrl}${photo}`, width: 1200, height: 630, alt: title }]
-    : undefined;
+  const images = photo ? [{ url: photo.startsWith("http") ? photo : `${baseUrl}${photo}`, alt: title }] : undefined;
 
   return {
+    metadataBase: new URL(baseUrl),
     title,
     description,
     openGraph: {
@@ -59,6 +66,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       type: "website",
       url: `${baseUrl}/invite/${inv.slug}`,
+      siteName: "E-Wedding",
       images,
     },
     twitter: {
