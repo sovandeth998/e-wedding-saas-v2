@@ -6,9 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { startBuiltinMusic, stopMusic, pauseMusic, resumeMusic, isBuiltinMusic } from "@/lib/wedding-music";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Heart, MapPin, Clock, Camera, Gift, MessageCircle, Calendar, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Share2, Video, Shirt, X, Send, Sparkles } from "lucide-react";
+import { Heart, MapPin, Clock, Camera, Gift, MessageCircle, Calendar, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Share2, Video, Shirt, X, Sparkles } from "lucide-react";
 import type { Invitation, Guest, Wish, QRCode, GalleryPhoto, TimelineEvent } from "@/types/database";
 
 const ANIM_CSS = `
@@ -97,10 +96,6 @@ function InvitationContent() {
   const [rsvpStatus, setRsvpStatus] = useState<"attending" | "not_attending" | "">("");
   const [rsvpGuests, setRsvpGuests] = useState(1);
   const [rsvpMessage, setRsvpMessage] = useState("");
-  const [wishName, setWishName] = useState("");
-  useEffect(() => { if (displayName && !wishName) setWishName(displayName); }, [displayName]);
-  const [wishContent, setWishContent] = useState("");
-  const [wishSending, setWishSending] = useState(false);
   const [rsvpSubmitted, setRsvpSubmitted] = useState(false);
   const [opened, setOpened] = useState(false);
   const [opening, setOpening] = useState(false);
@@ -322,33 +317,6 @@ function InvitationContent() {
     } catch {}
   };
 
-  const submitWish = async () => {
-    if (!invitation || !wishContent.trim()) return;
-    setWishSending(true);
-    let finalGuestId: string | null | undefined = guest?.id;
-    if (!finalGuestId && (wishName.trim() || displayName)) {
-      const nm = wishName.trim() || displayName!;
-      const { data: ng } = await supabase.from("guests").insert({ invitation_id: invitation.id, name: nm, custom_link: `${params.slug}/guest/${nm.toLowerCase().replace(/\s+/g, "-")}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, side: "both" }).select().single();
-      finalGuestId = ng?.id;
-    }
-    const { error } = await supabase.from("wishes").insert({
-      invitation_id: invitation.id,
-      guest_id: finalGuestId || null,
-      sender_name: wishName.trim() || displayName || "អនាមិក",
-      content: wishContent.trim(),
-      is_approved: true,
-    });
-    if (!error) {
-      const { data: fresh } = await supabase.from("wishes").select("*").eq("invitation_id", invitation.id).eq("is_approved", true).order("created_at", { ascending: false });
-      setWishes(fresh || []);
-      setWishContent("");
-      toast.success("បានផ្ញើពាក្យជូនពរ! 💐");
-    } else {
-      toast.error("បរាជ័យក្នុងការផ្ញើ");
-    }
-    setWishSending(false);
-  };
-
   // ---------- shared decorative pieces ----------
   const Ornament = ({ c }: { c: string }) => (
     <div className="flex items-center justify-center gap-2">
@@ -498,7 +466,7 @@ function InvitationContent() {
         <div className="max-w-lg mx-auto relative">
           <CoupleAvatars size={72} />
           <p className="text-[10px] tracking-[0.45em] uppercase mb-2 font-medium mt-4" style={{ color: t.accent }}>Invitation</p>
-          <p className="text-sm mb-7" style={{ color: t.textSec }}>សូមអញ្ជើញចូលរួមក្នុងថ្ងៃរៀបការរបស់យើង</p>
+          <p className="text-sm mb-7" style={{ color: t.textSec }}>ពិធីរៀបអាពាហ៍ពិពាហ៍របស់យើងខ្ញុំ</p>
 
           {(invitation.groom_photo || invitation.bride_photo) ? (
             <div className="flex items-end justify-center gap-4 mb-6">
@@ -531,7 +499,7 @@ function InvitationContent() {
             <div className="inline-block mt-7 rounded-full px-7 py-2.5 fade-up" style={{ animationDelay: ".2s", border: `1.5px solid ${t.accent}30`, background: t.accentBg }}>
               <p className="font-semibold" style={{ color: t.textPri }}>
                 <Sparkles className="h-3.5 w-3.5 inline mr-1.5 -mt-0.5" style={{ color: t.accent }} />
-                សូមអញ្ជើញ <b>{displayName}</b>
+                សូមគោរពអញ្ជើញ <b>{displayName}</b>
               </p>
             </div>
           )}
@@ -746,17 +714,9 @@ function InvitationContent() {
               ))}
             </div>
           )}
-          <div className="rounded-2xl p-4 space-y-3" style={{ border: `1px solid ${t.accent}22` }}>
-            {!displayName && (
-              <Input value={wishName} onChange={(e) => setWishName(e.target.value)} placeholder="ឈ្មោះរបស់អ្នក..." className="rounded-xl text-sm" style={{ borderColor: `${t.accent}25`, background: isLight ? "#fff" : t.accentBg, color: t.textPri }} />
-            )}
-            <Textarea value={wishContent} onChange={(e) => setWishContent(e.target.value)} placeholder="សរសេរពាក្យជូនពរដល់គូស្នេហ៍..." rows={2} className="rounded-xl text-sm resize-none" style={{ borderColor: `${t.accent}25`, background: isLight ? "#fff" : t.accentBg, color: t.textPri }} />
-            <Button onClick={submitWish} disabled={!wishContent.trim() || wishSending} size="sm"
-              className="w-full text-white rounded-xl h-10 gap-2 btn-shine"
-              style={{ background: `linear-gradient(to right, ${t.btnFrom}, ${t.btnTo})` }}>
-              <Send className="h-4 w-4" /> {wishSending ? "កំពុងផ្ញើ..." : "ផ្ញើពាក្យជូនពរ"}
-            </Button>
-          </div>
+          {wishes.length === 0 && (
+            <p className="text-xs text-center py-3" style={{ color: t.textMut }}>មិនទាន់មានពាក្យជូនពរ — អ្នកអាចសរសេរក្នុងផ្នែកបញ្ជាក់ការចូលរួមខាងក្រោម</p>
+          )}
         </section>
         </Reveal>
 
