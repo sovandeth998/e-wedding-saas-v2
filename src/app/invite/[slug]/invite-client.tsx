@@ -90,6 +90,7 @@ function InvitationContent() {
   const cleanName = (s: string) => s.replace(/-[a-z0-9]{10,}$/i, "").replace(/-/g, " ").trim();
   const displayName = guest?.name ? cleanName(guest.name) : cleanName(guestName);
   const [qrCodes, setQrCodes] = useState<QRCode[]>([]);
+  const [showGift, setShowGift] = useState(false);
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [rsvpStatus, setRsvpStatus] = useState<"attending" | "not_attending" | "">("");
@@ -668,23 +669,11 @@ function InvitationContent() {
           <Reveal delay={100}>
           <section className="rounded-3xl p-6 text-center" style={cardStyle}>
             <SectionHead icon={Gift} title="ចំណងដៃ" />
-            <p className="text-xs mb-4 -mt-2" style={{ color: t.textMut }}>សូមស្កេន QR ខាងក្រោមដើម្បីផ្ញើចំណងដៃ</p>
-            <div className="space-y-4">
-              {qrCodes.map((qr) => (
-                <div key={qr.id} className="rounded-2xl p-5 inline-block w-full" style={{ border: `1px solid ${t.accent}20`, background: t.accentBg }}>
-                  {qr.qr_image_url && (
-                    <div className="bg-white p-3 rounded-2xl inline-block shadow-md">
-                      <img src={qr.qr_image_url} alt="QR Code" className="w-44 h-44 object-contain" />
-                    </div>
-                  )}
-                  <div className="mt-3 space-y-0.5">
-                    {qr.bank_name && <p className="font-bold text-sm" style={{ color: t.textPri }}>{qr.bank_name}</p>}
-                    {qr.account_name && <p className="text-xs" style={{ color: t.textSec }}>{qr.account_name}</p>}
-                    {qr.account_number && <p className="text-xs font-mono" style={{ color: t.textMut }}>{qr.account_number}</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <p className="text-xs mb-4 -mt-2" style={{ color: t.textMut }}>អ្នកអាចផ្ញើការលើកទឹកចិត្តតាមរយៈ QR</p>
+            <Button onClick={() => setShowGift(true)} className="btn-shine w-full max-w-xs mx-auto h-12 rounded-2xl text-white shadow-lg font-semibold gap-2"
+              style={{ background: `linear-gradient(to right, ${t.btnFrom}, ${t.btnTo})`, boxShadow: `0 6px 20px ${t.accent}40` }}>
+              <Gift className="h-4 w-4" /> ផ្ញើចំណងដៃ
+            </Button>
           </section>
           </Reveal>
         )}
@@ -778,6 +767,42 @@ function InvitationContent() {
             </>
           )}
           <img key={lightboxIdx} src={photos[lightboxIdx].url} alt="រូបភាព" className="max-w-[92vw] max-h-[88vh] rounded-xl object-contain shadow-2xl lb-img" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
+
+      {/* Gift QR modal */}
+      {showGift && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 overflow-y-auto" onClick={() => setShowGift(false)} style={{ animation: "pageIn .25s ease both" }}>
+          <button onClick={() => setShowGift(false)} className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/15 backdrop-blur flex items-center justify-center hover:bg-white/25">
+            <X className="h-5 w-5 text-white" />
+          </button>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-3xl p-6 text-center my-auto lb-img relative" style={cardStyle}>
+            <div className="h-11 w-11 rounded-full flex items-center justify-center mx-auto mb-2.5" style={{ border: `1px solid ${t.accent}25`, background: t.accentBg }}>
+              <Gift className="h-5 w-5" style={{ color: t.accent }} />
+            </div>
+            <h3 className="text-lg font-bold mb-1" style={{ color: t.textPri }}>ស្កេនដើម្បីផ្ញើចំណងដៃ</h3>
+            <p className="text-xs mb-4" style={{ color: t.textMut }}>សូមជូនពរតាមរយៈការផ្ទេរប្រាក់ខាងក្រោម</p>
+            <div className="space-y-4">
+              {qrCodes.map((qr) => (
+                <div key={qr.id} className="rounded-2xl p-5 inline-block w-full" style={{ border: `1px solid ${t.accent}20`, background: t.accentBg }}>
+                  {qr.qr_image_url && (
+                    <div className="bg-white p-3 rounded-2xl inline-block shadow-md">
+                      <img src={qr.qr_image_url} alt="QR Code" className="w-56 h-56 object-contain" />
+                    </div>
+                  )}
+                  <div className="mt-3 space-y-0.5">
+                    {qr.bank_name && <p className="font-bold text-sm" style={{ color: t.textPri }}>{qr.bank_name}</p>}
+                    {qr.account_name && <p className="text-xs" style={{ color: t.textSec }}>{qr.account_name}</p>}
+                    {qr.account_number && <p className="text-xs font-mono" style={{ color: t.textMut }}>{qr.account_number}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Button onClick={() => setShowGift(false)} variant="outline" size="sm" className="mt-5 rounded-full"
+              style={{ borderColor: `${t.accent}40`, color: t.accent, background: "transparent" }}>
+              បិទ
+            </Button>
+          </div>
         </div>
       )}
     </div>
