@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { startBuiltinMusic, stopMusic, pauseMusic, resumeMusic, isBuiltinMusic } from "@/lib/wedding-music";
 import { formatKhmerDate, formatKhmerDateShort, formatKhmerTime } from "@/lib/khmer-date";
+import { generateShareCode } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Heart, MapPin, Clock, Camera, Gift, MessageCircle, Calendar, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Share2, Video, Shirt, X, Sparkles } from "lucide-react";
@@ -284,7 +285,7 @@ function InvitationContent() {
   const ensureGuestId = async (): Promise<string | null | undefined> => {
     if (guest?.id) return guest.id;
     if (!guestName) return undefined;
-    const { data: ng } = await supabase.from("guests").insert({ invitation_id: (invitation as any).id, name: guestName, custom_link: `${params.slug}/guest/${guestName.toLowerCase().replace(/\s+/g, "-")}`, share_code: undefined as any, side: "both" }).select().single();
+    const { data: ng } = await supabase.from("guests").insert({ invitation_id: (invitation as any).id, name: guestName, custom_link: `${params.slug}/guest/${guestName.toLowerCase().replace(/\s+/g, "-")}`, share_code: generateShareCode(), side: "both" }).select().single();
     return ng?.id;
   };
 
