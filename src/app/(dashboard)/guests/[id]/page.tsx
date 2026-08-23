@@ -644,8 +644,8 @@ export default function GuestManagerPage() {
                                   ? `${invitation.groom_name_kh || invitation.groom_name} ❤ ${invitation.bride_name_kh || invitation.bride_name}`
                                   : "";
                                 const text = isBday
-                                  ? `🎂 លិខិតអញ្ជើញពិធីខួបកំណើត\n\nសួស្តី ${cleanName} 👋\n\n🎉 អ្នកកំណើត៖ ${invitation?.groom_name_kh || invitation?.groom_name || ""}\n📅 ${dateStr}${timeStr ? `\n🕐 ម៉ោង ${timeStr}` : ""}\n📍 ${invitation?.venue_name || ""}\n\n👉 សូមចុច Link ដើម្បីមើលលិខិតអញ្ជើញពេញលេញ៖\n${inviteLink}\n\n🙏 សូមអរគុណ!`
-                                  : `💌 លិខិតអញ្ជើញពិធីរៀបអាពាហ៍ពិពាហ៍\n\nសួស្តី ${cleanName} 👋\n\nយើងខ្ញុំគោរពជូនដំណឹង៖\n👫 ${couple}\n📅 ${dateStr}${timeStr ? `\n🕐 ម៉ោង ${timeStr}` : ""}\n📍 ${invitation?.venue_name || ""}\n\n👉 សូមចុច Link ដើម្បីមើលលិខិតអញ្ជើញពេញលេញ៖\n${inviteLink}\n\n🙏 សូមអរគុណ!`;
+                                  ? `🎂 លិខិតអញ្ជើញពិធីខួបកំណើត\n\nសូមគោរពអញ្ជើញ ${cleanName}\n\n🎉 អ្នកកំណើត៖ ${invitation?.groom_name_kh || invitation?.groom_name || ""}\n📅 ${dateStr}${timeStr ? `\n🕐 ម៉ោង ${timeStr}` : ""}\n📍 ${invitation?.venue_name || ""}\n\n👉 សូមចុច Link ដើម្បីមើលលិខិតអញ្ជើញពេញលេញ៖\n${inviteLink}\n\n🙏 សូមអរគុណ!`
+                                  : `💌 លិខិតអញ្ជើញពិធីរៀបអាពាហ៍ពិពាហ៍\n\nសូមគោរពអញ្ជើញ ${cleanName}\n\nយើងខ្ញុំគោរពជូនដំណឹង៖\n👫 ${couple}\n📅 ${dateStr}${timeStr ? `\n🕐 ម៉ោង ${timeStr}` : ""}\n📍 ${invitation?.venue_name || ""}\n\n👉 សូមចុច Link ដើម្បីមើលលិខិតអញ្ជើញពេញលេញ៖\n${inviteLink}\n\n🙏 សូមអរគុណ!`;
                                 window.open(`https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent(text)}`, "_blank");
                               }}
                               title="ចែករំលែក Telegram"
