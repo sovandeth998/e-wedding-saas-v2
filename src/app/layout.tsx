@@ -9,9 +9,28 @@ const kantumruy = Kantumruy_Pro({
   variable: "--font-kantumruy",
 });
 
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://e-wedding-saas-v2.vercel.app";
+
 export const metadata: Metadata = {
-  title: "E-Wedding | បង្កើតលិខិតអញ្ជើញរោងពិធីរៀបការអន្តរបណ្ដាញ",
-  description: "បង្កើត និងចែករំលែកលិខិតអញ្ជើញរោងពិធីរៀបការអន្តរបណ្ដាញយ៉ាងស្អាត។ ងាយស្រួល ស្អាត និងថោក។",
+  metadataBase: new URL(BASE_URL),
+  title: "💌 E-Wedding | លិខិតអញ្ជើញរៀបការ & ខួបកំណើតអនឡាញ",
+  description:
+    "បង្កើតលិខិតអញ្ជើញដ៏ស្រស់ស្អាត ជាមួយរូបភាព តន្ត្រី ការគណនាថ្ងៃពិធី និងប្រព័ន្ធបញ្ជាក់ការចូលរួម (RSVP) — ចែករំលែកទៅភ្ញៀវគ្រប់ទីកន្លែងតាម Telegram យ៉ាងងាយស្រួល",
+  openGraph: {
+    title: "💌 E-Wedding | លិខិតអញ្ជើញរៀបការ & ខួបកំណើតអនឡាញ",
+    description:
+      "បង្កើតលិខិតអញ្ជើញដ៏ស្រស់ស្អាត ជាមួយរូបភាព តន្ត្រី ការគណនាថ្ងៃពិធី និងប្រព័ន្ធបញ្ជាក់ការចូលរួម (RSVP) — ចែករំលែកទៅភ្ញៀវគ្រប់ទីកន្លែងតាម Telegram យ៉ាងងាយស្រួល",
+    type: "website",
+    url: BASE_URL,
+    siteName: "E-Wedding",
+    locale: "km_KH",
+  },
+  twitter: {
+    card: "summary",
+    title: "💌 E-Wedding | លិខិតអញ្ជើញរៀបការ & ខួបកំណើតអនឡាញ",
+    description:
+      "បង្កើតលិខិតអញ្ជើញដ៏ស្រស់ស្អាត ជាមួយរូបភាព តន្ត្រី ការគណនាថ្ងៃពិធី និងប្រព័ន្ធបញ្ជាក់ការចូលរួម (RSVP)",
+  },
 };
 
 export default function RootLayout({
