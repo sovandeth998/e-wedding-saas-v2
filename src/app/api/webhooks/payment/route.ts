@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getServiceClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   try {
+    const supabase = getServiceClient();
+    if (!supabase) {
+      return NextResponse.json({ error: "Server configuration missing" }, { status: 500 });
+    }
     const body = await request.json();
     const { orderId, status, khqrReference } = body;
 

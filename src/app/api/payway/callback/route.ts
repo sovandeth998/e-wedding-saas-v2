@@ -1,13 +1,8 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getServiceClient } from "@/lib/supabase/admin";
 import { checkTransaction, fulfillOrder, isPayWayConfigured } from "@/lib/payway";
 
 export const dynamic = "force-dynamic";
-
-const service = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 async function handleCallback(payload: Record<string, string>) {
   const tranId = payload.tran_id || "";
@@ -15,6 +10,11 @@ async function handleCallback(payload: Record<string, string>) {
 
   if (!tranId || !isPayWayConfigured()) {
     return NextResponse.json({ error: "invalid" }, { status: 400 });
+  }
+
+  const service = getServiceClient();
+  if (!service) {
+    return NextResponse.json({ error: "Server configuration missing" }, { status: 500 });
   }
 
   const { data: order } = await service
