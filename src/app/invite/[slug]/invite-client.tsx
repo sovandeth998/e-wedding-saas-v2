@@ -10,7 +10,7 @@ import { formatKhmerDate, formatKhmerDateShort, formatKhmerTime } from "@/lib/kh
 import { generateShareCode } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Heart, MapPin, Clock, Camera, Gift, MessageCircle, Calendar, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Share2, Video, Shirt, X, Sparkles } from "lucide-react";
+import { Heart, MapPin, Clock, Camera, Gift, MessageCircle, Calendar, Share2, Video, Shirt, X, Sparkles, Play, Pause, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Invitation, Guest, QRCode, GalleryPhoto, TimelineEvent } from "@/types/database";
 
 const ANIM_CSS = `
@@ -445,75 +445,112 @@ function InvitationContent() {
         <div
           className="relative max-w-md w-full"
           style={{
-            animation: opening ? "envOut .62s cubic-bezier(.55,0,.55,.2) forwards" : "envIn .8s cubic-bezier(.22,1,.36,1) both",
+            perspective: "1200px",
+            animation: opening ? "envOut .5s cubic-bezier(.55,0,.55,.2) .5s forwards" : "envIn .8s cubic-bezier(.22,1,.36,1) both",
           }}
         >
           <div className="absolute -inset-4 rounded-[2.4rem] blur-2xl pointer-events-none" style={{ background: `${t.accent}20`, animation: "pulseGlow 4s ease-in-out infinite" }} />
-          <div className="relative rounded-[2rem] px-8 py-10 md:px-10 shadow-2xl text-center overflow-hidden" style={cardStyle}>
-            <div className="absolute top-0 left-0 right-0 h-1" style={{ background: `linear-gradient(to right, transparent, ${t.accent}70, transparent)` }} />
+
+          <div
+            className="relative rounded-2xl overflow-hidden shadow-2xl"
+            style={{ background: "linear-gradient(160deg, #fffdf6 0%, #f8f0dd 45%, #f2e6ca 100%)", border: `1px solid ${t.accent}25`, transformStyle: "preserve-3d" }}
+            onClick={openEnvelope}
+          >
             {isOfficial && (
-              <div className="absolute inset-2.5 rounded-[1.6rem] pointer-events-none" style={{ border: `1px solid ${t.accent}38` }} />
-            )}
-            {isOfficial && (
-              <>
-                <div className="absolute top-4 left-4"><GoldCorner c={t.accent} /></div>
-                <div className="absolute top-4 right-4"><GoldCorner c={t.accent} flip /></div>
-                <div className="absolute bottom-4 left-4 rotate-180"><GoldCorner c={t.accent} /></div>
-                <div className="absolute bottom-4 right-4 rotate-180"><GoldCorner c={t.accent} flip /></div>
-              </>
+              <div className="absolute inset-2 rounded-2xl pointer-events-none" style={{ border: `1px solid ${t.accent}30` }} />
             )}
 
-            <CoupleAvatars size={64} />
-            {isOfficial && <div className="mb-4"><Monogram size={76} /></div>}
+            {/* crease lines (flap V + bottom pocket) */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 60" preserveAspectRatio="none" style={{ zIndex: 10 }}>
+              <polyline points="0,0 50,26 100,0" fill="none" stroke={`${t.accent}60`} strokeWidth="0.5" />
+              <polyline points="0,60 50,34 100,60" fill="none" stroke={`${t.accent}30`} strokeWidth="0.4" />
+              <line x1="50" y1="26" x2="50" y2="34" stroke={`${t.accent}40`} strokeWidth="0.4" />
+            </svg>
 
-            {!isOfficial && !invitation.groom_photo && !invitation.bride_photo && (
-              <div className="h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: `linear-gradient(135deg, ${t.accent}15, ${t.accent}08)`, border: `2px solid ${t.accent}30`, animation: "floatY 4s ease-in-out infinite" }}>
-                {isBirthday ? <span className="text-3xl">🎂</span> : <Heart className="h-8 w-8" style={{ color: t.accent, fill: t.accentFill }} />}
-              </div>
-            )}
-
-            <p className="text-[10px] tracking-[0.4em] uppercase mb-3 font-medium" style={{ color: t.accent }}>{isBirthday ? "Birthday Invitation" : "Wedding Invitation"}</p>
-
-            {isBirthday ? (
-              <h1 className="text-3xl font-bold leading-tight mb-5" style={{ color: t.textPri }}>
-                {invitation.groom_name_kh || invitation.groom_name || "អ្នកកំណើត"}
-              </h1>
-            ) : (
-              <>
-                <h1 className="text-3xl font-bold leading-tight" style={{ color: t.textPri }}>
-                  {invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"}
-                </h1>
-                <div className="flex items-center justify-center gap-3 my-3">
-                  <span className="h-px w-12" style={{ background: `linear-gradient(to right, transparent, ${t.accent}50)` }} />
-                  <span className="text-xl font-light" style={{ color: t.accent }}>&amp;</span>
-                  <span className="h-px w-12" style={{ background: `linear-gradient(to left, transparent, ${t.accent}50)` }} />
-                </div>
-                <h1 className="text-3xl font-bold leading-tight mb-5" style={{ color: t.textPri }}>
-                  {invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}
-                </h1>
-              </>
-            )}
-
-            <Ornament c={t.accent} />
-
-            <div className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm" style={{ border: `1px solid ${t.accent}25`, color: t.textSec }}>
-              <Calendar className="h-4 w-4" style={{ color: t.accent }} />
-              {formatKhmerDateShort(weddingDate)}
+            {/* STAMP (top right) */}
+            <div className="absolute top-4 right-4 z-30 h-16 w-14 flex flex-col items-center justify-center gap-1 rounded-[3px]"
+              style={{ border: `1.5px dashed ${t.accent}50`, background: `${t.accent}10`, color: t.accent, boxShadow: `0 3px 10px ${t.accent}18` }}>
+              <Heart className="h-5 w-5" fill={`${t.accent}30`} />
+              <span className="text-[7px] font-bold tracking-[0.22em]">E-WEDDING</span>
             </div>
 
-            {displayName && (
-              <div className="mt-5 py-3.5 px-5 rounded-2xl" style={{ border: `1.5px solid ${t.accent}25`, background: t.accentBg }}>
-                <p className="text-[10px] tracking-[0.25em] uppercase mb-1" style={{ color: t.accent }}>គូរាល់ជូន</p>
-                <p className="font-bold text-lg" style={{ color: t.textPri }}>{displayName}</p>
+            {/* FRONT FLAP (top triangle) */}
+            <div
+              className="absolute top-0 inset-x-0 z-20 pointer-events-none"
+              style={{
+                height: "46%",
+                clipPath: "polygon(0 0, 100% 0, 50% 100%)",
+                background: "linear-gradient(180deg, #efe2c6 0%, #f7efda 70%, #fbf5e6 100%)",
+                transformStyle: "preserve-3d",
+                transformOrigin: "50% 0%",
+                transform: opening ? "rotateX(-74deg)" : "rotateX(0deg)",
+                transition: "transform .55s cubic-bezier(.55,0,.35,1), opacity .45s ease .05s",
+                opacity: opening ? 0 : 1,
+                boxShadow: "0 10px 22px -8px rgba(80,60,20,.35)",
+              }}
+            >
+              <div className="absolute top-0 inset-x-0 h-[3px]" style={{ background: `linear-gradient(to right, transparent, ${t.accent}55, transparent)` }} />
+            </div>
+
+            {/* WAX SEAL (flap apex, clickable) */}
+            <button
+              onClick={(e) => { e.stopPropagation(); openEnvelope(); }}
+              disabled={opening}
+              aria-label="បើកលិខិត"
+              className="absolute left-1/2 top-[33%] -translate-x-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-1.5 cursor-pointer"
+              style={{ transform: opening ? "translate(-50%,-50%) scale(1.6)" : "translate(-50%,-50%) scale(1)", opacity: opening ? 0 : 1, transition: "transform .5s ease, opacity .4s ease .05s" }}
+            >
+              <span className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: `radial-gradient(circle at 35% 28%, ${t.btnFrom}, ${t.btnTo} 78%)`, border: `2px solid ${t.accent}55`, boxShadow: `0 8px 24px ${t.accent}50, inset 0 2px 6px rgba(255,255,255,.45)`, animation: !opening && !isOfficial && !invitation.groom_photo ? "tlPulse 3s ease-in-out infinite" : "floatY 3.4s ease-in-out infinite" }}>
+                <Heart className="h-7 w-7 text-white" fill="rgba(255,255,255,.92)" />
+              </span>
+              <span className="text-[10px] font-bold tracking-wide px-2.5 py-0.5 rounded-full" style={{ background: `${t.accent}14`, color: t.textSec }}>
+                {opening ? "កំពុងបើក..." : "បើកលិខិត"}
+              </span>
+            </button>
+
+            {/* BODY CONTENT */}
+            <div className="relative px-7 pt-[47%] pb-8 md:px-9 md:pb-9 text-center cursor-pointer" onClick={openEnvelope}>
+              {isOfficial && <div className="mb-2 flex justify-center"><Monogram size={58} /></div>}
+              <CoupleAvatars size={48} />
+
+              <p className="text-[9px] tracking-[0.4em] uppercase mb-2 font-medium" style={{ color: t.accent }}>
+                {isBirthday ? "Birthday Invitation" : "Wedding Invitation"}
+              </p>
+
+              {isBirthday ? (
+                <h1 className="text-2xl font-bold leading-tight" style={{ color: "#4a3a1e" }}>
+                  {invitation.groom_name_kh || invitation.groom_name || "អ្នកកំណើត"}
+                </h1>
+              ) : (
+                <>
+                  <h1 className="text-2xl font-bold leading-tight" style={{ color: "#4a3a1e" }}>
+                    {invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"}
+                  </h1>
+                  <div className="flex items-center justify-center gap-3 my-2">
+                    <span className="h-px w-10" style={{ background: `linear-gradient(to right, transparent, ${t.accent}50)` }} />
+                    <span className="text-lg font-light" style={{ color: t.accent }}>&amp;</span>
+                    <span className="h-px w-10" style={{ background: `linear-gradient(to left, transparent, ${t.accent}50)` }} />
+                  </div>
+                  <h1 className="text-2xl font-bold leading-tight" style={{ color: "#4a3a1e" }}>
+                    {invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}
+                  </h1>
+                </>
+              )}
+
+              <div className="mt-4"><Ornament c={t.accent} /></div>
+
+              <div className="mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm" style={{ border: `1px solid ${t.accent}30`, color: "#5a4a2a" }}>
+                <Calendar className="h-4 w-4" style={{ color: t.accent }} />
+                {formatKhmerDateShort(weddingDate)}
               </div>
-            )}
 
-            <Button onClick={openEnvelope} disabled={opening} className="mt-7 w-full text-white rounded-2xl h-12 font-semibold tracking-wide shadow-lg hover:scale-[1.02] transition-transform btn-shine"
-              style={{ background: `linear-gradient(135deg, ${t.btnFrom}, ${t.btnTo})`, boxShadow: `0 8px 28px ${t.accent}45` }}>
-              {opening ? "✨" : "✉️"} បើកលិខិតអញ្ជើញ
-            </Button>
-
-            <div className="mt-5"><ChevronDown className="h-5 w-5 animate-bounce mx-auto" style={{ color: `${t.accent}55` }} /></div>
+              {displayName && (
+                <div className="mt-4 py-2.5 px-4 rounded-xl" style={{ border: `1.5px solid ${t.accent}28`, background: "rgba(255,253,246,.7)" }}>
+                  <p className="text-[9px] tracking-[0.25em] uppercase mb-0.5" style={{ color: t.accent }}>ប្រគល់ជូន</p>
+                  <p className="font-bold text-base" style={{ color: "#4a3a1e" }}>{displayName}</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
