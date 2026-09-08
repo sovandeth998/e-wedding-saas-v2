@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, Suspense, useRef } from "react";
+import type { CSSProperties } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -148,10 +149,15 @@ function InvitationContent() {
     btnTo: templateConfig.btnTo || fallbackT.btnTo,
   } : fallbackT;
   const isLight = templateConfig?.isLight ?? (tid === "1");
+  const isOfficial = tid === "13";
 
   const cardStyle = isLight
     ? { background: "linear-gradient(145deg, #fffefa, #f8f2e4)", border: `1.5px solid ${t.accent}20`, boxShadow: `0 4px 24px ${t.accent}10` }
     : { background: `linear-gradient(135deg, ${t.cardFrom}cc, ${t.cardTo}cc)`, border: `1px solid ${t.accent}25` };
+
+  const sectionCard: CSSProperties = isOfficial
+    ? { ...cardStyle, boxShadow: `0 4px 24px ${t.accent}10, inset 0 0 0 1px ${t.accent}22, inset 0 0 0 8px ${t.accent}07` }
+    : cardStyle;
 
   useEffect(() => {
     fetchInvitation();
@@ -318,12 +324,56 @@ function InvitationContent() {
   };
 
   // ---------- shared decorative pieces ----------
-  const Ornament = ({ c }: { c: string }) => (
-    <div className="flex items-center justify-center gap-2">
-      <span className="h-px w-10 md:w-14" style={{ background: `linear-gradient(to right, transparent, ${c}60)` }} />
-      <span className="h-1.5 w-1.5 rotate-45 shrink-0" style={{ background: c }} />
-      <span className="h-px w-10 md:w-14" style={{ background: `linear-gradient(to left, transparent, ${c}60)` }} />
-    </div>
+  const Ornament = ({ c }: { c: string }) =>
+    isOfficial ? (
+      <div className="flex items-center justify-center">
+        <svg width="180" height="16" viewBox="0 0 180 16" className="max-w-[75%]" aria-hidden>
+          <path d="M4 8h52c5 0 8-4 11-6" stroke={c} strokeWidth="1" fill="none" opacity="0.6" />
+          <path d="M124 8h52M176 8v0" stroke={c} strokeWidth="1" fill="none" opacity="0.6" />
+          <path d="M176 2a6 6 0 0 0 0 12" stroke={c} strokeWidth="1" fill="none" opacity="0.45" />
+          <path d="M4 2a6 6 0 0 1 0 12" stroke={c} strokeWidth="1" fill="none" opacity="0.45" />
+          <path d="M64 8c4-6 12-6 12 0s8 6 12 0" stroke={c} strokeWidth="1.1" fill="none" />
+          <path d="M88 8c2-3 5-3 7 0s5 3 7 0" stroke={c} strokeWidth="1.1" fill="none" />
+          <circle cx="102" cy="8" r="4" stroke={c} strokeWidth="1.1" fill="none" />
+          <circle cx="102" cy="8" r="1.6" fill={c} />
+          <circle cx="36" cy="8" r="1.6" fill={c} opacity="0.7" />
+          <circle cx="144" cy="8" r="1.6" fill={c} opacity="0.7" />
+        </svg>
+      </div>
+    ) : (
+      <div className="flex items-center justify-center gap-2">
+        <span className="h-px w-10 md:w-14" style={{ background: `linear-gradient(to right, transparent, ${c}60)` }} />
+        <span className="h-1.5 w-1.5 rotate-45 shrink-0" style={{ background: c }} />
+        <span className="h-px w-10 md:w-14" style={{ background: `linear-gradient(to left, transparent, ${c}60)` }} />
+      </div>
+    );
+
+  const Monogram = ({ size = 84 }: { size?: number }) => {
+    const initial = (name?: string | null) => (name ? Array.from(name.trim())[0] || "•" : "•");
+    const label = isBirthday
+      ? initial(invitation?.groom_name_kh || invitation?.groom_name)
+      : `${initial(invitation?.groom_name_kh || invitation?.groom_name)}${initial(invitation?.bride_name_kh || invitation?.bride_name)}`;
+    const fs = isBirthday ? size * 0.42 : size * 0.4;
+    return (
+      <div className="relative mx-auto flex items-center justify-center" style={{ width: size, height: size }}>
+        <div
+          className="absolute inset-0 rounded-full flex items-center justify-center"
+          style={{ background: `linear-gradient(135deg, ${t.accent}14, ${t.accent}06)`, border: `1.5px solid ${t.accent}55`, boxShadow: `0 0 0 5px ${t.accent}10, inset 0 0 0 3px ${t.accent}12` }}
+        >
+          <span className="font-bold leading-none" style={{ color: t.accent, fontSize: fs }}>{label}</span>
+        </div>
+        <span className="absolute -top-1 h-2 w-2 rotate-45" style={{ background: t.accent }} />
+        <span className="absolute -bottom-1 h-2 w-2 rotate-45" style={{ background: t.accent }} />
+      </div>
+    );
+  };
+
+  const GoldCorner = ({ c, flip = false }: { c: string; flip?: boolean }) => (
+    <svg width="42" height="42" viewBox="0 0 42 42" className={flip ? "-scale-x-100" : ""} aria-hidden>
+      <path d={flip ? "M42 2 L8 2 Q2 2 2 8 L2 22 M42 22 L2 42" : "M2 2 L34 2 Q40 2 40 8 L40 22 M2 22 L40 42"} stroke={c} strokeWidth="1.4" fill="none" opacity="0.6" />
+      <path d={flip ? "M42 8 L14 8 Q6 8 6 16 L6 30" : "M2 8 L28 8 Q36 8 36 16 L36 30"} stroke={c} strokeWidth="0.8" fill="none" opacity="0.3" />
+      <circle cx={flip ? 40 : 4} cy={4} r="2" fill={c} opacity="0.7" />
+    </svg>
   );
 
   const SectionHead = ({ icon: Icon, title }: { icon: any; title: string }) => (
@@ -401,10 +451,22 @@ function InvitationContent() {
           <div className="absolute -inset-4 rounded-[2.4rem] blur-2xl pointer-events-none" style={{ background: `${t.accent}20`, animation: "pulseGlow 4s ease-in-out infinite" }} />
           <div className="relative rounded-[2rem] px-8 py-10 md:px-10 shadow-2xl text-center overflow-hidden" style={cardStyle}>
             <div className="absolute top-0 left-0 right-0 h-1" style={{ background: `linear-gradient(to right, transparent, ${t.accent}70, transparent)` }} />
+            {isOfficial && (
+              <div className="absolute inset-2.5 rounded-[1.6rem] pointer-events-none" style={{ border: `1px solid ${t.accent}38` }} />
+            )}
+            {isOfficial && (
+              <>
+                <div className="absolute top-4 left-4"><GoldCorner c={t.accent} /></div>
+                <div className="absolute top-4 right-4"><GoldCorner c={t.accent} flip /></div>
+                <div className="absolute bottom-4 left-4 rotate-180"><GoldCorner c={t.accent} /></div>
+                <div className="absolute bottom-4 right-4 rotate-180"><GoldCorner c={t.accent} flip /></div>
+              </>
+            )}
 
             <CoupleAvatars size={64} />
+            {isOfficial && <div className="mb-4"><Monogram size={76} /></div>}
 
-            {!invitation.groom_photo && !invitation.bride_photo && (
+            {!isOfficial && !invitation.groom_photo && !invitation.bride_photo && (
               <div className="h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: `linear-gradient(135deg, ${t.accent}15, ${t.accent}08)`, border: `2px solid ${t.accent}30`, animation: "floatY 4s ease-in-out infinite" }}>
                 {isBirthday ? <span className="text-3xl">🎂</span> : <Heart className="h-8 w-8" style={{ color: t.accent, fill: t.accentFill }} />}
               </div>
@@ -472,7 +534,15 @@ function InvitationContent() {
           <div className="absolute bottom-4 right-8 w-28 h-28 rounded-full blur-[60px]" style={{ background: `${t.accent}0d` }} />
         </div>
         <div className="max-w-lg mx-auto relative">
+          {isOfficial && (
+            <>
+              <div className="absolute -top-10 left-1/2 -translate-x-1/2 h-32 w-px" style={{ background: `linear-gradient(to bottom, transparent, ${t.accent}45)` }} />
+              <div className="absolute top-2 left-1"><GoldCorner c={t.accent} /></div>
+              <div className="absolute top-2 right-1"><GoldCorner c={t.accent} flip /></div>
+            </>
+          )}
           <CoupleAvatars size={72} />
+          {isOfficial && <div className="mb-1"><Monogram size={84} /></div>}
           <p className="text-[10px] tracking-[0.45em] uppercase mb-2 font-medium mt-4" style={{ color: t.accent }}>Invitation</p>
           <p className="text-sm mb-7" style={{ color: t.textSec }}>{isBirthday ? "ពិធីរំលឹកថ្ងៃកំណើត" : "ពិធីរៀបអាពាហ៍ពិពាហ៍"}</p>
 
@@ -561,7 +631,7 @@ function InvitationContent() {
 
         {/* Event info */}
         <Reveal>
-          <section className="rounded-3xl p-6" style={cardStyle}>
+          <section className="rounded-3xl p-6" style={sectionCard}>
           <SectionHead icon={Calendar} title="ព័ត៌មានពិធីការ" />
           <div className="space-y-3 text-center">
             <div className="flex items-center justify-center gap-2" style={{ color: t.textSec }}>
@@ -611,7 +681,7 @@ function InvitationContent() {
         {/* Timeline */}
         {timeline.length > 0 && (
           <Reveal delay={60}>
-          <section className="rounded-3xl p-6" style={cardStyle}>
+          <section className="rounded-3xl p-6" style={sectionCard}>
             <SectionHead icon={Clock} title="កាលវិភាគពិធី" />
             <div className="relative pl-8">
               <div className="absolute left-[11px] top-1 bottom-1 w-0.5 rounded" style={{ background: `linear-gradient(to bottom, ${t.accent}50, ${t.accent}15)` }} />
@@ -631,7 +701,7 @@ function InvitationContent() {
         {/* Dress code */}
         {invitation.dress_code && (
           <Reveal delay={80}>
-          <section className="rounded-3xl p-6" style={cardStyle}>
+          <section className="rounded-3xl p-6" style={sectionCard}>
             <SectionHead icon={Shirt} title="ការស្លៀកពាក់" />
             <p className="text-sm text-center" style={{ color: t.textSec }}>{invitation.dress_code}</p>
             {invitation.dress_code_color && (
@@ -647,7 +717,7 @@ function InvitationContent() {
         {/* Story */}
         {invitation.story && !isBirthday && (
           <Reveal delay={100}>
-          <section className="rounded-3xl p-6" style={cardStyle}>
+          <section className="rounded-3xl p-6" style={sectionCard}>
             <SectionHead icon={MessageCircle} title="រឿងស្នេហារបស់យើង" />
             <p className="whitespace-pre-line leading-relaxed text-sm text-center" style={{ color: t.textSec }}>{invitation.story}</p>
           </section>
@@ -657,7 +727,7 @@ function InvitationContent() {
         {/* Video */}
         {invitation.video_url && (
           <Reveal delay={100}>
-          <section className="rounded-3xl p-6" style={cardStyle}>
+          <section className="rounded-3xl p-6" style={sectionCard}>
             <SectionHead icon={Video} title="វីដេអូរៀបការ" />
             <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
               <iframe
@@ -675,7 +745,7 @@ function InvitationContent() {
         {/* Gallery */}
         {photos.length > 0 && (
           <Reveal delay={100}>
-          <section className="rounded-3xl p-6" style={cardStyle}>
+          <section className="rounded-3xl p-6" style={sectionCard}>
             <SectionHead icon={Camera} title="វិចិត្រសាលរូបភាព" />
             {photos.length === 1 ? (
               <div className="aspect-[4/3] rounded-2xl overflow-hidden cursor-zoom-in" style={{ border: `1px solid ${t.accent}20` }} onClick={() => setLightboxIdx(0)}>
@@ -697,7 +767,7 @@ function InvitationContent() {
         {/* Gift QR */}
         {qrCodes.length > 0 && (
           <Reveal delay={100}>
-          <section className="rounded-3xl p-6 text-center" style={cardStyle}>
+          <section className="rounded-3xl p-6 text-center" style={sectionCard}>
             <SectionHead icon={Gift} title="ចំណងដៃ" />
             <p className="text-xs mb-4 -mt-2" style={{ color: t.textMut }}>អ្នកអាចផ្ញើការលើកទឹកចិត្តតាមរយៈ QR</p>
             <Button onClick={() => setShowGift(true)} className="btn-shine w-full max-w-xs mx-auto h-12 rounded-2xl text-white shadow-lg font-semibold gap-2"
@@ -710,7 +780,7 @@ function InvitationContent() {
 
         {/* RSVP */}
         <Reveal delay={80}>
-        <section className="rounded-3xl p-6" style={cardStyle}>
+        <section className="rounded-3xl p-6" style={sectionCard}>
           <SectionHead icon={Calendar} title="បញ្ជាក់ការចូលរួម" />
           {rsvpSubmitted ? (
             <div className="text-center py-6">
