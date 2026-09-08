@@ -33,8 +33,7 @@ const ANIM_CSS = `
   .petal{position:absolute;top:-24px;border-radius:82% 4% 82% 4%;animation-name:petalFall;animation-timing-function:linear;animation-iteration-count:infinite;will-change:transform;backface-visibility:hidden}
   @keyframes twinkle{0%,85%,100%{opacity:0;transform:scale(.35) rotate(0deg)}35%,60%{opacity:1;transform:scale(1) rotate(45deg)}}
   .tw-spark{position:absolute;animation-name:twinkle;animation-iteration-count:infinite;pointer-events:none;will-change:transform,opacity}
-  @keyframes spinSlow{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-  @keyframes sealFloat{0%,100%{transform:translateY(0);box-shadow:0 8px 24px rgba(236,72,153,.55),inset 0 2px 6px rgba(255,255,255,.55)}50%{transform:translateY(-9px);box-shadow:0 10px 34px rgba(255,200,90,.95),inset 0 2px 6px rgba(255,255,255,.55)}}
+  @keyframes sealGlow{0%,100%{box-shadow:0 10px 26px rgba(190,24,93,.5),inset 0 2px 6px rgba(255,255,255,.58)}50%{box-shadow:0 12px 34px rgba(236,72,153,.85),inset 0 2px 6px rgba(255,255,255,.58)}}
   .reveal{opacity:0;transform:translateY(30px);transition:opacity .85s cubic-bezier(.22,1,.36,1),transform .85s cubic-bezier(.22,1,.36,1)}
   .reveal-in{opacity:1;transform:none}
   .fade-up{animation:fadeUp .8s cubic-bezier(.22,1,.36,1) both}
@@ -525,7 +524,7 @@ function InvitationContent() {
             <div className="absolute top-4 right-4 z-30 h-16 w-14 flex flex-col items-center justify-center gap-1 rounded-[3px]"
               style={{ border: "1.5px dashed rgba(219,39,119,.5)", background: "rgba(255,241,246,.75)", color: "#db2777", boxShadow: "0 3px 10px rgba(219,39,119,.2)" }}>
               <Heart className="h-5 w-5" fill="rgba(219,39,119,.22)" />
-              <span className="text-[7px] font-bold tracking-[0.22em]">E-WEDDING</span>
+              <span className="text-[7px] font-bold tracking-[0.2em]">អញ្ជើញ</span>
             </div>
 
             {/* FRONT FLAP (top triangle) */}
@@ -555,8 +554,8 @@ function InvitationContent() {
               style={{ transform: opening ? "translate(-50%,-50%) scale(1.7) rotate(8deg)" : "translate(-50%,-50%) scale(1) rotate(0deg)", opacity: opening ? 0 : 1, transition: "transform .5s ease, opacity .4s ease .05s" }}
             >
               <span className="relative flex items-center justify-center">
-                <span className="absolute rounded-full" style={{ inset: -10, border: "1.5px dashed rgba(255,201,80,.65)", animation: "spinSlow 9s linear infinite" }} />
-                <span className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "radial-gradient(circle at 35% 28%, #f9a8d4, #ec4899 55%, #be185d 95%)", border: "2px solid rgba(255,255,255,.65)", animation: opening ? "none" : "sealFloat 3.4s ease-in-out infinite" }}>
+                <span className="absolute rounded-full" style={{ inset: -10, border: "1.5px dashed rgba(255,201,80,.65)" }} />
+                <span className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "radial-gradient(circle at 35% 28%, #f9a8d4, #ec4899 55%, #be185d 95%)", border: "2px solid rgba(255,255,255,.65)", animation: opening ? "none" : "sealGlow 3.4s ease-in-out infinite" }}>
                   <Heart className="h-7 w-7 text-white" fill="rgba(255,255,255,.95)" />
                 </span>
               </span>
@@ -574,8 +573,8 @@ function InvitationContent() {
               <EnvPhoto size={46} />
               {isOfficial && !invitation.groom_photo && !invitation.bride_photo && <div className="mb-2 flex justify-center"><Monogram size={56} /></div>}
 
-              <p className="text-[9px] tracking-[0.4em] uppercase mb-2 font-medium" style={{ color: "#db2777" }}>
-                {isBirthday ? "Birthday Invitation" : "Wedding Invitation"}
+              <p className="text-[9px] tracking-[0.15em] mb-2 font-medium" style={{ color: "#db2777" }}>
+                {isBirthday ? "លិខិតអញ្ជើញខួបកំណើត" : "លិខិតអញ្ជើញរៀបអាពាហ៍ពិពាហ៍"}
               </p>
 
               {isBirthday ? (
@@ -642,7 +641,7 @@ function InvitationContent() {
           )}
           <CoupleAvatars size={72} />
           {isOfficial && <div className="mb-1"><Monogram size={84} /></div>}
-          <p className="text-[10px] tracking-[0.45em] uppercase mb-2 font-medium mt-4" style={{ color: t.accent }}>Invitation</p>
+          <p className="text-[10px] tracking-[0.25em] mb-2 font-medium mt-4" style={{ color: t.accent }}>លិខិតអញ្ជើញ</p>
           <p className="text-sm mb-7" style={{ color: t.textSec }}>{isBirthday ? "áž–áž·áž’áž¸ážšáŸ†áž›áž¹áž€ážáŸ’áž„áŸƒáž€áŸ†ážŽáž¾áž" : "áž–áž·áž’áž¸ážšáŸ€áž”áž¢áž¶áž–áž¶áž áŸáž–áž·áž–áž¶áž áŸ"}</p>
 
           {isBirthday ? (
