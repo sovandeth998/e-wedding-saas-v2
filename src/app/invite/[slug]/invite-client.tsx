@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense, useRef } from "react";
+import { useEffect, useState, Suspense, useRef, useMemo } from "react";
 import type { CSSProperties } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -29,6 +29,8 @@ const ANIM_CSS = `
   @keyframes lbIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
   .lb-img{animation:lbIn .32s cubic-bezier(.22,1,.36,1) both}
   @keyframes tlPulse{0%,100%{box-shadow:0 0 0 0 rgba(0,0,0,0)}50%{box-shadow:0 0 0 5px transparent}}
+  @keyframes petalFall{0%{transform:translate3d(0,-6vh,0) rotate(0deg);opacity:0}8%{opacity:.9}88%{opacity:.5}100%{transform:translate3d(-38px,108vh,0) rotate(280deg);opacity:0}}
+  .petal{position:absolute;top:-24px;border-radius:82% 4% 82% 4%;animation-name:petalFall;animation-timing-function:linear;animation-iteration-count:infinite;will-change:transform;backface-visibility:hidden}
   .reveal{opacity:0;transform:translateY(30px);transition:opacity .85s cubic-bezier(.22,1,.36,1),transform .85s cubic-bezier(.22,1,.36,1)}
   .reveal-in{opacity:1;transform:none}
   .fade-up{animation:fadeUp .8s cubic-bezier(.22,1,.36,1) both}
@@ -55,30 +57,6 @@ function Reveal({ children, delay = 0, className = "" }: { children: React.React
   return (
     <div ref={ref} className={`${className} reveal ${vis ? "reveal-in" : ""}`} style={{ transitionDelay: `${delay}ms` }}>
       {children}
-    </div>
-  );
-}
-
-function FloatHearts({ color, count = 9 }: { color: string; count?: number }) {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {Array.from({ length: count }).map((_, i) => {
-        const left = (i * 11.3 + ((i * 37) % 13)) % 97;
-        const dur = 10 + ((i * 41) % 80) / 10;
-        const del = ((i * 53) % 90) / 10;
-        const size = 10 + ((i * 29) % 16);
-        return (
-          <svg
-            key={i}
-            viewBox="0 0 24 24"
-            fill={color}
-            className="float-heart"
-            style={{ left: `${left}%`, width: size, height: size, opacity: 0, animationDuration: `${dur}s`, animationDelay: `${del}s` }}
-          >
-            <path d="M12 21s-7.5-4.9-10-9.3C.6 8.6 2.3 5 5.7 5c2 0 3.3 1.1 4.3 2.6h4C15 6.1 16.3 5 18.3 5c3.4 0 5.1 3.6 3.7 6.7C19.5 16.1 12 21 12 21z" />
-          </svg>
-        );
-      })}
     </div>
   );
 }
@@ -324,6 +302,51 @@ function InvitationContent() {
   };
 
   // ---------- shared decorative pieces ----------
+  const Petals = () => {
+    const petals = useMemo(
+      () =>
+        Array.from({ length: 20 }).map((_, i) => ({
+          left: `${Math.random() * 100}%`,
+          size: 8 + Math.random() * 9,
+          delay: Math.random() * 12,
+          dur: 11 + Math.random() * 9,
+          hue: Math.random() < 0.5 ? "rgba(244,143,177,.9)" : "rgba(244,182,201,.9)",
+        })),
+      []
+    );
+    return (
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {petals.map((p, i) => (
+          <span key={i} className="petal" style={{ left: p.left, width: p.size, height: p.size * 1.3, background: p.hue, animationDuration: `${p.dur}s`, animationDelay: `${p.delay}s` }} />
+        ))}
+      </div>
+    );
+  };
+
+  const EnvPhoto = ({ size = 46 }: { size?: number }) => {
+    const photos = [invitation?.groom_photo, invitation?.bride_photo].filter(Boolean) as string[];
+    if (photos.length > 0) {
+      return (
+        <div className="flex justify-center mb-3">
+          <div className="relative flex items-center rounded-2xl px-3 py-2 shadow-xl" style={{ background: "linear-gradient(160deg,#ffffff, #fff0f4)", border: `1.5px solid rgba(232,145,168,.45)`, transform: "rotate(-2deg)" }}>
+            <div className="flex -space-x-3">
+              {photos.slice(0, 2).map((p, i) => (
+                <img key={i} src={p} alt="" className="rounded-full object-cover border-2 border-white shadow" style={{ width: size, height: size }} />
+              ))}
+            </div>
+            <Heart className="absolute -right-1 -bottom-1 h-5 w-5 drop-shadow" style={{ color: "#db2777", fill: "#ffe4ec" }} />
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="flex justify-center mb-2">
+        <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full shadow-md" style={{ background: `radial-gradient(circle at 35% 28%, #fbcfe8, #f9a8d4 80%)`, border: `2px solid rgba(244,114,182,.55)` }}>
+          {isBirthday ? <span className="text-2xl">🎂</span> : <Heart className="h-6 w-6" style={{ color: "#fff" }} fill="rgba(255,255,255,.92)" />}
+        </div>
+      </div>
+    );
+  };
   const Ornament = ({ c }: { c: string }) =>
     isOfficial ? (
       <div className="flex items-center justify-center">
@@ -437,40 +460,42 @@ function InvitationContent() {
       <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ background: t.bg, animation: "pageIn .4s ease both" }}>
         <style dangerouslySetInnerHTML={{ __html: ANIM_CSS }} />
         <div className="absolute inset-0 pointer-events-none">
-          <FloatHearts color={t.accent} count={10} />
-          <div className="absolute top-[-10%] left-[15%] w-72 h-72 rounded-full blur-[110px]" style={{ background: `${t.accent}18`, animation: "pulseGlow 5s ease-in-out infinite" }} />
-          <div className="absolute bottom-[-8%] right-[10%] w-80 h-80 rounded-full blur-[120px]" style={{ background: `${t.accent}14`, animation: "pulseGlow 6s ease-in-out 1s infinite" }} />
+          <Petals />
+          <div className="absolute top-[-10%] left-[15%] w-72 h-72 rounded-full blur-[110px]" style={{ background: "rgba(244,143,177,.28)", animation: "pulseGlow 5s ease-in-out infinite" }} />
+          <div className="absolute bottom-[-8%] right-[10%] w-80 h-80 rounded-full blur-[120px]" style={{ background: "rgba(244,182,201,.32)", animation: "pulseGlow 6s ease-in-out 1s infinite" }} />
         </div>
 
         <div
           className="relative max-w-md w-full"
           style={{
             perspective: "1200px",
-            animation: opening ? "envOut .5s cubic-bezier(.55,0,.55,.2) .5s forwards" : "envIn .8s cubic-bezier(.22,1,.36,1) both",
+            transform: opening ? "rotate(-2deg) translateY(-8px) scale(1.03)" : "rotate(0deg) translateY(0) scale(1)",
+            transition: "transform .6s cubic-bezier(.34,1.56,.5,1)",
+            animation: opening ? "envOut .5s cubic-bezier(.55,0,.55,.2) .55s forwards" : "envIn .8s cubic-bezier(.22,1,.36,1) both",
           }}
         >
-          <div className="absolute -inset-4 rounded-[2.4rem] blur-2xl pointer-events-none" style={{ background: `${t.accent}20`, animation: "pulseGlow 4s ease-in-out infinite" }} />
+          <div className="absolute -inset-4 rounded-[2.4rem] blur-2xl pointer-events-none" style={{ background: "rgba(244,114,182,.35)", animation: "pulseGlow 4s ease-in-out infinite" }} />
 
           <div
             className="relative rounded-2xl overflow-hidden shadow-2xl"
-            style={{ background: "linear-gradient(160deg, #fffdf6 0%, #f8f0dd 45%, #f2e6ca 100%)", border: `1px solid ${t.accent}25`, transformStyle: "preserve-3d" }}
+            style={{ background: "linear-gradient(160deg, #fff6f9 0%, #ffe9f1 45%, #ffd9e6 100%)", border: "1.5px solid rgba(232,145,168,.55)", transformStyle: "preserve-3d" }}
             onClick={openEnvelope}
           >
             {isOfficial && (
-              <div className="absolute inset-2 rounded-2xl pointer-events-none" style={{ border: `1px solid ${t.accent}30` }} />
+              <div className="absolute inset-2 rounded-2xl pointer-events-none" style={{ border: "1px solid rgba(232,145,168,.45)" }} />
             )}
 
-            {/* crease lines (flap V + bottom pocket) */}
+            {/* crease lines (flap V + bottom pocket) — cute pink */}
             <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 60" preserveAspectRatio="none" style={{ zIndex: 10 }}>
-              <polyline points="0,0 50,26 100,0" fill="none" stroke={`${t.accent}60`} strokeWidth="0.5" />
-              <polyline points="0,60 50,34 100,60" fill="none" stroke={`${t.accent}30`} strokeWidth="0.4" />
-              <line x1="50" y1="26" x2="50" y2="34" stroke={`${t.accent}40`} strokeWidth="0.4" />
+              <polyline points="0,0 50,26 100,0" fill="none" stroke="rgba(219,39,119,.5)" strokeWidth="0.5" />
+              <polyline points="0,60 50,34 100,60" fill="none" stroke="rgba(219,39,119,.22)" strokeWidth="0.4" />
+              <line x1="50" y1="26" x2="50" y2="34" stroke="rgba(219,39,119,.3)" strokeWidth="0.4" />
             </svg>
 
             {/* STAMP (top right) */}
             <div className="absolute top-4 right-4 z-30 h-16 w-14 flex flex-col items-center justify-center gap-1 rounded-[3px]"
-              style={{ border: `1.5px dashed ${t.accent}50`, background: `${t.accent}10`, color: t.accent, boxShadow: `0 3px 10px ${t.accent}18` }}>
-              <Heart className="h-5 w-5" fill={`${t.accent}30`} />
+              style={{ border: "1.5px dashed rgba(219,39,119,.5)", background: "rgba(255,241,246,.75)", color: "#db2777", boxShadow: "0 3px 10px rgba(219,39,119,.2)" }}>
+              <Heart className="h-5 w-5" fill="rgba(219,39,119,.22)" />
               <span className="text-[7px] font-bold tracking-[0.22em]">E-WEDDING</span>
             </div>
 
@@ -480,16 +505,16 @@ function InvitationContent() {
               style={{
                 height: "46%",
                 clipPath: "polygon(0 0, 100% 0, 50% 100%)",
-                background: "linear-gradient(180deg, #efe2c6 0%, #f7efda 70%, #fbf5e6 100%)",
+                background: "linear-gradient(180deg, #ffd0df 0%, #ffe2ec 70%, #ffecf3 100%)",
                 transformStyle: "preserve-3d",
                 transformOrigin: "50% 0%",
-                transform: opening ? "rotateX(-74deg)" : "rotateX(0deg)",
+                transform: opening ? "rotateX(-78deg)" : "rotateX(0deg)",
                 transition: "transform .55s cubic-bezier(.55,0,.35,1), opacity .45s ease .05s",
                 opacity: opening ? 0 : 1,
-                boxShadow: "0 10px 22px -8px rgba(80,60,20,.35)",
+                boxShadow: "0 10px 22px -8px rgba(190,24,93,.4)",
               }}
             >
-              <div className="absolute top-0 inset-x-0 h-[3px]" style={{ background: `linear-gradient(to right, transparent, ${t.accent}55, transparent)` }} />
+              <div className="absolute top-0 inset-x-0 h-[3px]" style={{ background: "linear-gradient(to right, transparent, rgba(219,39,119,.55), transparent)" }} />
             </div>
 
             {/* WAX SEAL (flap apex, clickable) */}
@@ -498,56 +523,60 @@ function InvitationContent() {
               disabled={opening}
               aria-label="បើកលិខិត"
               className="absolute left-1/2 top-[33%] -translate-x-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-1.5 cursor-pointer"
-              style={{ transform: opening ? "translate(-50%,-50%) scale(1.6)" : "translate(-50%,-50%) scale(1)", opacity: opening ? 0 : 1, transition: "transform .5s ease, opacity .4s ease .05s" }}
+              style={{ transform: opening ? "translate(-50%,-50%) scale(1.7) rotate(8deg)" : "translate(-50%,-50%) scale(1) rotate(0deg)", opacity: opening ? 0 : 1, transition: "transform .5s ease, opacity .4s ease .05s" }}
             >
-              <span className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: `radial-gradient(circle at 35% 28%, ${t.btnFrom}, ${t.btnTo} 78%)`, border: `2px solid ${t.accent}55`, boxShadow: `0 8px 24px ${t.accent}50, inset 0 2px 6px rgba(255,255,255,.45)`, animation: !opening && !isOfficial && !invitation.groom_photo ? "tlPulse 3s ease-in-out infinite" : "floatY 3.4s ease-in-out infinite" }}>
-                <Heart className="h-7 w-7 text-white" fill="rgba(255,255,255,.92)" />
+              <span className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "radial-gradient(circle at 35% 28%, #f9a8d4, #ec4899 55%, #be185d 95%)", border: "2px solid rgba(255,255,255,.65)", boxShadow: "0 8px 24px rgba(219,39,119,.5), inset 0 2px 6px rgba(255,255,255,.5)", animation: "floatY 3.4s ease-in-out infinite" }}>
+                <Heart className="h-7 w-7 text-white" fill="rgba(255,255,255,.95)" />
               </span>
-              <span className="text-[10px] font-bold tracking-wide px-2.5 py-0.5 rounded-full" style={{ background: `${t.accent}14`, color: t.textSec }}>
+              <span className="text-[10px] font-bold tracking-wide px-2.5 py-0.5 rounded-full" style={{ background: "rgba(244,114,182,.16)", color: "#9d174d" }}>
                 {opening ? "កំពុងបើក..." : "បើកលិខិត"}
               </span>
             </button>
 
             {/* BODY CONTENT */}
-            <div className="relative px-7 pt-[47%] pb-8 md:px-9 md:pb-9 text-center cursor-pointer" onClick={openEnvelope}>
-              {isOfficial && <div className="mb-2 flex justify-center"><Monogram size={58} /></div>}
-              <CoupleAvatars size={48} />
+            <div
+              className="relative px-7 pt-[47%] pb-8 md:px-9 md:pb-9 text-center cursor-pointer"
+              onClick={openEnvelope}
+              style={{ transform: opening ? "translateY(-16px)" : "translateY(0)", transition: "transform .3s cubic-bezier(.34,1.3,.5,1) .12s" }}
+            >
+              <EnvPhoto size={46} />
+              {isOfficial && !invitation.groom_photo && !invitation.bride_photo && <div className="mb-2 flex justify-center"><Monogram size={56} /></div>}
 
-              <p className="text-[9px] tracking-[0.4em] uppercase mb-2 font-medium" style={{ color: t.accent }}>
+              <p className="text-[9px] tracking-[0.4em] uppercase mb-2 font-medium" style={{ color: "#db2777" }}>
                 {isBirthday ? "Birthday Invitation" : "Wedding Invitation"}
               </p>
 
               {isBirthday ? (
-                <h1 className="text-2xl font-bold leading-tight" style={{ color: "#4a3a1e" }}>
+                <h1 className="text-2xl font-bold leading-tight" style={{ color: "#7c3a50" }}>
                   {invitation.groom_name_kh || invitation.groom_name || "អ្នកកំណើត"}
                 </h1>
               ) : (
                 <>
-                  <h1 className="text-2xl font-bold leading-tight" style={{ color: "#4a3a1e" }}>
+                  <h1 className="text-2xl font-bold leading-tight" style={{ color: "#7c3a50" }}>
                     {invitation.groom_name_kh || invitation.groom_name || "កូនកំលោះ"}
                   </h1>
                   <div className="flex items-center justify-center gap-3 my-2">
-                    <span className="h-px w-10" style={{ background: `linear-gradient(to right, transparent, ${t.accent}50)` }} />
-                    <span className="text-lg font-light" style={{ color: t.accent }}>&amp;</span>
-                    <span className="h-px w-10" style={{ background: `linear-gradient(to left, transparent, ${t.accent}50)` }} />
+                    <span className="h-px w-10" style={{ background: "linear-gradient(to right, transparent, rgba(219,39,119,.45))" }} />
+                    <span className="text-lg font-light" style={{ color: "#db2777" }}>&amp;</span>
+                    <span className="h-px w-10" style={{ background: "linear-gradient(to left, transparent, rgba(219,39,119,.45))" }} />
                   </div>
-                  <h1 className="text-2xl font-bold leading-tight" style={{ color: "#4a3a1e" }}>
+                  <h1 className="text-2xl font-bold leading-tight" style={{ color: "#7c3a50" }}>
                     {invitation.bride_name_kh || invitation.bride_name || "កូនក្រមុំ"}
                   </h1>
                 </>
               )}
 
-              <div className="mt-4"><Ornament c={t.accent} /></div>
+              <div className="mt-4"><Ornament c="#db2777" /></div>
 
-              <div className="mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm" style={{ border: `1px solid ${t.accent}30`, color: "#5a4a2a" }}>
-                <Calendar className="h-4 w-4" style={{ color: t.accent }} />
+              <div className="mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm" style={{ border: "1px solid rgba(244,114,182,.45)", background: "rgba(255,255,255,.55)", color: "#9d174d" }}>
+                <Calendar className="h-4 w-4" style={{ color: "#db2777" }} />
                 {formatKhmerDateShort(weddingDate)}
               </div>
 
               {displayName && (
-                <div className="mt-4 py-2.5 px-4 rounded-xl" style={{ border: `1.5px solid ${t.accent}28`, background: "rgba(255,253,246,.7)" }}>
-                  <p className="text-[9px] tracking-[0.25em] uppercase mb-0.5" style={{ color: t.accent }}>ប្រគល់ជូន</p>
-                  <p className="font-bold text-base" style={{ color: "#4a3a1e" }}>{displayName}</p>
+                <div className="mt-4 py-2.5 px-4 rounded-xl" style={{ border: "1.5px solid rgba(244,114,182,.35)", background: "rgba(255,251,252,.8)" }}>
+                  <p className="text-[9px] tracking-[0.25em] uppercase mb-0.5" style={{ color: "#ec4899" }}>ប្រគល់ជូន</p>
+                  <p className="font-bold text-base" style={{ color: "#7c3a50" }}>{displayName}</p>
                 </div>
               )}
             </div>
@@ -565,7 +594,7 @@ function InvitationContent() {
       {/* HERO */}
       <section className="relative pt-16 pb-10 px-4 text-center overflow-hidden fade-up">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <FloatHearts color={t.accent} count={8} />
+          <Petals />
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] rounded-full blur-[130px]" style={{ background: `${t.accent}0d` }} />
           <div className="absolute top-24 left-8 w-28 h-28 rounded-full blur-[60px]" style={{ background: `${t.accent}0d` }} />
           <div className="absolute bottom-4 right-8 w-28 h-28 rounded-full blur-[60px]" style={{ background: `${t.accent}0d` }} />
