@@ -188,6 +188,19 @@ const templates: Template[] = [
     btnFrom: "#6b7280",
     btnTo: "#4b5563",
   },
+  {
+    id: "13",
+    name: "ផ្លូវការ",
+    category: "luxury",
+    isPremium: true,
+    description: "លិខិតអញ្ជើញបែបផ្លូវការ ប្រណិត ជាមួយពណ៌មាសភ្លឺចែងចាំង",
+    features: ["រចនាបែបផ្លូវការ", "ពណ៌មាសប្រណិត", "ភ្លឺចែងចាំង", "ស័ក្តិសមសម្រាប់ពិធីធំ"],
+    bg: "linear-gradient(180deg, #fffdf8, #faf3e3, #f3e7cc)",
+    textPri: "#3a2a08",
+    accent: "#a67c00",
+    btnFrom: "#c99a1f",
+    btnTo: "#8a6500",
+  },
 ];
 
 const categories = [
