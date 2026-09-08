@@ -193,7 +193,7 @@ export default function BuilderPage() {
         .from("templates")
         .select("code, name, category, is_premium, config")
         .order("code");
-      if (tpls) setDbTemplates(tpls);
+      if (tpls) setDbTemplates([...tpls].sort((a, b) => Number(a.code) - Number(b.code)));
 
       requestAnimationFrame(() => { loadedRef.current = true; });
     })();
