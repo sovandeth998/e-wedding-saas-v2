@@ -236,10 +236,10 @@ function TemplatePreview({
         fill={template.accent}
       />
       <p
-        className={`${large ? "text-xs tracking-[0.25em]" : "text-[7px] tracking-[0.2em]"} uppercase mb-2`}
+        className={`${large ? "text-xs tracking-[0.15em]" : "text-[7px] tracking-[0.1em]"} mb-2`}
         style={{ color: template.accent }}
       >
-        Wedding Invitation
+        លិខិតអញ្ជើញរៀបអាពាហ៍ពិពាហ៍
       </p>
       <p
         className={`${large ? "text-2xl font-bold mb-1" : "text-sm font-bold"}`}
