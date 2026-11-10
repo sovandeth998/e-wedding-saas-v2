@@ -95,7 +95,7 @@ export default function AdminTemplatesPage() {
     try {
       config = JSON.parse(newTemplate.config);
     } catch {
-      toast.error("Config JSON មិនត្រឹមត្រូវ");
+      toast.error("ទម្រង់ JSON មិនត្រឹមត្រូវ");
       return;
     }
     const { error } = await supabase.from("templates").insert({
@@ -140,7 +140,7 @@ export default function AdminTemplatesPage() {
     try {
       config = JSON.parse(editForm.config);
     } catch {
-      toast.error("Config JSON មិនត្រឹមត្រូវ");
+      toast.error("ទម្រង់ JSON មិនត្រឹមត្រូវ");
       return;
     }
     const { error } = await supabase
@@ -249,7 +249,7 @@ export default function AdminTemplatesPage() {
         )}
       </div>
       <div className="space-y-2">
-        <Label className="text-secondary">រូបភាព Preview</Label>
+        <Label className="text-secondary">រូបភាពមើលជាមុន</Label>
         <div className="flex gap-2">
           <Input
             value={form.preview_url}
@@ -270,7 +270,7 @@ export default function AdminTemplatesPage() {
       </div>
       <div className="space-y-2">
         <Label className="text-secondary flex items-center gap-1">
-          <Code className="h-3 w-3" /> Config (JSON)
+          <Code className="h-3 w-3" /> ការកំណត់ (JSON)
         </Label>
         <Textarea
           value={form.config}
@@ -287,7 +287,7 @@ export default function AdminTemplatesPage() {
           id={`premium-${isEdit ? "edit" : "new"}`}
           className="accent-primary"
         />
-        <Label htmlFor={`premium-${isEdit ? "edit" : "new"}`} className="text-secondary">ធៀបគំរូ Premium</Label>
+        <Label htmlFor={`premium-${isEdit ? "edit" : "new"}`} className="text-secondary">ធៀបគំរូប្រណិត</Label>
       </div>
     </div>
   );
@@ -322,7 +322,7 @@ export default function AdminTemplatesPage() {
                   <h3 className="font-semibold text-secondary truncate">{template.name}</h3>
                   <div className="flex gap-1 shrink-0">
                     <Badge className={`${template.is_premium ? "bg-gold-gradient text-white" : ""} border-0 text-xs`}>
-                      {template.is_premium ? "Premium" : "ឥតគិតថ្លៃ"}
+                      {template.is_premium ? "ប្រណិត" : "ឥតគិតថ្លៃ"}
                     </Badge>
                   </div>
                 </div>
@@ -330,7 +330,7 @@ export default function AdminTemplatesPage() {
                   <Badge variant="outline" className="border-gold-200 text-xs">{categoryLabels[template.category] || template.category}</Badge>
                   {template.config && Object.keys(template.config).length > 0 && (
                     <Badge variant="outline" className="border-blue-200 text-blue-600 text-xs">
-                      <Code className="h-2.5 w-2.5 mr-0.5" /> Config
+                      <Code className="h-2.5 w-2.5 mr-0.5" /> ការកំណត់
                     </Badge>
                   )}
                 </div>

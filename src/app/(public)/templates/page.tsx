@@ -329,7 +329,7 @@ export default function TemplatesPage() {
               {template.isPremium && (
                 <div className="absolute top-3 right-3 z-10">
                   <Badge className="bg-gold-gradient text-white gap-1 shadow-lg">
-                    <Crown className="h-3 w-3" /> Premium
+                    <Crown className="h-3 w-3" /> ប្រណិត
                   </Badge>
                 </div>
               )}
@@ -385,7 +385,7 @@ export default function TemplatesPage() {
                   </DialogTitle>
                   {selectedTemplate.isPremium && (
                     <Badge className="bg-gold-gradient text-white gap-1">
-                      <Crown className="h-3 w-3" /> Premium
+                      <Crown className="h-3 w-3" /> ប្រណិត
                     </Badge>
                   )}
                 </div>

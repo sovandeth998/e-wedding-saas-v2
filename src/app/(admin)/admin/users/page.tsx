@@ -37,8 +37,8 @@ interface PackageRow {
 
 const PLAN_LABELS: Record<string, string> = {
   free: "ឥតគិតថ្លៃ",
-  standard: "Standard",
-  vip: "VIP / Luxury",
+  standard: "ស្តង់ដារ",
+  vip: "VIP / ប្រណិត",
 };
 
 const PLAN_BADGE: Record<string, string> = {
@@ -187,13 +187,13 @@ export default function AdminUsersPage() {
         <Card className="border-0 shadow-md">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center"><Star className="h-5 w-5 text-blue-500" /></div>
-            <div><p className="text-2xl font-bold text-secondary">{standardCount}</p><p className="text-xs text-muted-foreground">Standard</p></div>
+            <div><p className="text-2xl font-bold text-secondary">{standardCount}</p><p className="text-xs text-muted-foreground">ស្តង់ដារ</p></div>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-md">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-amber-50 flex items-center justify-center"><Crown className="h-5 w-5 text-amber-500" /></div>
-            <div><p className="text-2xl font-bold text-secondary">{vipCount}</p><p className="text-xs text-muted-foreground">VIP / Luxury</p></div>
+            <div><p className="text-2xl font-bold text-secondary">{vipCount}</p><p className="text-xs text-muted-foreground">VIP / ប្រណិត</p></div>
           </CardContent>
         </Card>
       </div>
@@ -244,8 +244,8 @@ export default function AdminUsersPage() {
                             className="rounded-md border border-gold-200 bg-white text-xs text-secondary px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <option value="free">ឥតគិតថ្លៃ</option>
-                            <option value="standard">Standard</option>
-                            <option value="vip">VIP / Luxury</option>
+                            <option value="standard">ស្តង់ដារ</option>
+                            <option value="vip">VIP / ប្រណិត</option>
                           </select>
                         </div>
                       </td>

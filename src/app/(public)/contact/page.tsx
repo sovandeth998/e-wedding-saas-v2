@@ -55,7 +55,7 @@ export default function ContactPage() {
                 <MessageCircle className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <h3 className="font-bold text-secondary mb-2">Telegram Support</h3>
+                <h3 className="font-bold text-secondary mb-2">ជំនួយតាម Telegram</h3>
                 <p className="text-sm text-muted-foreground mb-3">
                   ជជែកជាមួយយើងនៅ Telegram សម្រាប់ជំនួយភ្លាមៗ។
                 </p>
@@ -94,7 +94,7 @@ export default function ContactPage() {
                 <p>ថ្ងៃអាទិត្យ: បិទ</p>
               </div>
               <p className="mt-4 text-sm font-medium text-gold-300">
-                Telegram Support 24/7
+                ជំនួយ Telegram 24/7
               </p>
             </CardContent>
           </Card>

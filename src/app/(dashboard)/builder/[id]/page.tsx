@@ -380,7 +380,7 @@ export default function BuilderPage() {
         <div className="flex gap-2">
           <Link href={`/preview/${params.id}`} target="_blank">
             <Button variant="outline" size="sm" className="border-gold-200 text-secondary hover:bg-gold-50 gap-1.5 h-9">
-              <Eye className="h-4 w-4" /> Preview
+              <Eye className="h-4 w-4" /> មើលជាមុន
             </Button>
           </Link>
           <Button variant="outline" onClick={saveInvitation} disabled={saving} className="border-gold-200 text-secondary hover:bg-gold-50 gap-1.5 h-9">
@@ -584,7 +584,7 @@ export default function BuilderPage() {
                         <div key={photo.id} className="relative group aspect-square">
                           <img src={photo.url} alt={photo.caption || "រូបភាព"} className="w-full h-full object-cover rounded-xl border border-gold-200" />
                           {idx === 0 && (
-                            <span className="absolute bottom-2 left-2 text-[10px] bg-black/60 text-white px-2 py-0.5 rounded-full">Preview share</span>
+                            <span className="absolute bottom-2 left-2 text-[10px] bg-black/60 text-white px-2 py-0.5 rounded-full">មើលជាមុនការចែករំលែក</span>
                           )}
                           <button type="button" onClick={() => removeGalleryPhoto(photo.id)} className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Trash2 className="h-4 w-4" />
@@ -745,7 +745,7 @@ export default function BuilderPage() {
                             )}
                             {tpl.isPremium && (
                               <div className="absolute -top-2 left-3 z-10">
-                                <span className="text-[9px] font-bold bg-gold-gradient text-white px-2 py-0.5 rounded-full shadow">Premium</span>
+                                <span className="text-[9px] font-bold bg-gold-gradient text-white px-2 py-0.5 rounded-full shadow">ប្រណិត</span>
                               </div>
                             )}
                             <div className="mx-auto w-24 aspect-[3/5] rounded-[1rem] border-4 border-secondary/90 shadow overflow-hidden relative transition-transform duration-300 group-hover:scale-[1.03]">

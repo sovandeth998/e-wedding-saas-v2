@@ -355,7 +355,7 @@ export default function BillingPage() {
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-primary" />
-                  <span className="text-secondary">{plan.features.guests} ភ្ញៀវ</span>
+                  <span className="text-secondary">{plan.features.guests}</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-primary" />

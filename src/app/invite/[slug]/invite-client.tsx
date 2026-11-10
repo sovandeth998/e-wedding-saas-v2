@@ -272,9 +272,12 @@ function InvitationContent() {
 
   const ensureGuestId = async (): Promise<string | null | undefined> => {
     if (guest?.id) return guest.id;
-    if (!guestName) return undefined;
-    const { data: ng } = await supabase.from("guests").insert({ invitation_id: (invitation as any).id, name: guestName, custom_link: `${params.slug}/guest/${guestName.toLowerCase().replace(/\s+/g, "-")}`, share_code: generateShareCode(), side: "both" }).select().single();
-    return ng?.id;
+    if (guestName) {
+      const { data: ng } = await supabase.from("guests").insert({ invitation_id: (invitation as any).id, name: guestName, custom_link: `${params.slug}/guest/${guestName.toLowerCase().replace(/\s+/g, "-")}`, share_code: generateShareCode(), side: "both" }).select().single();
+      return ng?.id;
+    }
+    const { data: anon } = await supabase.from("guests").insert({ invitation_id: (invitation as any).id, name: "ភ្ញៀវអនាមិក", custom_link: `${params.slug}/guest/anonymous-${Date.now()}`, share_code: generateShareCode(), side: "both" }).select().single();
+    return anon?.id;
   };
 
   const submitRSVP = async () => {

@@ -18,7 +18,7 @@ const features = [
     icon: Users,
     title: "គ្រប់គ្រងភ្ញៀវ",
     description:
-      "តាមដានការឆ្លើយតប RSVP របស់ភ្ញៀវកិត្តិយស និងគ្រប់គ្រងបញ្ជីភ្ញៀវយ៉ាងងាយស្រួលពី Dashboard។",
+      "តាមដានការឆ្លើយតប RSVP របស់ភ្ញៀវកិត្តិយស និងគ្រប់គ្រងបញ្ជីភ្ញៀវយ៉ាងងាយស្រួលពីផ្ទាំងគ្រប់គ្រង។",
   },
 ];
 
@@ -29,7 +29,7 @@ export default function AboutPage() {
         <p className="text-primary font-medium text-sm tracking-wider uppercase mb-3">អំពីយើង</p>
         <h1 className="text-4xl md:text-5xl font-bold mb-6 text-secondary">អំពី E-Wedding</h1>
         <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          E-Wedding ជា Platform សម្រាប់បង្កើតលិខិតអញ្ជើញរៀបការដ៏ស្អាត និងទំនើប។
+          E-Wedding ជាវេទិកា សម្រាប់បង្កើតលិខិតអញ្ជើញរៀបការដ៏ស្អាត និងទំនើប។
           យើងជួយគូស្វាមីភរិយាថ្មីបង្កើតបទពិសោធន៍អញ្ជើញការដ៏ពិសេសសម្រាប់ភ្ញៀវកិត្តិយស។
         </p>
       </div>

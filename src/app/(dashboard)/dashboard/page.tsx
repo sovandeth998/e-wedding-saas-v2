@@ -290,7 +290,7 @@ export default function DashboardPage() {
             {[
               { href: "/invitations", icon: Plus, title: "បង្កើតថ្មី", desc: "លិខិតអញ្ជើញថ្មី", primary: true },
               { href: firstInvitation ? `/guests/${firstInvitation.id}` : "/guests", icon: Users, title: "គ្រប់គ្រងភ្ញៀវ", desc: `${guestCount} នាក់ក្នុងបញ្ជី` },
-              { href: "/analytics", icon: CheckCircle, title: "Analytics", desc: "ស្ថិតិលម្អិត" },
+              { href: "/analytics", icon: CheckCircle, title: "ស្ថិតិវិភាគ", desc: "ស្ថិតិលម្អិត" },
               { href: "/billing", icon: CreditCard, title: "ការទូទាត់", desc: `កញ្ចប់${packageName}` },
             ].map((a) =>
               a.primary ? (

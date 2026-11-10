@@ -214,7 +214,7 @@ export default function TemplateDetailPage({
               </h1>
               {template.isPremium && (
                 <Badge className="bg-gold-gradient text-white gap-1">
-                  <Crown className="h-3 w-3" /> Premium
+                  <Crown className="h-3 w-3" /> ប្រណិត
                 </Badge>
               )}
             </div>
@@ -292,7 +292,7 @@ export default function TemplateDetailPage({
                     {rel.isPremium && (
                       <div className="absolute top-3 right-3">
                         <Badge className="bg-gold-gradient text-white gap-1 shadow-lg">
-                          <Crown className="h-3 w-3" /> Premium
+                          <Crown className="h-3 w-3" /> ប្រណិត
                         </Badge>
                       </div>
                     )}

@@ -20,7 +20,7 @@ const pricingTiers = [
       { name: "តន្ត្រីផ្ទៃខាងក្រោយ", included: false },
       { name: "តាមដាន RSVP", included: false },
       { name: "ចៅអធិការចម្រាក់ពេល", included: false },
-      { name: "ដក Watermark", included: false },
+      { name: "ដកស្លាកសញ្ញាទឹក", included: false },
       { name: "ជំនួយ Telegram", included: false },
     ],
   },
@@ -39,7 +39,7 @@ const pricingTiers = [
       { name: "តន្ត្រីផ្ទាល់ខ្លួន", included: true },
       { name: "តាមដាន RSVP", included: true },
       { name: "ចៅអធិការចម្រាក់ពេល", included: true },
-      { name: "ដក Watermark", included: true },
+      { name: "ដកស្លាកសញ្ញាទឹក", included: true },
       { name: "ជំនួយ Telegram", included: true },
     ],
   },
@@ -53,12 +53,12 @@ const pricingTiers = [
       { name: "ធៀបគំរូប្រណិតទាំងអស់", included: true },
       { name: "រយៈពេល Link: អចិន្ត្រៃយ៍ (1 ឆ្នាំ)", included: true },
       { name: "ភ្ញៀវមិនកំណត់", included: true },
-      { name: "រូបថត 20+ (HD Gallery)", included: true },
+      { name: "រូបថត 20+ (វិចិត្រសាល HD)", included: true },
       { name: "QR Code និងផែនទី", included: true },
       { name: "តន្ត្រីផ្ទាល់ខ្លួន", included: true },
       { name: "តាមដាន RSVP", included: true },
       { name: "ចៅអធិការចម្រាក់ពេល", included: true },
-      { name: "ដក Watermark", included: true },
+      { name: "ដកស្លាកសញ្ញាទឹក", included: true },
       { name: "ជំនួយរៀបចំទិន្នន័យ", included: true },
     ],
   },
@@ -73,7 +73,7 @@ export default function PricingPage() {
           តម្លៃសាមញ្ញ និងថ្លៃ
         </h1>
         <p className="text-muted-foreground max-w-2xl mx-auto">
-          ជ្រើសរើសកញ្ចប់ដែលសមនឹងតម្រូវការរបស់អ្នក។ ចាប់ផ្ដើមដោយឥតគិតថ្លៃ រួច upgrade នៅពេលត្រៀមខ្លួន។
+          ជ្រើសរើសកញ្ចប់ដែលសមនឹងតម្រូវការរបស់អ្នក។ ចាប់ផ្ដើមដោយឥតគិតថ្លៃ រួចដំឡើងកញ្ចប់នៅពេលត្រៀមខ្លួន។
         </p>
       </div>
 
@@ -90,7 +90,6 @@ export default function PricingPage() {
                 <tier.icon className={`h-7 w-7 ${tier.popular ? "text-white" : "text-primary"}`} />
               </div>
               <CardTitle className="text-xl text-secondary">{tier.name}</CardTitle>
-              <p className="text-xs text-muted-foreground">{tier.nameEn}</p>
               <div className="mt-4">
                 <span className="text-4xl font-bold text-secondary">${tier.price}</span>
                 {tier.price > 0 && <span className="text-muted-foreground text-sm"> / កញ្ចប់</span>}

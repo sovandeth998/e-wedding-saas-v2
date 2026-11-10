@@ -91,7 +91,7 @@ export default function AdminLayout({
               <div className="h-8 w-8 rounded-full bg-gold-gradient flex items-center justify-center">
                 <Heart className="h-4 w-4 text-white fill-white" />
               </div>
-              <span className="text-secondary">Admin Panel</span>
+              <span className="text-secondary">ផ្ទាំងគ្រប់គ្រង</span>
             </Link>
           </div>
           <nav className="flex-1 p-4 space-y-1">
@@ -114,7 +114,7 @@ export default function AdminLayout({
           <div className="p-4 border-t border-gold-200/50 space-y-2">
             <Link href="/dashboard">
               <Button variant="outline" size="sm" className="w-full gap-2 border-gold-200 text-secondary hover:bg-gold-50">
-                <LayoutDashboard className="h-4 w-4" /> Dashboard
+                <LayoutDashboard className="h-4 w-4" /> ផ្ទាំងអ្នកប្រើ
               </Button>
             </Link>
             <div className="text-xs text-muted-foreground truncate">

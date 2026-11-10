@@ -40,8 +40,8 @@ export default function AdminLoginPage() {
         </div>
 
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
-          <p className="text-sm text-white/50 mt-1">គ្រប់គ្រង Platform</p>
+          <h1 className="text-2xl font-bold text-white">ផ្ទាំងគ្រប់គ្រង</h1>
+          <p className="text-sm text-white/50 mt-1">គ្រប់គ្រងវេទិកា</p>
         </div>
 
         <form onSubmit={handleLogin} className="bg-white rounded-2xl shadow-2xl p-6 space-y-4 border border-gold-100">

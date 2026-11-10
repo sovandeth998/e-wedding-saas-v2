@@ -113,7 +113,7 @@ export default async function PreviewPage({
           )}
           <div className="bg-gold-50 border border-gold-200 rounded-xl p-4">
             <p className="text-sm text-primary font-medium flex items-center justify-center gap-1.5">
-              <Eye className="h-4 w-4" /> នេះគឺជាលក្ខណៈ Preview
+              <Eye className="h-4 w-4" /> នេះគឺជាការមើលជាមុន
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               ភ្ញៀវនឹងឃើញទំព័រនេះនៅពេលចុច Link

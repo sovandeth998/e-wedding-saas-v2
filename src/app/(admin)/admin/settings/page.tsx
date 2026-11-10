@@ -242,7 +242,7 @@ export default function AdminSettingsPage() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h1 className="text-2xl font-bold text-secondary">ការកំណត់ Platform</h1>
+        <h1 className="text-2xl font-bold text-secondary">ការកំណត់វេទិកា</h1>
         <p className="text-muted-foreground">គ្រប់គ្រងព័ត៌មានទាំងអស់នៅលើ Website</p>
       </div>
 
@@ -284,8 +284,8 @@ export default function AdminSettingsPage() {
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              { label: "QR Standard ($18)", ref: qrStdRef, preview: qrStdPreview, onChange: handleQrStdChange, clear: () => { setQrStdPreview(""); setQrStdFile(null); setQrStdImage(""); } },
-              { label: "QR VIP ($40)", ref: qrVipRef, preview: qrVipPreview, onChange: handleQrVipChange, clear: () => { setQrVipPreview(""); setQrVipFile(null); setQrVipImage(""); } },
+              { label: "QR ស្តង់ដារ ($18)", ref: qrStdRef, preview: qrStdPreview, onChange: handleQrStdChange, clear: () => { setQrStdPreview(""); setQrStdFile(null); setQrStdImage(""); } },
+              { label: "QR ប្រណិត ($40)", ref: qrVipRef, preview: qrVipPreview, onChange: handleQrVipChange, clear: () => { setQrVipPreview(""); setQrVipFile(null); setQrVipImage(""); } },
             ].map((slot) => (
               <div key={slot.label} className="border border-gold-200 rounded-xl p-4 space-y-3 bg-gold-50/40">
                 <p className="text-sm font-semibold text-secondary text-center">{slot.label}</p>
