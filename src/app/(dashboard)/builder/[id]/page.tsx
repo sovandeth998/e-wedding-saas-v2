@@ -341,7 +341,7 @@ export default function BuilderPage() {
 
   const copyLink = () => {
     navigator.clipboard.writeText(`${window.location.origin}/invite/${invitation.slug || params.id}`);
-    toast.success("បានចម្លង Link!");
+    toast.success("បានចម្លងតំណ!");
   };
 
   return (

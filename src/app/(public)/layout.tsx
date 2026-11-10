@@ -115,7 +115,7 @@ export default function PublicLayout({
             <div>
               <h3 className="font-bold mb-3">ទំនាក់ទំនង</h3>
               <ul className="space-y-2 text-sm text-white/60">
-                <li>Email: mensovandath998@gmail.com</li>
+                <li>អ៊ីមែល: mensovandath998@gmail.com</li>
                 <li>ABA Bank: 070866998</li>
               </ul>
             </div>

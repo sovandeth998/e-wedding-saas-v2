@@ -401,7 +401,7 @@ export default function GuestManagerPage() {
             ) : (
               <Copy className="h-4 w-4" />
             )}
-            {allCopied ? "បានចម្លង!" : "ចម្លង Link ទាំងអស់"}
+            {allCopied ? "បានចម្លង!" : "ចម្លងតំណទាំងអស់"}
           </Button>
           <Dialog open={bulkDialogOpen} onOpenChange={setBulkDialogOpen}>
             <DialogTrigger asChild>
@@ -553,7 +553,7 @@ export default function GuestManagerPage() {
                       ស្ថានភាព
                     </th>
                     <th className="text-left p-3 text-sm font-medium text-secondary">
-                      Link ផ្ទាល់
+                      តំណផ្ទាល់
                     </th>
                     <th className="text-left p-3 text-sm font-medium text-secondary">
                       សកម្មភាព
@@ -606,7 +606,7 @@ export default function GuestManagerPage() {
                               onClick={() =>
                                 copyLink(guest, guest.id)
                               }
-                              title="ចម្លង Link"
+                              title="ចម្លងតំណ"
                             >
                               {copiedId === guest.id ? (
                                 <Check className="h-4 w-4 text-green-600" />
@@ -618,7 +618,7 @@ export default function GuestManagerPage() {
                               variant="ghost"
                               size="icon"
                               asChild
-                              title="បើក Link"
+                              title="បើកតំណ"
                             >
                               <a
                                 href={guestLinkPath(guest)}

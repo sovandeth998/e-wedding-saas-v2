@@ -12,7 +12,7 @@ const features = [
   {
     icon: Users,
     title: "គ្រប់គ្រងភ្ញៀវ",
-    description: "គ្រប់គ្រងបញ្ជីភ្ញៀវរបស់អ្នកយ៉ាងងាយស្រួល ជាមួយ Link ផ្ទាល់ខ្លួនសម្រាប់ភ្ញៀវម្នាក់ៗ។",
+    description: "គ្រប់គ្រងបញ្ជីភ្ញៀវរបស់អ្នកយ៉ាងងាយស្រួល ជាមួយតំណផ្ទាល់ខ្លួនសម្រាប់ភ្ញៀវម្នាក់ៗ។",
   },
   {
     icon: Share2,
@@ -142,7 +142,7 @@ export default function HomePage() {
             {[
               { step: "១", title: "ជ្រើសរើសធៀបគំរូ", desc: "ជ្រើសរើសពីស្តុកធៀបគំរូដ៏ស្អាតរបស់យើង។", icon: Palette },
               { step: "២", title: "ប្តូរតាមបំណង", desc: "ដាក់ព័ត៌មាន រូបថត និងប្តូរតាមបំណងអ្វីៗ។", icon: Heart },
-              { step: "៣", title: "ចែករំលែក និងតាមដាន", desc: "ចែករំលែក Link ទៅភ្ញៀវ និងតាមដាន RSVP។", icon: Users },
+              { step: "៣", title: "ចែករំលែក និងតាមដាន", desc: "ចែករំលែកតំណទៅភ្ញៀវ និងតាមដាន RSVP។", icon: Users },
             ].map((item, index) => (
               <div key={index} className="text-center group">
                 <div className="h-20 w-20 rounded-2xl bg-gold-gradient flex items-center justify-center text-3xl font-bold mx-auto mb-6 group-hover:scale-110 transition-transform">
