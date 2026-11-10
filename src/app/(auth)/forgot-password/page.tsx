@@ -39,13 +39,13 @@ export default function ForgotPasswordPage() {
     <Card className="border-0 shadow-lg">
       <CardHeader className="text-center">
         <CardTitle className="text-secondary">ភ្លេចពាក្យសម្ងាត់</CardTitle>
-        <CardDescription>បញ្ចូលអ៊ីមែលដើម្បីទទួល Link កំណត់ពាក្យសម្ងាត់ថ្មី</CardDescription>
+        <CardDescription>បញ្ចូលអ៊ីមែលដើម្បីទទួលតំណកំណត់ពាក្យសម្ងាត់ថ្មី</CardDescription>
       </CardHeader>
       <CardContent>
         {success ? (
           <div className="text-center space-y-4">
             <div className="bg-green-50 text-green-600 text-sm p-3 rounded-md">
-              សូមពិនិត្យអ៊ីមែលរបស់អ្នកសម្រាប់ Link កំណត់ពាក្យសម្ងាត់ថ្មី។
+              សូមពិនិត្យអ៊ីមែលរបស់អ្នកសម្រាប់តំណកំណត់ពាក្យសម្ងាត់ថ្មី។
             </div>
             <Link href="/login">
               <Button variant="outline" className="w-full gap-2 border-gold-200 text-secondary hover:bg-gold-50">
@@ -71,7 +71,7 @@ export default function ForgotPasswordPage() {
               />
             </div>
             <Button type="submit" className="w-full bg-gold-gradient text-white hover:opacity-90" disabled={loading}>
-              {loading ? "កំពុងផ្ញើ..." : "ផ្ញើ Link កំណត់ពាក្យសម្ងាត់"}
+              {loading ? "កំពុងផ្ញើ..." : "ផ្ញើតំណកំណត់ពាក្យសម្ងាត់"}
             </Button>
             <Link href="/login">
               <Button variant="ghost" className="w-full gap-2 text-primary">

@@ -7,13 +7,12 @@ import Link from "next/link";
 const pricingTiers = [
   {
     name: "កញ្ចប់សាកល្បង",
-    nameEn: "Free Trial",
     price: 0,
     popular: false,
     icon: Sparkles,
     features: [
       { name: "ធៀបគំរូធម្មតា (1-2)", included: true },
-      { name: "រយៈពេល Link: 30 ថ្ងៃ", included: true },
+      { name: "រយៈពេលតំណ: 30 ថ្ងៃ", included: true },
       { name: "ភ្ញៀវរហូតដល់ 50 នាក់", included: true },
       { name: "រូបថត 2 សន្លឹក", included: true },
       { name: "QR Code និងផែនទី", included: true },
@@ -26,13 +25,12 @@ const pricingTiers = [
   },
   {
     name: "កញ្ចប់ស្តង់ដារ",
-    nameEn: "Standard",
     price: 18,
     popular: true,
     icon: Crown,
     features: [
       { name: "ធៀបគំរូសម័យទំនើប (5+)", included: true },
-      { name: "រយៈពេល Link: 6 ខែ", included: true },
+      { name: "រយៈពេលតំណ: 6 ខែ", included: true },
       { name: "ភ្ញៀវមិនកំណត់", included: true },
       { name: "រូបថត 6-10 សន្លឹក", included: true },
       { name: "QR Code និងផែនទី", included: true },
@@ -45,13 +43,12 @@ const pricingTiers = [
   },
   {
     name: "កញ្ចប់ប្រណិត",
-    nameEn: "VIP / Luxury",
     price: 40,
     popular: false,
     icon: Crown,
     features: [
       { name: "ធៀបគំរូប្រណិតទាំងអស់", included: true },
-      { name: "រយៈពេល Link: អចិន្ត្រៃយ៍ (1 ឆ្នាំ)", included: true },
+      { name: "រយៈពេលតំណ: អចិន្ត្រៃយ៍ (1 ឆ្នាំ)", included: true },
       { name: "ភ្ញៀវមិនកំណត់", included: true },
       { name: "រូបថត 20+ (វិចិត្រសាល HD)", included: true },
       { name: "QR Code និងផែនទី", included: true },

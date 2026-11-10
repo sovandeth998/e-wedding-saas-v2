@@ -101,9 +101,9 @@ export default function AdminUsersPage() {
     setConfirmUser(null);
     setUpdating(null);
     if (newRole === "admin") {
-      toast.success("បានបន្ថែម Admin!");
+      toast.success("បានបន្ថែមអ្នកគ្រប់គ្រង!");
     } else {
-      toast.success("បានដក Admin!");
+      toast.success("បានដកសិទ្ធិអ្នកគ្រប់គ្រង!");
     }
   };
 
@@ -166,13 +166,13 @@ export default function AdminUsersPage() {
         <Card className="border-0 shadow-md">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-gold-50 flex items-center justify-center"><Shield className="h-5 w-5 text-primary" /></div>
-            <div><p className="text-2xl font-bold text-secondary">{adminCount}</p><p className="text-xs text-muted-foreground">Admin</p></div>
+            <div><p className="text-2xl font-bold text-secondary">{adminCount}</p><p className="text-xs text-muted-foreground">អ្នកគ្រប់គ្រង</p></div>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-md">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-gold-50 flex items-center justify-center"><UserCheck className="h-5 w-5 text-primary" /></div>
-            <div><p className="text-2xl font-bold text-secondary">{clientCount}</p><p className="text-xs text-muted-foreground">Client</p></div>
+            <div><p className="text-2xl font-bold text-secondary">{clientCount}</p><p className="text-xs text-muted-foreground">អតិថិជន</p></div>
           </CardContent>
         </Card>
       </div>
@@ -251,7 +251,7 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="p-3">
                         <Badge variant={u.role === "admin" ? "default" : "secondary"} className={u.role === "admin" ? "bg-gold-gradient text-white border-0" : ""}>
-                          {u.role === "admin" ? "Admin" : "Client"}
+                          {u.role === "admin" ? "អ្នកគ្រប់គ្រង" : "អតិថិជន"}
                         </Badge>
                       </td>
                       <td className="p-3 text-sm text-muted-foreground">
@@ -269,9 +269,9 @@ export default function AdminUsersPage() {
                             {updating === u.id ? (
                               <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1" />
                             ) : u.role === "admin" ? (
-                              <><ShieldOff className="h-3 w-3 mr-1" /> ដក Admin</>
+                              <><ShieldOff className="h-3 w-3 mr-1" /> ដកសិទ្ធិ</>
                             ) : (
-                              <><Shield className="h-3 w-3 mr-1" /> ដាក់ Admin</>
+                              <><Shield className="h-3 w-3 mr-1" /> ដាក់ជាអ្នកគ្រប់គ្រង</>
                             )}
                           </Button>
                         )}
@@ -298,15 +298,15 @@ export default function AdminUsersPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-secondary">
-                    {confirmUser.role === "admin" ? "ដក Admin?" : "ដាក់ Admin?"}
+                    {confirmUser.role === "admin" ? "ដកសិទ្ធិអ្នកគ្រប់គ្រង?" : "ដាក់ជាអ្នកគ្រប់គ្រង?"}
                   </h3>
                   <p className="text-sm text-muted-foreground">{confirmUser.email}</p>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground">
                 {confirmUser.role === "admin"
-                  ? `តើអ្នកប្រាកដទេថាចង់ដក ${confirmUser.email} ពី Admin?`
-                  : `តើអ្នកប្រាកដទេថាចង់ដាក់ ${confirmUser.email} ជា Admin?`}
+                  ? `តើអ្នកប្រាកដទេថាចង់ដក ${confirmUser.email} ពីសិទ្ធិអ្នកគ្រប់គ្រង?`
+                  : `តើអ្នកប្រាកដទេថាចង់ដាក់ ${confirmUser.email} ជាអ្នកគ្រប់គ្រង?`}
               </p>
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" className="border-gold-200" onClick={() => setConfirmUser(null)}>បោះបង់</Button>

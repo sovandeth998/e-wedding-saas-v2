@@ -476,7 +476,7 @@ function InvitationContent() {
             <Heart className="h-10 w-10" style={{ color: `${t.accent}80` }} />
           </div>
           <h1 className="text-2xl font-bold mb-2" style={{ color: t.textPri }}>រកមិនឃើញលិខិតអញ្ជើញ</h1>
-          <p style={{ color: t.textMut }}>Link លិខិតអញ្ជើញនេះមិនត្រឹមត្រូវ ឬត្រូវបានលុប។</p>
+          <p style={{ color: t.textMut }}>តំណលិខិតអញ្ជើញនេះមិនត្រឹមត្រូវ ឬត្រូវបានលុប។</p>
         </div>
       </div>
     );

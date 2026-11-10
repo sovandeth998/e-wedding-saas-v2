@@ -65,7 +65,7 @@ export default function AdminLoginPage() {
 
           <Button type="submit" className="w-full bg-gold-gradient text-white hover:opacity-90 h-11 rounded-xl" disabled={loading}>
             {loading ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" /> : <ArrowRight className="h-4 w-4 mr-2" />}
-            {loading ? "កំពុងចូល..." : "ចូល Admin"}
+            {loading ? "កំពុងចូល..." : "ចូលជាអ្នកគ្រប់គ្រង"}
           </Button>
         </form>
 

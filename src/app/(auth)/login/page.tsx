@@ -120,7 +120,7 @@ export default function LoginPage() {
 
         <Link href="/admin/login" className="block">
           <Button variant="outline" className="w-full border-gold-200 text-secondary hover:bg-gold-50 rounded-xl h-10 text-sm">
-            <Shield className="h-4 w-4 mr-2" /> ចូល Admin
+            <Shield className="h-4 w-4 mr-2" /> ចូលជាអ្នកគ្រប់គ្រង
           </Button>
         </Link>
     </div>

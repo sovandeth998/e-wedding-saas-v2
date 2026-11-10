@@ -441,7 +441,7 @@ export default function BuilderPage() {
             <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
               <Globe className="h-5 w-5 text-green-600 mx-auto mb-1" />
               <p className="text-xs font-medium text-green-700">បានផ្សាយរួចរាល់</p>
-              <button onClick={copyLink} className="text-[11px] text-green-600 underline mt-0.5">ចម្លង Link លិខិតអញ្ជើញ</button>
+              <button onClick={copyLink} className="text-[11px] text-green-600 underline mt-0.5">ចម្លងតំណលិខិតអញ្ជើញ</button>
             </div>
           )}
         </aside>
@@ -797,7 +797,7 @@ export default function BuilderPage() {
                     </div>
 
                     <div className="p-4 bg-gold-50/40 border border-gold-200 rounded-2xl">
-                      <p className="font-medium mb-2 text-secondary text-sm">Link លិខិតអញ្ជើញ</p>
+                      <p className="font-medium mb-2 text-secondary text-sm">តំណលិខិតអញ្ជើញ</p>
                       <div className="flex items-center gap-2">
                         <code className="flex-1 text-xs md:text-sm font-mono text-primary bg-white p-2.5 rounded-lg border border-gold-200 truncate">
                           {typeof window !== "undefined" ? window.location.origin : ""}/invite/{invitation.slug || "..."}

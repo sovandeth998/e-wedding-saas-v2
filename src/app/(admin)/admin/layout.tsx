@@ -74,7 +74,7 @@ export default function AdminLayout({
           <div className="h-7 w-7 rounded-full bg-gold-gradient flex items-center justify-center">
             <Heart className="h-3.5 w-3.5 text-white fill-white" />
           </div>
-          <span className="text-secondary">Admin</span>
+          <span className="text-secondary">អ្នកគ្រប់គ្រង</span>
         </Link>
         <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
           {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

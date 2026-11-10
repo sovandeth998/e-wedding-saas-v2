@@ -278,7 +278,7 @@ export default function DashboardPage() {
                       <CheckCircle className="h-7 w-7 text-primary/40" />
                     </div>
                     <p className="text-muted-foreground text-sm">មិនទាន់មាន RSVP</p>
-                    <p className="text-xs text-muted-foreground mt-1">ភ្ញៀវនឹងឆ្លើយតបនៅពេលពួកគេបើក Link លិខិតអញ្ជើញ</p>
+                    <p className="text-xs text-muted-foreground mt-1">ភ្ញៀវនឹងឆ្លើយតបនៅពេលពួកគេបើកតំណលិខិតអញ្ជើញ</p>
                   </div>
                 )}
               </CardContent>
