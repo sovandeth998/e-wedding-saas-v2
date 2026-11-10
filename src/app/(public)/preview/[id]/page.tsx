@@ -79,13 +79,13 @@ export default async function PreviewPage({
             {invitation.ceremony_time && (
               <p className="text-sm text-muted-foreground flex items-center justify-center gap-1.5 mt-1">
                 <Clock className="h-3.5 w-3.5" />
-                ពិធីជប់លៀងម៉ោង {invitation.ceremony_time}
+                ម៉ោងពិធីជប់លៀង {invitation.ceremony_time}
               </p>
             )}
             {invitation.reception_time && (
               <p className="text-sm text-muted-foreground flex items-center justify-center gap-1.5">
                 <Clock className="h-3.5 w-3.5" />
-                ស្វាគមន៍ម៉ោង {invitation.reception_time}
+                ម៉ោងស្វាគមន៍ {invitation.reception_time}
               </p>
             )}
           </div>
