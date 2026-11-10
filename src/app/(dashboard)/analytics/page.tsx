@@ -167,7 +167,7 @@ export default function AnalyticsPage() {
         <div>
           <h1 className="text-2xl font-bold text-secondary flex items-center gap-2">
             <BarChart3 className="h-6 w-6 text-primary" />
-            ស្ថិតិវិភាគទាន
+            ស្ថិតិវិភាគ
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
             {inviteLabel && `លិខិតអញ្ជើញ: ${inviteLabel}`}

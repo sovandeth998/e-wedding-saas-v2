@@ -11,7 +11,7 @@ import { Heart, LayoutDashboard, Mail, BarChart3, CreditCard, User, LogOut, Menu
 const navItems = [
   { href: "/dashboard", label: "ទំព័រដើម", icon: LayoutDashboard },
   { href: "/invitations", label: "លិខិតអញ្ជើញរបស់ខ្ញុំ", icon: Mail },
-  { href: "/analytics", label: "ស្ថិតិវិភាគទាន", icon: BarChart3 },
+  { href: "/analytics", label: "ស្ថិតិវិភាគ", icon: BarChart3 },
   { href: "/billing", label: "ការទូទាត់", icon: CreditCard },
   { href: "/profile", label: "គណនីរបស់ខ្ញុំ", icon: User },
 ];
